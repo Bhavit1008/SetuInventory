@@ -1,0 +1,136 @@
+<div class="container">
+    <form [formGroup]="stockFormGroup" #stockForm="ngForm">
+        <div class="form-group" style="margin: 10px;">
+            <label for="productCategory">Godon Locations: </label>
+            <select 
+                name="productCategory" 
+                id="productCategory" 
+                class="form-control"
+                formControlName="godownLocation"
+                required>
+                <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin: 10px;">
+          <label for="productQuality">Product Quality: </label>
+          <select 
+              name="productQuality" 
+              id="productQuality" 
+              class="form-control"
+              formControlName="productQuality"
+              required>
+              <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
+          </select>
+      </div>
+
+        <div class="form-group" style="margin: 10px;">
+            <label>Product code: </label>
+            <input type="text" class="form-control" name="productCode" formControlName="productCode">
+        </div>
+        
+        <div class="row">
+          <div class="form-group col-md-3" style="margin: 5px;">
+            <label>Length: </label>
+            <input type="text" class="form-control" name="productLength" formControlName="productSize">
+        </div>
+        <div class="form-group col-md-3" style="margin: 5px;">
+          <label>Width: </label>
+          <input type="text" class="form-control" name="productWidth" formControlName="productSize">
+        </div>
+        <div class="form-group col-md-3" style="margin: 10px;">
+          <label>Number of Pieces: </label>
+          <input type="text" class="form-control" name="productPieces" formControlName="productPieces">
+      </div>
+        </div>
+
+        <div class="form-group" style="margin: 5px;">
+          <label>Total Size: </label>
+          <input type="text" class="form-control" name="productSize" formControlName="productSize">
+        </div>
+
+        <div class="form-group" style="margin: 10px;">
+            <label>In House cost: </label>
+            <input type="text" class="form-control" name="inHouseCost" formControlName="inHouseCost">
+        </div>
+
+        <div class="form-group" style="margin: 10px;">
+            <label>Freight: </label>
+            <input type="text" class="form-control" name="freight" formControlName="freight">
+        </div>
+
+        <div class="form-group" style="margin: 10px;">
+            <label>Miscellaneous Cost: </label>
+            <input type="text" class="form-control" name="misCost" formControlName="misCost">
+        </div>
+
+        <div class="form-group" style="margin: 10px;">
+            <label>Selling Cost:</label>
+            <input type="text" class="form-control" name="sellingCost" formControlName="misCost">
+        </div>
+
+
+
+        <div class="container mt-4">
+            <h2 class="text-center">Enter Slab Details</h2>
+          
+            <table class="table table-bordered">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Length</th>
+                  <th>Width</th>
+                  <th colspan="2">Less</th>
+                  <th>Size</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let form of userForms; let i = index" [formGroup]="form">
+                    <td>
+                        <input *ngIf="form.value.editable" formControlName="id" class="form-control" placeholder="id">
+                        <span *ngIf="!form.value.editable">{{ form.value.id }}</span>
+                    </td>
+                  <td>
+                    <input *ngIf="form.value.editable" formControlName="length" class="form-control" placeholder="Enter length">
+                    <span *ngIf="!form.value.editable">{{ form.value.length }}</span>
+                  </td>
+                  <td>
+                    <input *ngIf="form.value.editable" formControlName="width" class="form-control" placeholder="Enter width">
+                    <span *ngIf="!form.value.editable">{{ form.value.width }}</span>
+                  </td>
+                  <td>
+                    <input *ngIf="form.value.editable" formControlName="lessLength" class="form-control" placeholder="Enter length">
+                    <span *ngIf="!form.value.editable">{{ form.value.lessLength }}</span>
+                  </td>
+                  <td>
+                    <input *ngIf="form.value.editable" formControlName="lessWidth" class="form-control" placeholder="Enter width">
+                    <span *ngIf="!form.value.editable">{{ form.value.lessWidth }}</span>
+                  </td>
+                  <td>
+                    <input *ngIf="form.value.editable" formControlName="tSize" class="form-control" placeholder="Enter size">
+                    <span *ngIf="!form.value.editable">{{ form.value.tSize }}</span>
+                  </td>
+                  <td>
+                    <button *ngIf="!form.value.editable" (click)="editUser(i)" class="btn btn-primary btn-sm" style="margin: 10px;">Edit</button>
+                    <button *ngIf="form.value.editable" (click)="saveUser(i)" class="btn btn-success btn-sm" style="margin: 10px;">Save</button>
+                    <button *ngIf="form.value.editable" (click)="cancelEdit(i)" class="btn btn-warning btn-sm" style="margin: 10px;">Cancel</button>
+                    <button (click)="deleteUser(i)" class="btn btn-danger btn-sm">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <button (click)="addNewRow()" class="btn btn-success mb-2">+ Add New Row</button>
+
+          </div>
+          
+          
+          
+          
+          
+          
+        
+        <button type="submit" class="btn btn-primary" (click)="getValues()" style="margin: 10px;">Submit</button>
+      </form>
+</div>
