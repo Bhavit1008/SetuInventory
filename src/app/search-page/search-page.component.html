@@ -1,0 +1,50 @@
+<div class="container">
+
+
+  <!-- Sidebar: Filter section -->
+  <div class="sidebar" [class.show-sidebar]="sidebarVisible" [class.mobile-sidebar]="isMobile">
+    <div class="sidebar-header d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Filters</h3>
+      <button type="button" class="btn-close" (click)="toggleSidebar()" *ngIf="isMobile"></button>
+    </div>
+    <form [formGroup]="searchForm" (ngSubmit)="applyFilter()">
+      <label>Category</label>
+      <select formControlName="category">
+        <option value="">-- Select Category --</option>
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+
+      <label>Godon Locations</label>
+      <input type="text" formControlName="godonLocations" />
+
+      <label>Product Quality</label>
+      <input type="text" formControlName="productQuality" />
+
+      <label>Product Code</label>
+      <input type="text" formControlName="productCode" />
+
+      <label>Min Price</label>
+      <input type="number" formControlName="minPrice" />
+
+      <label>Max Price</label>
+      <input type="number" formControlName="maxPrice" />
+
+      <button type="submit">Search</button>
+      <button type="button" (click)="resetForm()">Reset</button>
+    </form>
+  </div>
+
+  <!-- Main content: Results -->
+  <div class="content">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+      <h3 class="mb-0 me-3">Results</h3>
+      <div class="d-flex align-items-center gap-2">
+        <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
+        <button class="sort-button" type="button" (click)="sortData()">Sort by price</button>
+      </div>
+    </div>
+    <div class="card-grid">
+      <app-product-card *ngFor="let product of filteredProducts" [product]="product" />
+    </div>
+  </div>
+</div>
