@@ -1,4 +1,4 @@
-.product-card {
+  .product-card {
     background-color: #ffffff;
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -6,7 +6,14 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  
+  .card-header {
+    background-color: #ffffff;
+    padding: 0px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 0px;
+  }
   .product-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
@@ -22,5 +29,19 @@
     margin: 6px 0;
     font-size: 14px;
     color: #333;
+  }
+  
+  .edit-button {
+    background-color: transparent;
+    border: none;
+    color: #2c7be5;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    padding-bottom: 2px;
+  }
+  
+  .edit-button:hover {
+    color: #1a5dcc;
   }
   

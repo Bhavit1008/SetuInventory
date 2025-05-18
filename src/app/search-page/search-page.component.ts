@@ -2,14 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Product } from '../model/product';
-import { Observable } from 'rxjs';
+import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { ProductService } from '../services/product.service';
 import { ProductCardComponent } from '../product-card/product-card.component';
 
 @Component({
   selector: 'app-search-page',
   standalone: true,
-  imports: [CommonModule, FormsModule ,ReactiveFormsModule , ProductCardComponent ],
+  imports: [CommonModule, FormsModule ,ReactiveFormsModule , ProductCardComponent ,NgxSkeletonLoaderModule ],
   templateUrl: './search-page.component.html',
   styleUrl: './search-page.component.css'
 })
@@ -17,17 +17,35 @@ export class SearchPageComponent implements OnInit{
   isMobile = false;
   sidebarVisible = false;
   sortAsc = true;
+  isLoading = true;
+  showAvailable = true;
 
   searchForm: FormGroup;
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
+  finalProducts: Product[] = [];  
   categories: string[] = ['Slab', 'Block']; 
   ngOnInit() {
-    this.checkMobile();
-    window.addEventListener('resize', () => this.checkMobile());
+    this.productService.getBlockProducts().then(products => {
+      this.allProducts = products;
+      this.filteredProducts = [...products]
+      this.finalProducts = [...products];
+      this.isLoading = false;
+    });
+    this.productService.getBlockProducts().then(products => {
+      this.allProducts.push(...products);
+      this.filteredProducts.push(...products);
+      this.finalProducts.push(...products);
+    });
+    if (typeof window !== 'undefined') {
+      this.checkMobile();
+      window.addEventListener('resize', () => this.checkMobile());
+    }
   }
   checkMobile() {
+    if (typeof window !== 'undefined') {
     this.isMobile = window.innerWidth <= 768;
+  }
   }
   toggleSidebar() {
     this.sidebarVisible = !this.sidebarVisible;
@@ -46,11 +64,6 @@ export class SearchPageComponent implements OnInit{
       minPrice: [''],
       maxPrice: ['']
     });
-
-    this.productService.getMockProducts().subscribe(products => {
-      this.allProducts = products;
-      this.filteredProducts = [...products];
-    });
   }
 
   // Apply the filter based on input
@@ -66,6 +79,7 @@ export class SearchPageComponent implements OnInit{
       (!minPrice || p.price >= +minPrice) &&
       (!maxPrice || p.price <= +maxPrice)
     );
+    this.finalProducts=[...this.filteredProducts];
     this.closeSidebar();
   }
 
@@ -77,6 +91,14 @@ export class SearchPageComponent implements OnInit{
   sortData(){
     this.sortAsc ? this.filteredProducts.sort((a, b) => a.price - b.price) : this.filteredProducts.sort((a, b) => b.price - a.price);
     this.sortAsc = !this.sortAsc;
+  }
+  availableProduct() {
+    if (this.showAvailable) {
+      this.finalProducts = this.filteredProducts.filter(p => p.status.toLowerCase().includes('available'));
+    } else {
+      this.finalProducts = [...this.filteredProducts];
+    }
+    this.showAvailable = !this.showAvailable;
   }
  
 }

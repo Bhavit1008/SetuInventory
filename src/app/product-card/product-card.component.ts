@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from '../model/product';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-product-card',
@@ -11,4 +12,11 @@ import { Product } from '../model/product';
 })
 export class ProductCardComponent {
   @Input() product!: Product;
+  constructor(private router: Router) {}
+
+  editProduct(product: any) {
+  this.router.navigate(['/blocks'], {
+    state: { formData: product }
+  });
+  }
 }

@@ -40,11 +40,28 @@
       <h3 class="mb-0 me-3">Results</h3>
       <div class="d-flex align-items-center gap-2">
         <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
+        <button class="available-button" type="button" (click)="availableProduct()">{{ showAvailable ? 'Available
+          Products' : 'All Products' }}</button>
         <button class="sort-button" type="button" (click)="sortData()">Sort by price</button>
       </div>
     </div>
+    <div *ngIf="isLoading">
+      <div *ngFor="let _ of [1,2,3]" class="skeleton-wrapper">
+        <ngx-skeleton-loader count="3" [theme]="{
+            'border': '1px solid #dee2e6',
+            'border-radius': '10px',
+            'box-shadow': '0 4px 12px rgba(0, 0, 0, 0.05)',
+            'height':'206px',
+            'width':'290px',
+            'display':'flex'
+          }"></ngx-skeleton-loader>
+      </div>
+    </div>
     <div class="card-grid">
-      <app-product-card *ngFor="let product of filteredProducts" [product]="product" />
+      <app-product-card *ngFor="let product of finalProducts" [product]="product" />
+    </div>
+    <div *ngIf="!isLoading && finalProducts.length === 0" class="no-results">
+      <p>No products found. Please try adjusting your filters or check back later.</p>
     </div>
   </div>
 </div>
