@@ -1,0 +1,12 @@
+<div class="product-card">
+    <div class="card-header">
+        <h4>{{ product.productCode }}</h4>
+        <button class="edit-button" (click)="editProduct(product)">Edit</button>
+    </div>
+    <p><strong>Category:</strong> {{ product.category }}</p>
+    <p><strong>Location:</strong> {{ product.godonLocations }}</p>
+    <p><strong>Quality:</strong> {{ product.productQuality }}</p>
+    <p><strong>Description:</strong> {{ product.description }}</p>
+    <p><strong>Status:</strong> {{ product.status }}</p>
+    <p><strong>Price:</strong> ₹{{ product.price }}</p>
+</div>

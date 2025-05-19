@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Block } from '../model/block';
 
 @Component({
   selector: 'app-blocks-management',
@@ -15,7 +16,18 @@ export class BlocksManagementComponent {
     blockObject: any;
 
     ngOnInit(){
+      const state = history.state as { formData?: Block };
       this.buildForm();
+      if (state?.formData) {
+        this.blockFormGroup = new FormGroup({
+          productCode : new FormControl(state.formData.productCode),
+          productLength : new FormControl(state.formData.productLength),
+          productWidth : new FormControl(state.formData.productWeight),
+          productHeight : new FormControl(state.formData.productHeight),
+          productWeight : new FormControl(state.formData.productWeight),
+          remarks :new FormControl(state.formData.remarks),
+        })
+      }
     }
 
     buildForm(){
