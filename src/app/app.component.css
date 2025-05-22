@@ -1,0 +1,7 @@
+  .center-me {
+    padding-top: 61px;
+  }
+  .navbar-nav .nav-link.text-danger {
+    cursor: pointer;
+    font-weight: 600;
+  }

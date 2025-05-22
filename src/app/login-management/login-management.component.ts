@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-
+import {SecurityService} from '../services/security.service';
 @Component({
   selector: 'app-login-management',
   standalone: true,
@@ -34,46 +34,41 @@ export class LoginManagementComponent {
     }
   ]
 
-      constructor(private router: Router) { }
+  constructor(private router: Router, private sessionService: SecurityService) { }
 
 
-ngOnInit(){
-      this.buildForm();
-    }
+  ngOnInit(){
+    this.buildForm();
+  }
   
 
   buildForm(){
-        this.loginFormGroup = new FormGroup({
-          loginId : new FormControl(''),
-          password : new FormControl('')
-        })
-      }
-
-
-
-
-  saveLoginDetails(user: any){
-      if(user!=null && user!=undefined){
-        console.log('block details :: ', this.prepareResponseObject(user).loginId);
-        for (let i = 0; i < this.users.length; i++) {
-          console.log('user :: ',this.users[i].loginId)
-          if (this.users[i].loginId.toLowerCase() === this.loginUser.loginId.toLowerCase() && this.users[i].password.toLowerCase() === this.loginUser.password.toLowerCase()) {
-            this.matchedUser = this.users[i];
-            console.log('login successful')
-           localStorage.setItem('loggedIn', 'true');
-        this.router.navigate(['/search']);
-        return;            
-          }
+    this.loginFormGroup = new FormGroup({
+      loginId : new FormControl(''),
+      password : new FormControl('')
+    })
+  }
+  async saveLoginDetails(user: any){
+    if(user!=null && user!=undefined){
+      console.log('block details :: ', this.prepareResponseObject(user).loginId);
+      for (let i = 0; i < this.users.length; i++) {
+        if (this.users[i].loginId.toLowerCase() === this.loginUser.loginId.toLowerCase() && this.users[i].password.toLowerCase() === this.loginUser.password.toLowerCase()) {
+          this.matchedUser = this.users[i];
+          const token = await this.sessionService.createEncPayload();
+          localStorage.setItem('sessionId', token);
+          this.router.navigate(['/search']);
+          return;            
         }
       }
     }
+  }
 
-    prepareResponseObject(user: any){
-      this.loginUser = {
-        loginId : user.value.loginId,
-        password : user.value.password,
-      }
-      return this.loginUser;
+  prepareResponseObject(user: any){
+    this.loginUser = {
+      loginId : user.value.loginId,
+      password : user.value.password,
     }
+    return this.loginUser;
+  }
 
 }

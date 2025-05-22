@@ -1,15 +1,17 @@
-<div class="container" >
-  <form [formGroup]="loginFormGroup" #loginForm="ngForm">
-    <div class="form-group" style="margin: 10px">
-      <label>Login id: </label>
-      <input type="text" class="form-control" name="loginId" formControlName="loginId" required>
-    </div>
-    <div class="form-group" style="margin: 10px">
-      <label>Password: </label>
-      <input type="text" class="form-control" name="password" formControlName="password" required>
-    </div>
-    <div class="form-group" style="margin: 10px">
-      <button class="btn btn-primary btn-block" (click)="saveLoginDetails(loginForm)">Login</button>
-    </div>
-  </form>
+<div class="login-wrapper">
+  <div class="container login-box">
+    <form [formGroup]="loginFormGroup" #loginForm="ngForm">
+      <div class="form-group" style="margin: 10px">
+        <label>Login id: </label>
+        <input type="text" class="form-control" name="loginId" formControlName="loginId" required>
+      </div>
+      <div class="form-group" style="margin: 10px">
+        <label>Password: </label>
+        <input type="password" class="form-control" name="password" formControlName="password" required>
+      </div>
+      <div class="form-group" style="margin: 10px">
+        <button class="btn btn-primary btn-block" (click)="saveLoginDetails(loginForm)">Login</button>
+      </div>
+    </form>
+  </div>
 </div>
