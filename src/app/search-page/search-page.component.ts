@@ -25,6 +25,24 @@ export class SearchPageComponent implements OnInit{
   filteredProducts: Product[] = [];
   finalProducts: Product[] = [];  
   categories: string[] = ['Slab', 'Block']; 
+
+  goDownLocations = [
+    { id: 1, label: "Kishangarh" },
+    { id: 2, label: "Moradabad" },
+    { id: 3, label: "Banswara"}
+  ]
+
+  productQuality = [
+    { id: 1, label: "Banswara White"},
+    { id: 2, label: "Banswara Purple"},
+    { id: 3, label: "Torronto"},
+    { id: 4, label: "Traventine B."},
+    { id: 5, label: "Kayampura"},
+    { id: 6, label: "Morchana Brown"},
+    { id: 7, label: "Marine Black"},
+    { id: 8, label: "Kesariya Green"},
+  ]
+
   ngOnInit() {
     this.productService.getBlockProducts().then(products => {
       this.allProducts = products;

@@ -15,6 +15,37 @@ export class BlocksManagementComponent {
     public blockFormGroup!: FormGroup;
     blockObject: any;
 
+    goDownLocations = [
+    { id: 1, label: "Kishangarh" },
+    { id: 2, label: "Moradabad" },
+    { id: 3, label: "Banswara"}
+  ]
+
+  productQuality = [
+    { id: 1, label: "Banswara White"},
+    { id: 2, label: "Banswara Purple"},
+    { id: 3, label: "Torronto"},
+    { id: 4, label: "Traventine B."},
+    { id: 5, label: "Kayampura"},
+    { id: 6, label: "Morchana Brown"},
+    { id: 7, label: "Marine Black"},
+    { id: 8, label: "Kesariya Green"},
+  ]
+
+
+  finishesRange = [
+    { id: 1, label: "Raw" },
+    { id: 2, label: "Mirror Finish" },
+    { id: 3, label: "Honed Finish"},
+    { id: 4, label: "Hydro Finish"},
+    { id: 5, label: "Epoxy Process"},
+    { id: 6, label: "Filling Process"},
+    { id: 7, label: "Mirror Epoxy Finish"},
+    { id: 8, label: "Sand Blast"},
+    { id: 9, label: "Fire Flame"},
+    { id: 10, label: "Leather Finish"},
+]
+
     ngOnInit(){
       const state = history.state as { formData?: Block };
       this.buildForm();

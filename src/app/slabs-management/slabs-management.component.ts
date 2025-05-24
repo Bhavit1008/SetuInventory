@@ -25,17 +25,41 @@ export class SlabsManagementComponent {
   public stockFormGroup!: FormGroup;
 
   goDownLocations = [
-    { id: 1, label: "KishanGarh" },
-    { id: 2, label: "Muradabad" },
-    { id: 3, label: "Bangluru"},
-    { id: 4, label: "Other"},
+    { id: 1, label: "Kishangarh" },
+    { id: 2, label: "Moradabad" },
+    { id: 3, label: "Banswara"}
+]
+
+  thicknessRange = [
+    { id: 1, label: "10 mm" },
+    { id: 2, label: "15 mm" },
+    { id: 3, label: "20 mm"},
+    { id: 4, label: "25 mm"},
+    { id: 5, label: "30 mm"}
+]
+
+finishesRange = [
+    { id: 1, label: "Raw" },
+    { id: 2, label: "Mirror Finish" },
+    { id: 3, label: "Honed Finish"},
+    { id: 4, label: "Hydro Finish"},
+    { id: 5, label: "Epoxy Process"},
+    { id: 6, label: "Filling Process"},
+    { id: 7, label: "Mirror Epoxy Finish"},
+    { id: 8, label: "Sand Blast"},
+    { id: 9, label: "Fire Flame"},
+    { id: 10, label: "Leather Finish"},
 ]
 
   productQuality = [
     { id: 1, label: "Banswara White"},
-    { id: 2, label: "Banswara Purble"},
+    { id: 2, label: "Banswara Purple"},
     { id: 3, label: "Torronto"},
-    { id: 4, label: "Traventine B."}
+    { id: 4, label: "Traventine B."},
+    { id: 5, label: "Kayampura"},
+    { id: 6, label: "Morchana Brown"},
+    { id: 7, label: "Marine Black"},
+    { id: 8, label: "Kesariya Green"},
   ]
 
 users = [
