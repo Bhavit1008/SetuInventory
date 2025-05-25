@@ -14,9 +14,16 @@ export class ProductCardComponent {
   @Input() product!: Product;
   constructor(private router: Router) {}
 
-  editProduct(product: any) {
-  this.router.navigate(['/blocks'], {
-    state: { formData: product }
-  });
+  editProduct(product: Product) {
+    if(product.category.toLowerCase()==='slab'){
+      this.router.navigate(['/slab'], {
+        state: { formData: product }
+      });
+    }
+    else{
+      this.router.navigate(['/blocks'], {
+        state: { formData: product }
+      });
+    }
   }
 }

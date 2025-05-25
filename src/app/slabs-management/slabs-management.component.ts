@@ -2,17 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProductService } from '../services/product.service';
+import { Product } from '../model/product';
+import { SlabPieces } from '../model/slab-pieces';
 
-interface Slab {
-  id: number;
-  length: string;
-  width: string;
-  lessLength: string;
-  lessWidth: string;
-  totalArea: string;
-  editable: boolean;
-  remark:string
-}
 
 @Component({
   selector: 'app-slabs-management',
@@ -25,6 +17,7 @@ interface Slab {
 
 export class SlabsManagementComponent {
   public stockFormGroup!: FormGroup;
+  isResultDialog = false;
 
   goDownLocations = [
     { id: 1, label: "Kishangarh" },
@@ -33,11 +26,11 @@ export class SlabsManagementComponent {
 ]
 
   thicknessRange = [
-    { id: 1, label: "10 mm" },
-    { id: 2, label: "15 mm" },
-    { id: 3, label: "20 mm"},
-    { id: 4, label: "25 mm"},
-    { id: 5, label: "30 mm"}
+    { id: 1, label: "10" },
+    { id: 2, label: "15" },
+    { id: 3, label: "20"},
+    { id: 4, label: "25"},
+    { id: 5, label: "30"}
 ]
 
 finishesRange = [
@@ -64,10 +57,44 @@ productQuality = [
   { id: 8, label: "Kesariya Green"},
 ]
 
-slabPieces :Slab[] = [];
+slabPieces :SlabPieces[] = [];
 
 ngOnInit(){
   this.buildForm();
+  const state = history.state as { formData?: Product };
+  if (state?.formData) {
+    this.stockFormGroup = new FormGroup({
+      productCode : new FormControl(state.formData.productCode),
+      godownLocation : new FormControl(state.formData.godownLocation),
+      productQuality:new FormControl(state.formData.productQuality),
+      productFinished : new FormControl(state.formData.productFinished),
+      productLength : new FormControl(state.formData.productLength),
+      productWidth : new FormControl(state.formData.productWidth),
+      productPieces: new FormControl(state.formData.quantity),
+      productThickness:new FormControl(state.formData.productThickness),
+      quantity:new FormControl(state.formData.quantity),
+      exFactoryCost : new FormControl(state.formData.exFactoryCost),
+      miscellaneousCost : new FormControl(state.formData.miscellaneousCost),
+      freightCost : new FormControl(state.formData.freightCost),
+      inHouseCost : new FormControl(state.formData.inHouseCost),
+      sellingCost : new FormControl(state.formData.sellingCost),
+      status: new FormControl(state.formData.status),
+      remark :new FormControl(state.formData.description),
+    })
+    this.slabPieces = state.formData.pieces;
+    for (const item of this.slabPieces) {
+      this.slabPieceForm.push(this.fb.group({
+        id: new FormControl(item.id),
+        length: new FormControl(item.length),
+        width: new FormControl(item.width),
+        lessLength: new FormControl(item.lessLength),
+        lessWidth: new FormControl(item.lessWidth),
+        totalArea: new FormControl(item.totalArea),
+        editable: new FormControl(item.editable),
+        remark:new FormControl(item.remark)
+      }));
+    }
+  }
 }
 
 constructor(private fb: FormBuilder ,  private productService: ProductService){
@@ -122,7 +149,8 @@ addNewRow() {
     const lastAddedSlabPieces = this.slabPieces[this.slabPieceForm.length - 1];
     id=lastAddedSlabPieces.id+1;
   }
-  const newUser: Slab = { id: id, length: '', width: '', lessLength: '', lessWidth: '', totalArea: 'To be calculated', editable: true , remark:''};
+  const newUser: SlabPieces = new SlabPieces();
+  newUser.id = id;
   this.slabPieces.push(newUser);
   this.slabPieceForm.push(this.fb.group({
     id: new FormControl(newUser.id),
@@ -162,7 +190,10 @@ addNewRow() {
         // this.isLoading = true;
         this.productService.postApiCall(this.prepareResponseObject(slab)).subscribe(() => {
           // this.isLoading = false;
-          // this.isResultDialog = true;
+          this.buildForm();
+          this.slabPieces = [];
+          this.slabPieceForm = [];
+          this.showSuccessMessage();
         })
     }
   }
@@ -188,5 +219,12 @@ addNewRow() {
         pieces : this.slabPieces
       }
       return slabObject;
+    }
+
+    showSuccessMessage() {
+      this.isResultDialog = true;
+      setTimeout(() => {
+        this.isResultDialog = false;
+      }, 10000); 
     }
 }

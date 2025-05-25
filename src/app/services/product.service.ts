@@ -20,27 +20,7 @@ export class ProductService {
     const data: any[] = await response.json();
     console.log('raw map :: ', data);
     const product: Product[] = data.map(raw => {
-      const product = new Product();
-      product.id = Number(raw.id);
-      product.category = raw.category;
-      product.productCode = raw.productCode;
-      product.godownLocation = raw.godownLocation;
-      product.productQuality = raw.productQuality;
-      product.productFinished = raw.productFinished;
-      product.productLength = raw.productLength;
-      product.productHeight = raw.productHeight;
-      product.productThickness = raw.productThickness;
-      product.productWidth = raw.productWidth;
-      product.productWeight = raw.productWeight;
-      product.quantity = raw.quantity;
-      product.exFactoryCost = raw.exFactoryCost;
-      product.freightCost = raw.freightCost;
-      product.miscellaneousCost = raw.miscellaneousCost;
-      product.inHouseCost = raw.inHouseCost;
-      product.sellingCost = raw.sellingCost;
-      product.royaltyCost = raw.royaltyCost;
-      product.status = raw.status;
-      product.description = raw.description;
+      const product = raw;
       return product;
     });
     return product;
