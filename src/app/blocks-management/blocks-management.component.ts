@@ -1,22 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Block } from '../model/block';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Product } from '../model/product';
+import { ProductService } from '../services/product.service';
 
 @Component({
   selector: 'app-blocks-management',
   standalone: true,
-  imports: [CommonModule, FormsModule ,ReactiveFormsModule , HttpClientModule],
+  imports: [CommonModule, FormsModule ,ReactiveFormsModule ],
   templateUrl: './blocks-management.component.html',
   styleUrl: './blocks-management.component.css'
 })
 export class BlocksManagementComponent {
 
-    constructor(private httpClient: HttpClient){}
+    constructor(private productService: ProductService){}
 
     public blockFormGroup!: FormGroup;
-    blockObject: any;
     isLoading = false;
     isResultDialog = false;
 
@@ -52,7 +51,7 @@ export class BlocksManagementComponent {
 ]
 
     ngOnInit(){
-      const state = history.state as { formData?: Block };
+      const state = history.state as { formData?: Product };
       this.buildForm();
       if (state?.formData) {
         this.blockFormGroup = new FormGroup({
@@ -68,7 +67,7 @@ export class BlocksManagementComponent {
           freightCost : new FormControl(state.formData.freightCost),
           inHouseCost : new FormControl(state.formData.inHouseCost),
           sellingCost : new FormControl(state.formData.sellingCost),
-          remarks :new FormControl(state.formData.remarks),
+          remarks :new FormControl(state.formData.description),
         })
       }
     }
@@ -94,17 +93,16 @@ export class BlocksManagementComponent {
     saveBlockDetails(block: any){
       if(block!=null && block!=undefined){
         console.log('block details :: ', this.prepareResponseObject(block));
-        this.postApiCall(this.prepareResponseObject(block)).subscribe(data => {
-    let res = JSON.parse(JSON.stringify(data))
-    console.log('data',res)
-    this.isLoading = false;
-    this.isResultDialog = true;
-  })
+        this.isLoading = true;
+        this.productService.postApiCall(this.prepareResponseObject(block)).subscribe(() => {
+          this.isLoading = false;
+          this.isResultDialog = true;
+        })
       }
     }
 
     prepareResponseObject(block: any){
-      this.blockObject = {
+     const blockObject = {
         productCode : block.value.productCode,
         godownLocation : block.value.godownLocation,
         productFinished : block.value.productFinished,
@@ -119,16 +117,7 @@ export class BlocksManagementComponent {
         sellingCost : block.value.sellingCost,
         remarks : block.value.remarks
       }
-      return this.blockObject;
-    }
-
-    postApiCall(data: any){
-      const headers = { 'content-type': 'application/json'}  
-      const body=JSON.stringify(data);
-      console.log(body)
-      this.isLoading = true;
-     var url = 'https://setu-crm.onrender.com/addProduct'
-     return this.httpClient.post(url, body,{'headers':headers})
+      return blockObject;
     }
   
 }

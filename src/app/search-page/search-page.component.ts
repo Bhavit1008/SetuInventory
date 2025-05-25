@@ -9,7 +9,7 @@ import { ProductCardComponent } from '../product-card/product-card.component';
 @Component({
   selector: 'app-search-page',
   standalone: true,
-  imports: [CommonModule, FormsModule ,ReactiveFormsModule , ProductCardComponent ,NgxSkeletonLoaderModule ],
+  imports: [CommonModule, FormsModule ,ReactiveFormsModule , ProductCardComponent ,NgxSkeletonLoaderModule  ],
   templateUrl: './search-page.component.html',
   styleUrl: './search-page.component.css'
 })
@@ -44,16 +44,11 @@ export class SearchPageComponent implements OnInit{
   ]
 
   ngOnInit() {
-    this.productService.getBlockProducts().then(products => {
+    this.productService.fetchAllsProducts().then(products => {
       this.allProducts = products;
       this.filteredProducts = [...products]
       this.finalProducts = [...products];
       this.isLoading = false;
-    });
-    this.productService.getBlockProducts().then(products => {
-      this.allProducts.push(...products);
-      this.filteredProducts.push(...products);
-      this.finalProducts.push(...products);
     });
     if (typeof window !== 'undefined') {
       this.checkMobile();
@@ -94,8 +89,8 @@ export class SearchPageComponent implements OnInit{
       (!productQuality || p.productQuality.toLowerCase().includes(productQuality.toLowerCase())) &&
       (!productCode || p.productCode.toLowerCase().includes(productCode.toLowerCase())) &&
       (!category || p.category.toLowerCase().includes(category.toLowerCase())) &&
-      (!minPrice || p.price >= +minPrice) &&
-      (!maxPrice || p.price <= +maxPrice)
+      (!minPrice || p.sellingCost >= +minPrice) &&
+      (!maxPrice || p.sellingCost <= +maxPrice)
     );
     this.finalProducts=[...this.filteredProducts];
     this.closeSidebar();
@@ -107,7 +102,7 @@ export class SearchPageComponent implements OnInit{
     this.closeSidebar(); 
   }
   sortData(){
-    this.sortAsc ? this.filteredProducts.sort((a, b) => a.price - b.price) : this.filteredProducts.sort((a, b) => b.price - a.price);
+    this.sortAsc ? this.filteredProducts.sort((a, b) => a.sellingCost - b.sellingCost) : this.filteredProducts.sort((a, b) => b.sellingCost - a.sellingCost);
     this.sortAsc = !this.sortAsc;
   }
   availableProduct() {
