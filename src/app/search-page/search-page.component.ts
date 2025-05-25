@@ -74,6 +74,9 @@ export class SearchPageComponent implements OnInit{
 
   closeSidebar() {
     this.sidebarVisible = false;
+    if (this.isMobile) {
+      document.body.style.overflow = '';
+    }
   }
 
   constructor(private fb: FormBuilder, private productService: ProductService) {
