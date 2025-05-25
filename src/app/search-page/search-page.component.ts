@@ -24,7 +24,10 @@ export class SearchPageComponent implements OnInit{
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   finalProducts: Product[] = [];  
-  categories: string[] = ['Slab', 'Block']; 
+  categories= [
+    { id: 1, label: "Slab" },
+    { id: 2, label: "Block" },
+  ]; 
 
   goDownLocations = [
     { id: 1, label: "Kishangarh" },
@@ -62,6 +65,11 @@ export class SearchPageComponent implements OnInit{
   }
   toggleSidebar() {
     this.sidebarVisible = !this.sidebarVisible;
+    if (this.sidebarVisible && this.isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   }
 
   closeSidebar() {

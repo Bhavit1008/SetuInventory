@@ -15,6 +15,10 @@ export class LoginManagementComponent {
   public loginFormGroup!: FormGroup;
   loginUser : any;
   matchedUser : any;
+  showAlert = false;
+  closing = false;
+  loginError: string | null = null;
+  isMobile:any;
 
   users:any = [
     {
@@ -34,7 +38,9 @@ export class LoginManagementComponent {
     }
   ]
 
-  constructor(private router: Router, private sessionService: SecurityService) { }
+  constructor(private router: Router, private sessionService: SecurityService) { 
+     this.isMobile = window.innerWidth <= 768;
+  }
 
 
   ngOnInit(){
@@ -49,18 +55,27 @@ export class LoginManagementComponent {
     })
   }
   async saveLoginDetails(user: any){
+    this.prepareResponseObject(user);
     if(user!=null && user!=undefined){
-      console.log('block details :: ', this.prepareResponseObject(user).loginId);
-      for (let i = 0; i < this.users.length; i++) {
-        if (this.users[i].loginId.toLowerCase() === this.loginUser.loginId.toLowerCase() && this.users[i].password.toLowerCase() === this.loginUser.password.toLowerCase()) {
-          this.matchedUser = this.users[i];
-          const token = await this.sessionService.createEncPayload();
-          localStorage.setItem('sessionId', token);
-          this.router.navigate(['/search']);
-          return;            
+      if(this.loginUser.loginId==="" || this.loginUser.password === ""){
+        this.triggerToast('Please fill in both fields.');
+      }
+      else{
+        for (let i = 0; i < this.users.length; i++) {
+          if (this.users[i].loginId.toLowerCase() === this.loginUser.loginId.toLowerCase() && this.users[i].password.toLowerCase() === this.loginUser.password.toLowerCase()) {
+            this.matchedUser = this.users[i];
+            const token = await this.sessionService.createEncPayload();
+            localStorage.setItem('sessionId', token);
+            this.router.navigate(['/search']);
+            return;            
+          }
+        }
+        if (this.matchedUser === undefined) {
+          this.triggerToast('Invalid login ID or password.');
         }
       }
     }
+     
   }
 
   prepareResponseObject(user: any){
@@ -69,6 +84,21 @@ export class LoginManagementComponent {
       password : user.value.password,
     }
     return this.loginUser;
+  }
+  triggerToast(message: string): void {
+  this.loginError = message;
+  this.closing = false;
+  this.showAlert = true;
+
+
+  setTimeout(() => {
+      this.closing = true;
+      setTimeout(() => {
+        this.showAlert = false;
+        this.loginError = null;
+        this.closing = false;
+      }, 750);
+    }, 5000);
   }
 
 }

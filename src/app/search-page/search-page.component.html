@@ -9,36 +9,22 @@
     </div>
     <form [formGroup]="searchForm" (ngSubmit)="applyFilter()">
       <label>Category</label>
-      <select formControlName="category">
+      <select name="category" id="category" class="form-control" formControlName="category">
         <option value="">-- Select Category --</option>
-        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+        <option *ngFor="let c of categories" [value]="c.label">{{ c.label }}</option>
       </select>
 
-      
+      <label for="productCategory">Locations: </label>
+      <select name="godonLocations" id="godonLocations" class="form-control" formControlName="godonLocations" required>
+        <option value="">-- Select Category --</option>
+        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+      </select>
 
-      <div class="form-group" style="margin: 10px;">
-            <label for="productCategory">Locations: </label>
-            <select 
-                name="godonLocations" 
-                id="godonLocations" 
-                class="form-control"
-                formControlName="godonLocations"
-                required>
-                <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
-            </select>
-        </div>
-
-      <div class="form-group" style="margin: 10px;">
-          <label for="productQuality">Product Quality: </label>
-          <select 
-              name="productQuality" 
-              id="productQuality" 
-              class="form-control"
-              formControlName="productQuality"
-              required>
-              <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
-          </select>
-      </div>
+      <label for="productQuality">Product Quality: </label>
+      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality" required>
+        <option value="">-- Select Category --</option>
+        <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
+      </select>
 
       <label>Product Code</label>
       <input type="text" formControlName="productCode" />
@@ -61,16 +47,16 @@
   </div>
 
   <!-- Main content: Results -->
-  <div class="content">
-    <!-- <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+  <div class="content" [class.blur]="sidebarVisible && isMobile">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
       <h3 class="mb-0 me-3">Results</h3>
       <div class="d-flex align-items-center gap-2">
         <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
-        <button class="available-button" type="button" (click)="availableProduct()">{{ showAvailable ? 'Available
+        <!-- <button class="available-button" type="button" (click)="availableProduct()">{{ showAvailable ? 'Available
           Products' : 'All Products' }}</button>
-        <button class="sort-button" type="button" (click)="sortData()">Sort by price</button>
+        <button class="sort-button" type="button" (click)="sortData()">Sort by price</button> -->
       </div>
-    </div> -->
+    </div>
     <div *ngIf="isLoading">
       <div *ngFor="let _ of [1,2,3]" class="skeleton-wrapper">
         <ngx-skeleton-loader count="3" [theme]="{
