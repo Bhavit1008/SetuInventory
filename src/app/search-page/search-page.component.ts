@@ -90,7 +90,7 @@ export class SearchPageComponent implements OnInit{
 
     this.filteredProducts = this.allProducts.filter(p =>
       (!category || p.category.toLowerCase().includes(category.toLowerCase())) &&
-      (!godonLocations || p.godonLocations.toLowerCase().includes(godonLocations.toLowerCase())) &&
+      (!godonLocations || p.godownLocation.toLowerCase().includes(godonLocations.toLowerCase())) &&
       (!productQuality || p.productQuality.toLowerCase().includes(productQuality.toLowerCase())) &&
       (!productCode || p.productCode.toLowerCase().includes(productCode.toLowerCase())) &&
       (!category || p.category.toLowerCase().includes(category.toLowerCase())) &&

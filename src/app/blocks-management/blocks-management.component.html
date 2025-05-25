@@ -1,6 +1,8 @@
 <div class="container">
     <form [formGroup]="blockFormGroup" #blockForm="ngForm">
-
+      <div class="alert alert-success" role="alert" *ngIf="isResultDialog">
+        Data submitted successfully 🎉
+      </div>
       <div class="form-group" style="margin: 10px;">
             <label>Product code: </label>
             <input type="text" class="form-control" name="productCode" formControlName="productCode">
@@ -8,7 +10,7 @@
 
 
       <div class="form-group" style="margin: 10px;">
-            <label for="productCategory">Locations: </label>
+            <label for="godownLocation">Locations: </label>
             <select 
                 name="productCategory" 
                 id="productCategory" 
@@ -20,12 +22,12 @@
         </div>
 
         <div class="form-group" style="margin: 10px;">
-          <label for="productQuality">Product Finishes: </label>
+          <label for="productFinished">Product Finishes: </label>
           <select 
-              name="productQuality" 
-              id="productQuality" 
+              name="productFinished" 
+              id="productFinished" 
               class="form-control"
-              formControlName="productQuality"
+              formControlName="productFinished"
               required>
               <option *ngFor="let quality of finishesRange" [value]="quality.label">{{ quality.label }}</option>
           </select>
@@ -55,27 +57,27 @@
 
         <div class="form-group" style="margin: 10px;">
             <label>Ex-factory cost/per ton: </label>
-            <input type="text" class="form-control" name="inHouseCost" formControlName="inHouseCost">
+            <input type="text" class="form-control" name="exFactoryCost" formControlName="exFactoryCost">
         </div>
 
         <div class="form-group" style="margin: 10px;">
             <label>Royalty per ton: </label>
-            <input type="text" class="form-control" name="inHouseCost" formControlName="inHouseCost">
+            <input type="text" class="form-control" name="royaltyCost" formControlName="royaltyCost">
         </div>
 
         <div class="form-group" style="margin: 10px;">
             <label>Freight/per ton: </label>
-            <input type="text" class="form-control" name="freight" formControlName="freight">
+            <input type="text" class="form-control" name="freightCost" formControlName="freightCost">
         </div>
 
         <div class="form-group" style="margin: 10px;">
             <label>In-House Cost/per ton: </label>
-            <input type="text" class="form-control" name="misCost" formControlName="misCost">
+            <input type="text" class="form-control" name="inHouseCost" formControlName="inHouseCost">
         </div>
         
         <div class="form-group" style="margin: 10px;">
             <label>Selling Cost/per ton:</label>
-            <input type="text" class="form-control" name="sellingCost" formControlName="misCost">
+            <input type="text" class="form-control" name="sellingCost" formControlName="sellingCost">
         </div>
 
         <div class="form-group" style="margin: 5px;">
@@ -83,6 +85,9 @@
             <input type="text" class="form-control" name="remarks" formControlName="remarks">
         </div>
 
-        <button type="submit" (click)="saveBlockDetails(blockForm)" class="btn btn-primary" style="margin: 5px;">Submit</button>
+        <button type="submit" (click)="saveBlockDetails(blockForm)" class="btn btn-primary" style="margin: 5px;">
+          Submit
+          <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true" *ngIf="isLoading"></span>
+        </button>
       </form>
 </div>
