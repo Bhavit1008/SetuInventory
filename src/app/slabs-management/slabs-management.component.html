@@ -88,6 +88,36 @@
       <label>Remarks</label>
       <input type="text" class="form-control" name="remark" formControlName="remark">
     </div>
+    <div class="form-group" style="margin: 10px">
+      <label>Upload or Take a Photo</label>
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
+        <button class="btn btn-primary" (click)="fileInput.click()">
+          Add Image
+        </button>
+
+        <button *ngIf="!isMobile" class="btn btn-primary" (click)="openCamera()">
+          Take a Photo
+        </button>
+      </div>
+
+      <div *ngIf="!isMobile && showCamera" class="camera-modal p-3 rounded shadow-lg">
+        <div class="video-wrapper mb-3">
+          <video #video autoplay class="video-frame rounded border w-100"></video>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-success me-2" (click)="capturePhoto()">Capture</button>
+          <button class="btn btn-danger" (click)="closeCamera()">Cancel</button>
+        </div>
+
+        <canvas #canvas style="display:none;"></canvas>
+      </div>
+
+      <div *ngIf="previewImg">
+        <img [src]="previewImg" alt="Captured Image" style="margin-top: 10px; max-width: 25vw;">
+      </div>
+    </div>
 
     <div class="container mt-4">
       <h2 class="text-center">Enter Slab Details</h2>

@@ -21,5 +21,6 @@ export class Product {
   royaltyCost: number=0;
   status:string ='';
   description: string = '';
-  pieces: SlabPieces[] = []; 
+  pieces: SlabPieces[] = [];
+  imageUrl: string=''; 
   }

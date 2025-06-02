@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Product } from '../model/product';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs/internal/Observable';
+import { switchMap } from 'rxjs/internal/operators/switchMap';
 
 
 @Injectable({
@@ -31,5 +33,42 @@ export class ProductService {
     const body=JSON.stringify(data);
     var url = 'https://setu-crm.onrender.com/addProduct'
     return this.httpClient.post(url, body,{'headers':headers})
+  }
+
+  uploadImage(data: any){
+    const blob = this.dataURLtoBlob(data);
+    const formData = new FormData();
+    formData.append('image', blob);
+
+    return this.httpClient.post(`https://setu-crm.onrender.com/upload-image`, formData, {
+      responseType: 'text'  
+    });
+  }
+
+  downloadImage(imageUrl: string): Observable<string> {
+    return this.httpClient.get(imageUrl, { responseType: 'blob' }).pipe(
+      switchMap(blob => {
+        return new Observable<string>((observer) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            observer.next(reader.result as string);
+            observer.complete();
+          };
+          reader.readAsDataURL(blob);
+        });
+      })
+    );
+  }
+
+  private dataURLtoBlob(dataurl: string): Blob {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || '';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
   }
 }
