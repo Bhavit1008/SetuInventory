@@ -26,4 +26,9 @@ export class ProductCardComponent {
       });
     }
   }
+  viewProduct(product: Product) {
+    this.router.navigate(['/view-product'], {
+      state: { product: product }
+    });
+  }
 }

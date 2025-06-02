@@ -1,7 +1,7 @@
-<div class="product-card">
+<div class="product-card" (click)="viewProduct(product)">
     <div class="card-header">
         <h4>{{ product.productCode }}</h4>
-        <button class="edit-button" (click)="editProduct(product)">Edit</button>
+        <button class="edit-button" (click)="editProduct(product); $event.stopPropagation()">Edit</button>
     </div>
     <p><strong>Category:</strong> {{ product.category }}</p>
     <p><strong>Location:</strong> {{ product.godownLocation }}</p>

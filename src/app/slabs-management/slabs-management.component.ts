@@ -6,6 +6,7 @@ import { Product } from '../model/product';
 import { SlabPieces } from '../model/slab-pieces';
 import {  ViewChild, ElementRef } from '@angular/core';
 import { Platform } from '@angular/cdk/platform';
+import { ToastService } from '../services/toast.service';
 
 
 @Component({
@@ -15,8 +16,6 @@ import { Platform } from '@angular/cdk/platform';
   templateUrl: './slabs-management.component.html',
   styleUrl: './slabs-management.component.css'
 })
-
-
 export class SlabsManagementComponent {
   public stockFormGroup!: FormGroup;
   isResultDialog = false;
@@ -113,7 +112,8 @@ export class SlabsManagementComponent {
     }
   }
 
-  constructor(private fb: FormBuilder ,  private productService: ProductService,private platform: Platform){
+  constructor(private fb: FormBuilder ,  private productService: ProductService,
+    private platform: Platform,private toastService: ToastService){
   }
 
   buildForm(){
@@ -209,8 +209,8 @@ export class SlabsManagementComponent {
             this.buildForm();
             this.slabPieces = [];
             this.slabPieceForm = [];
-            this.showSuccessMessage();
-            this.previewImg =null
+            this.previewImg =null;
+            this.toastService.showSuccess("Added new slab successfully.");
           })
         }
         else{
@@ -221,8 +221,8 @@ export class SlabsManagementComponent {
               this.buildForm();
               this.slabPieces = [];
               this.slabPieceForm = [];
-              this.showSuccessMessage();
-              this.previewImg =null
+              this.previewImg =null;
+              this.toastService.showSuccess("Slab details updated successfully.");
             })
           })
         }
@@ -254,13 +254,6 @@ export class SlabsManagementComponent {
       imageUrl : imgUrl
     }
     return slabObject;
-  }
-
-  showSuccessMessage() {
-    this.isResultDialog = true;
-    setTimeout(() => {
-      this.isResultDialog = false;
-    }, 10000); 
   }
 
   openCamera(): void {

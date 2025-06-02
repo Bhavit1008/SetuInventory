@@ -1,0 +1,53 @@
+<div class="view-container">
+    <div class="product-header">
+        <img [src]="product.imageUrl" alt="Product Image" class="product-image" />
+        <div class="basic-details">
+            <h2>{{ product.productCode }}</h2>
+            <p><strong>Category:</strong> {{ product.category }}</p>
+            <p><strong>Status:</strong> {{ product.status }}</p>
+            <p><strong>Description:</strong> {{ product.description }}</p>
+        </div>
+    </div>
+
+    <div class="card detail-section">
+        <h3>Product Specifications</h3>
+        <div class="detail-grid">
+            <div><strong>Quality:</strong> {{ product.productQuality }}</div>
+            <div><strong>Finish:</strong> {{ product.productFinished }}</div>
+            <div><strong>Length:</strong> {{ product.productLength }} ft</div>
+            <div><strong>Width:</strong> {{ product.productWidth }} ft</div>
+            <div><strong>Height:</strong> {{ product.productHeight }} ft</div>
+            <div><strong>Thickness:</strong> {{ product.productThickness }} mm</div>
+            <div><strong>Weight:</strong> {{ product.productWeight }} kg</div>
+            <div><strong>Location:</strong> {{ product.godownLocation }}</div>
+            <div><strong>Quantity:</strong> {{ product.quantity }}</div>
+        </div>
+    </div>
+
+    <div class="card detail-section">
+        <h3>Cost Breakdown</h3>
+        <div class="detail-grid">
+            <div><strong>Ex-Factory:</strong> ₹{{ product.exFactoryCost }}</div>
+            <div><strong>Freight:</strong> ₹{{ product.freightCost }}</div>
+            <div><strong>Miscellaneous:</strong> ₹{{ product.miscellaneousCost }}</div>
+            <div><strong>In-House:</strong> ₹{{ product.inHouseCost }}</div>
+            <div><strong>Selling:</strong> ₹{{ product.sellingCost }}</div>
+            <div><strong>Royalty:</strong> ₹{{ product.royaltyCost }}</div>
+        </div>
+    </div>
+
+    <div class="card detail-section" *ngIf="product.pieces?.length">
+        <h3>Piece Details</h3>
+        <div class="pieces-grid">
+            <div class="piece-card" *ngFor="let piece of product.pieces">
+                <p><strong>ID:</strong> {{ piece.id }}</p>
+                <p><strong>Length:</strong> {{ piece.length }} ft</p>
+                <p><strong>Width:</strong> {{ piece.width }} ft</p>
+                <p><strong>Less Length:</strong> {{ piece.lessLength }} ft</p>
+                <p><strong>Less Width:</strong> {{ piece.lessWidth }} ft</p>
+                <p><strong>Total Area:</strong> {{ piece.totalArea }} sq ft</p>
+                <p><strong>Remark:</strong> {{ piece.remark }}</p>
+            </div>
+        </div>
+    </div>
+</div>

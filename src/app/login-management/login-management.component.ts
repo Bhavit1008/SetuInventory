@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {SecurityService} from '../services/security.service';
+import { ToastService } from '../services/toast.service';
 @Component({
   selector: 'app-login-management',
   standalone: true,
@@ -38,7 +39,7 @@ export class LoginManagementComponent {
     }
   ]
 
-  constructor(private router: Router, private sessionService: SecurityService) { 
+  constructor(private router: Router, private sessionService: SecurityService,private toastService: ToastService) { 
      this.isMobile = window.innerWidth <= 768;
   }
 
@@ -58,7 +59,7 @@ export class LoginManagementComponent {
     this.prepareResponseObject(user);
     if(user!=null && user!=undefined){
       if(this.loginUser.loginId==="" || this.loginUser.password === ""){
-        this.triggerToast('Please fill in both fields.');
+        this.toastService.showError('Please fill in both fields.');
       }
       else{
         for (let i = 0; i < this.users.length; i++) {
@@ -71,7 +72,7 @@ export class LoginManagementComponent {
           }
         }
         if (this.matchedUser === undefined) {
-          this.triggerToast('Invalid login ID or password.');
+          this.toastService.showError('Invalid login ID or password.');
         }
       }
     }

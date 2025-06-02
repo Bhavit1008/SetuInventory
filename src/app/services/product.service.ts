@@ -9,12 +9,13 @@ import { switchMap } from 'rxjs/internal/operators/switchMap';
   providedIn: 'root'
 })
 export class ProductService {
+  static backendHost = 'https://setu-crm.onrender.com/';
 
   constructor(private httpClient: HttpClient) {}
 
   async fetchAllsProducts(): Promise<Product[]> {
 
-    const response = await fetch('https://setu-crm.onrender.com/getAllProducts');
+    const response = await fetch(ProductService.backendHost+'getAllProducts');
     if (!response.ok) {
       throw new Error('Failed to fetch data: ' + response.status);
     }
@@ -31,8 +32,7 @@ export class ProductService {
   postApiCall(data: any){
     const headers = { 'content-type': 'application/json'}  
     const body=JSON.stringify(data);
-    var url = 'https://setu-crm.onrender.com/addProduct'
-    return this.httpClient.post(url, body,{'headers':headers})
+    return this.httpClient.post(ProductService.backendHost+'addProduct', body,{'headers':headers})
   }
 
   uploadImage(data: any){
@@ -40,7 +40,7 @@ export class ProductService {
     const formData = new FormData();
     formData.append('image', blob);
 
-    return this.httpClient.post(`https://setu-crm.onrender.com/upload-image`, formData, {
+    return this.httpClient.post(ProductService.backendHost+'/upload-image', formData, {
       responseType: 'text'  
     });
   }

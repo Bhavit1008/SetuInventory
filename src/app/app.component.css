@@ -5,3 +5,95 @@
     cursor: pointer;
     font-weight: 600;
   }
+   .toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 15px;
+  font-weight: 600;
+  animation: slideFadeIn 0.75s ease forwards;
+  z-index: 9999;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast-message {
+  color: white;
+  padding: 14px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-size: 15px;
+  min-width: 250px;
+  max-width: 300px;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeIn 0.75s ease forwards;
+}
+
+.toast-container.closing-desktop {
+  animation: slideFadeOut 0.75s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes slideFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+}
+
+@keyframes mobileSlideFadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 50px) scale(0.95);
+  }
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: auto;
+    max-width: 90vw;
+  }
+  .toast-message {
+    color: white;
+    padding: 12px 22px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    min-width: 230px;
+    max-width: 250px;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeIn 0.75s ease forwards;
+  }
+  .toast-container.closing-mobile {
+    animation: mobileSlideFadeOut 0.75s ease forwards;
+  }
+}
+  
