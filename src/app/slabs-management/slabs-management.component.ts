@@ -23,6 +23,7 @@ export class SlabsManagementComponent {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   isMobile = false;
   updatedImage =false;
+  isUpdate = false;
 
   showCamera = false;
   previewImg: string | null = null;
@@ -109,6 +110,7 @@ export class SlabsManagementComponent {
           remark:new FormControl(item.remark)
         }));
       }
+      this.isUpdate = true;
     }
   }
 
@@ -210,7 +212,12 @@ export class SlabsManagementComponent {
             this.slabPieces = [];
             this.slabPieceForm = [];
             this.previewImg =null;
-            this.toastService.showSuccess("Added new slab successfully.");
+            if(this.isUpdate){
+              this.toastService.showSuccess("Slab details updated successfully.");
+            }else{
+              this.toastService.showSuccess("Added new slab successfully.");
+            }
+            this.isUpdate = false;
           })
         }
         else{
@@ -222,9 +229,14 @@ export class SlabsManagementComponent {
               this.slabPieces = [];
               this.slabPieceForm = [];
               this.previewImg =null;
-              this.toastService.showSuccess("Slab details updated successfully.");
+              if(this.isUpdate){
+                this.toastService.showSuccess("Slab details updated successfully.");
+              }else{
+                this.toastService.showSuccess("Added new slab successfully.");
+              }
+              this.isUpdate = false; 
             })
-          })
+          });
         }
         
     }

@@ -40,7 +40,7 @@ export class ProductService {
     const formData = new FormData();
     formData.append('image', blob);
 
-    return this.httpClient.post(ProductService.backendHost+'/upload-image', formData, {
+    return this.httpClient.post(ProductService.backendHost+'upload-image', formData, {
       responseType: 'text'  
     });
   }
