@@ -4,7 +4,11 @@
         <div class="basic-details">
             <h2>{{ product.productCode }}</h2>
             <p><strong>Category:</strong> {{ product.category }}</p>
-            <p><strong>Status:</strong> {{ product.status }}</p>
+            <p><strong>Status:</strong>
+                <span [ngClass]="getStatusClass(product.status)" class="status-badge">
+                    {{ product.status }}
+                </span>
+            </p>
             <p><strong>Description:</strong> {{ product.description }}</p>
         </div>
     </div>

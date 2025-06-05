@@ -17,4 +17,17 @@ export class ViewProductComponent {
     const nav = this.router.getCurrentNavigation();
     this.product = nav?.extras?.state?.['product'];
   }
+
+  getStatusClass(status: string): string {
+  switch (status?.toLowerCase()) {
+    case 'available':
+      return 'status-available';
+    case 'sold':
+      return 'status-sold';
+    case 'hold':
+      return 'status-hold';
+    default:
+      return 'status-default';
+  }
+}
 }
