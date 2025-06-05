@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
+import { Platform } from '@angular/cdk/platform';
 
 @Component({
   selector: 'app-blocks-management',
@@ -13,8 +14,14 @@ import { ProductService } from '../services/product.service';
 })
 export class BlocksManagementComponent {
 
-    constructor(private productService: ProductService){}
-
+    constructor(private productService: ProductService, private platform: Platform){}
+    @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
+    @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+    isMobile = false;
+    showCamera = false;
+    previewImg: string | null = null;
+    stream: MediaStream | null = null;
+    updatedImage =false;
     public blockFormGroup!: FormGroup;
     isLoading = false;
     isResultDialog = false;
@@ -50,14 +57,16 @@ export class BlocksManagementComponent {
     { id: 10, label: "Leather Finish"},
 ]
 
+
     ngOnInit(){
+      this.isMobile = this.platform.ANDROID || this.platform.IOS;
       const state = history.state as { formData?: Product };
       this.buildForm();
       if (state?.formData) {
         this.blockFormGroup = new FormGroup({
           productCode : new FormControl(state.formData.productCode),
           godownLocation : new FormControl(state.formData.godownLocation),
-          productFinished : new FormControl(state.formData.productFinished),
+          productQuality : new FormControl(state.formData.productQuality),
           productLength : new FormControl(state.formData.productLength),
           productWidth : new FormControl(state.formData.productWeight),
           productHeight : new FormControl(state.formData.productHeight),
@@ -76,7 +85,7 @@ export class BlocksManagementComponent {
       this.blockFormGroup = new FormGroup({
         productCode : new FormControl(''),
         godownLocation : new FormControl(''),
-        productFinished : new FormControl(''),
+        productQuality : new FormControl(''),
         productLength : new FormControl(''),
         productWidth : new FormControl(''),
         productHeight : new FormControl(''),
@@ -103,9 +112,10 @@ export class BlocksManagementComponent {
 
     prepareResponseObject(block: any){
      const blockObject = {
+        category : 'Block',
         productCode : block.value.productCode,
         godownLocation : block.value.godownLocation,
-        productFinished : block.value.productFinished,
+        productQuality : block.value.productQuality,
         productLength : block.value.productLength,
         productWidth : block.value.productWidth,
         productHeight : block.value.productHeight,
@@ -115,9 +125,54 @@ export class BlocksManagementComponent {
         freightCost : block.value.freightCost,
         inHouseCost : block.value.inHouseCost,
         sellingCost : block.value.sellingCost,
-        remarks : block.value.remarks
+        description : block.value.remarks
       }
       return blockObject;
     }
+
+    onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => this.previewImg = reader.result as string;
+      this.updatedImage = true;
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  openCamera(): void {
+    this.showCamera = true;
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      this.stream = stream;
+      this.videoRef.nativeElement.srcObject = stream;
+    }).catch(err => {
+      alert('Camera access denied or unavailable.');
+      this.showCamera = false;
+    });
+  }
+
+  capturePhoto(): void {
+    const video = this.videoRef.nativeElement;
+    const canvas = this.canvasRef.nativeElement;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    this.previewImg = canvas.toDataURL('image/png');
+    this.stopCamera();
+    this.showCamera = false;
+    this.updatedImage = true;
+  }
+
+  closeCamera(): void {
+    this.stopCamera();
+    this.showCamera = false;
+  }
+
+  stopCamera(): void {
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+      this.stream = null;
+    }
+  }
   
 }
