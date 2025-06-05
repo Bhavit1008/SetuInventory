@@ -46,6 +46,12 @@ export class SearchPageComponent implements OnInit{
     { id: 8, label: "Kesariya Green"},
   ]
 
+  status = [
+    { id: 1, label: "Available" },
+    { id: 2, label: "Hold" },
+    { id: 3, label: "Sold"}
+  ]
+
   ngOnInit() {
     this.productService.fetchAllsProducts().then(products => {
       this.allProducts = products;
@@ -84,24 +90,29 @@ export class SearchPageComponent implements OnInit{
       category: [''],
       godonLocations: [''],
       productQuality: [''],
+      status:[''],
       productCode: [''],
       minPrice: [''],
-      maxPrice: ['']
+      maxPrice: [''],
+      minQuantity: [''],
+      maxQuantity: ['']
     });
   }
 
   // Apply the filter based on input
   applyFilter() {
-    const {godonLocations,productQuality, productCode, category, minPrice, maxPrice } = this.searchForm.value;
+    const {godonLocations,productQuality,status, productCode, category, minPrice, maxPrice,minQuantity ,maxQuantity} = this.searchForm.value;
 
     this.filteredProducts = this.allProducts.filter(p =>
       (!category || p.category.toLowerCase().includes(category.toLowerCase())) &&
       (!godonLocations || p.godownLocation.toLowerCase().includes(godonLocations.toLowerCase())) &&
       (!productQuality || p.productQuality.toLowerCase().includes(productQuality.toLowerCase())) &&
+      (!status || p.status.toLowerCase().includes(status.toLowerCase())) &&
       (!productCode || p.productCode.toLowerCase().includes(productCode.toLowerCase())) &&
-      (!category || p.category.toLowerCase().includes(category.toLowerCase())) &&
       (!minPrice || p.sellingCost >= +minPrice) &&
-      (!maxPrice || p.sellingCost <= +maxPrice)
+      (!maxPrice || p.sellingCost <= +maxPrice) &&
+      (!minQuantity || p.quantity >= +minQuantity) &&
+      (!maxQuantity || p.quantity <= +maxQuantity)
     );
     this.finalProducts=[...this.filteredProducts];
     this.closeSidebar();
