@@ -60,4 +60,10 @@
     </ul>
   </div>
 </nav>
+<div class="toast-container" *ngIf="showAlert"
+  [ngClass]="{ 'closing-desktop': closing && !isMobile, 'closing-mobile': closing && isMobile }">
+  <div class="toast-message" [ngStyle]="{ 'background-color': toastColor }">
+    {{ loginError }}
+  </div>
+</div>
 <div class="center-me"><router-outlet></router-outlet></div>
