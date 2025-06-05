@@ -37,8 +37,8 @@
         <input type="number" class="form-control" name="productWidth" formControlName="productWidth">
       </div>
       <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Number of Pieces: </label>
-        <input type="number" class="form-control" name="productPieces" formControlName="productPieces">
+        <label>Quantity: </label>
+        <input type="number" class="form-control" name="quantity" formControlName="quantity">
       </div>
     </div>
     <div class="form-group" style="margin: 10px;">
@@ -47,11 +47,6 @@
         required>
         <option *ngFor="let quality of thicknessRange" [value]="quality.label">{{ quality.label }} mm</option>
       </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Quantity: </label>
-      <input type="number" class="form-control" name="quantity" formControlName="quantity">
     </div>
 
     <div class="form-group" style="margin: 10px;">
@@ -183,7 +178,13 @@
       <button (click)="addNewRow()" class="btn btn-success mb-2">+ Add New Row</button>
 
     </div>
-    <button type="submit" class="btn btn-primary" (click)="saveSlabDetails(stockForm)"
-      style="margin: 10px;">Submit</button>
+    <button type="submit" class="btn btn-primary" (click)="saveSlabDetails(stockForm)" style="margin: 10px;">
+      <ng-container *ngIf="!isSubmitting; else loading">
+        Submit
+      </ng-container>
+      <ng-template #loading>
+        <span class="spinner"></span> Submitting...
+      </ng-template>
+    </button>
   </form>
 </div>

@@ -24,6 +24,7 @@ export class SlabsManagementComponent {
   isMobile = false;
   updatedImage =false;
   isUpdate = false;
+  isSubmitting = false;
 
   showCamera = false;
   previewImg: string | null = null;
@@ -209,6 +210,7 @@ export class SlabsManagementComponent {
   }
 
   saveSlabDetails(slab: any){
+    this.isSubmitting = true;
     const state = history.state as { formData?: Product };
     if(slab!=null && slab!=undefined){
         // this.isLoading = true;
@@ -224,6 +226,7 @@ export class SlabsManagementComponent {
               this.toastService.showSuccess("Added new slab successfully.");
             }
             this.isUpdate = false;
+            this.isSubmitting = false;
           })
         }
         else{
@@ -241,6 +244,7 @@ export class SlabsManagementComponent {
                 this.toastService.showSuccess("Added new slab successfully.");
               }
               this.isUpdate = false; 
+              this.isSubmitting = false;
             })
           });
         }
