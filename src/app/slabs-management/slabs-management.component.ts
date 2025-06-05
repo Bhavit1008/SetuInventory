@@ -67,6 +67,12 @@ export class SlabsManagementComponent {
     { id: 8, label: "Kesariya Green"},
   ]
 
+  statusOption = [
+    { id: 1, label: "Available" },
+    { id: 2, label: "Hold" },
+    { id: 3, label: "Sold"}
+  ]
+
   slabPieces :SlabPieces[] = [];
 
   ngOnInit(){

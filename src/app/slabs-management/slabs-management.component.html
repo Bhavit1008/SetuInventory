@@ -78,10 +78,11 @@
       <label>Selling Cost/per sqft:</label>
       <input type="number" class="form-control" name="sellingCost" formControlName="sellingCost">
     </div>
-
     <div class="form-group" style="margin: 10px;">
-      <label>Status</label>
-      <input type="text" class="form-control" name="status" formControlName="status">
+      <label for="status">Status: </label>
+      <select name="status" id="status" class="form-control" formControlName="status" required>
+        <option *ngFor="let status of statusOption" [value]="status.label">{{ status.label }}</option>
+      </select>
     </div>
 
     <div class="form-group" style="margin: 10px;">

@@ -69,21 +69,42 @@
   gap: 1rem;
 }
 
-.pieces-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+.table-wrapper {
+  overflow-x: auto;
 }
 
-.piece-card {
-  background-color: #f5f5f5;
-  padding: 1rem;
-  border-left: 4px solid #1A73E8;
+.piece-table {
+  width: 100%;
+  border-collapse: collapse;
   border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-size: 0.95rem;
+}
+
+.piece-table thead {
+  background-color: #1A73E8;
+  color: white;
+}
+
+.piece-table th, .piece-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.piece-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.piece-table td:last-child {
+  max-width: 150px;
+  word-wrap: break-word;
 }
 ::ng-deep .center-me{
-    background-color: #F8F9FA;
-  }
+  background-color: #F8F9FA;
+}
 
 @media (max-width: 600px) {
   .product-summary {

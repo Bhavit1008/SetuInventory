@@ -4,6 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { Platform } from '@angular/cdk/platform';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-blocks-management',
@@ -14,7 +15,7 @@ import { Platform } from '@angular/cdk/platform';
 })
 export class BlocksManagementComponent {
 
-    constructor(private productService: ProductService, private platform: Platform){}
+    constructor(private productService: ProductService, private platform: Platform,private toastService: ToastService){}
     @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
     @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
     isMobile = false;
@@ -25,11 +26,18 @@ export class BlocksManagementComponent {
     public blockFormGroup!: FormGroup;
     isLoading = false;
     isResultDialog = false;
+    isUpdate = false;
 
     goDownLocations = [
     { id: 1, label: "Kishangarh" },
     { id: 2, label: "Moradabad" },
     { id: 3, label: "Banswara"}
+  ]
+
+  statusOption = [
+    { id: 1, label: "Available" },
+    { id: 2, label: "Hold" },
+    { id: 3, label: "Sold"}
   ]
 
   productQuality = [
@@ -64,6 +72,7 @@ export class BlocksManagementComponent {
       this.buildForm();
       if (state?.formData) {
         this.blockFormGroup = new FormGroup({
+          id: new FormControl(state.formData.id),
           productCode : new FormControl(state.formData.productCode),
           godownLocation : new FormControl(state.formData.godownLocation),
           productQuality : new FormControl(state.formData.productQuality),
@@ -76,8 +85,14 @@ export class BlocksManagementComponent {
           freightCost : new FormControl(state.formData.freightCost),
           inHouseCost : new FormControl(state.formData.inHouseCost),
           sellingCost : new FormControl(state.formData.sellingCost),
+          status : new FormControl(state.formData.status),
           remarks :new FormControl(state.formData.description),
         })
+        this.productService.downloadImage(state.formData.imageUrl).subscribe((base64Image) => {
+          this.previewImg = base64Image;
+          this.updatedImage = false;
+        });
+        this.isUpdate = true;
       }
     }
 
@@ -100,18 +115,46 @@ export class BlocksManagementComponent {
     }
 
     saveBlockDetails(block: any){
+      const state = history.state as { formData?: Product };
       if(block!=null && block!=undefined){
-        console.log('block details :: ', this.prepareResponseObject(block));
         this.isLoading = true;
-        this.productService.postApiCall(this.prepareResponseObject(block)).subscribe(() => {
-          this.isLoading = false;
-          this.isResultDialog = true;
-        })
+        if(!this.updatedImage){
+          this.productService.postApiCall(this.prepareResponseObject(block,state.formData?.imageUrl ?? '')).subscribe(() => {
+            this.buildForm();
+            this.previewImg =null;
+            if(this.isUpdate){
+              this.toastService.showSuccess("Slab details updated successfully.");
+            }else{
+              this.toastService.showSuccess("Added new slab successfully.");
+            }
+            this.isUpdate = false;
+            this.isLoading = false;
+          })
+        }
+        else{
+          this.productService.uploadImage(this.previewImg).subscribe((data)=>{
+            const imageUrl = data;
+            this.productService.postApiCall(this.prepareResponseObject(block,imageUrl)).subscribe(() => {
+              // this.isLoading = false;
+              this.buildForm();
+              this.previewImg =null;
+              if(this.isUpdate){
+                this.toastService.showSuccess("Slab details updated successfully.");
+              }else{
+                this.toastService.showSuccess("Added new slab successfully.");
+              }
+              this.isUpdate = false; 
+              this.isLoading = false;
+            })
+          });
+        }
+        history.replaceState({}, document.title);
       }
     }
 
-    prepareResponseObject(block: any){
+    prepareResponseObject(block: any, imgUrl : string){
      const blockObject = {
+        id : block.value.id,
         category : 'Block',
         productCode : block.value.productCode,
         godownLocation : block.value.godownLocation,
@@ -125,7 +168,9 @@ export class BlocksManagementComponent {
         freightCost : block.value.freightCost,
         inHouseCost : block.value.inHouseCost,
         sellingCost : block.value.sellingCost,
-        description : block.value.remarks
+        description : block.value.remarks,
+        status : block.value.status,
+        imageUrl : imgUrl
       }
       return blockObject;
     }

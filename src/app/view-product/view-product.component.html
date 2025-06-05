@@ -38,16 +38,31 @@
 
     <div class="card detail-section" *ngIf="product.pieces?.length">
         <h3>Piece Details</h3>
-        <div class="pieces-grid">
-            <div class="piece-card" *ngFor="let piece of product.pieces">
-                <p><strong>ID:</strong> {{ piece.id }}</p>
-                <p><strong>Length:</strong> {{ piece.length }} ft</p>
-                <p><strong>Width:</strong> {{ piece.width }} ft</p>
-                <p><strong>Less Length:</strong> {{ piece.lessLength }} ft</p>
-                <p><strong>Less Width:</strong> {{ piece.lessWidth }} ft</p>
-                <p><strong>Total Area:</strong> {{ piece.totalArea }} sq ft</p>
-                <p><strong>Remark:</strong> {{ piece.remark }}</p>
-            </div>
+        <div class="table-wrapper">
+            <table class="piece-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Length (ft)</th>
+                        <th>Width (ft)</th>
+                        <th>Less Length (ft)</th>
+                        <th>Less Width (ft)</th>
+                        <th>Total Area (sq ft)</th>
+                        <th>Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let piece of product.pieces">
+                        <td>{{ piece.id }}</td>
+                        <td>{{ piece.length }}</td>
+                        <td>{{ piece.width }}</td>
+                        <td>{{ piece.lessLength }}</td>
+                        <td>{{ piece.lessWidth }}</td>
+                        <td>{{ piece.totalArea }}</td>
+                        <td>{{ piece.remark }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
