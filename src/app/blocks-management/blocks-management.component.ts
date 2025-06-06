@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule ,Validators } from '@angular/forms';
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { Platform } from '@angular/cdk/platform';
@@ -15,20 +15,28 @@ import { ToastService } from '../services/toast.service';
 })
 export class BlocksManagementComponent {
 
-    constructor(private productService: ProductService, private platform: Platform,private toastService: ToastService){}
-    @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
-    @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
-    isMobile = false;
-    showCamera = false;
-    previewImg: string | null = null;
-    stream: MediaStream | null = null;
-    updatedImage =false;
-    public blockFormGroup!: FormGroup;
-    isLoading = false;
-    isResultDialog = false;
-    isUpdate = false;
+  constructor(
+    private productService: ProductService,
+    private platform: Platform,
+    private toastService: ToastService
+  ) {}
+  
+  @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
-    goDownLocations = [
+  isMobile = false;
+  showCamera = false;
+  updatedImage = false;
+  isUpdate = false;
+  isSubmitting = false;
+  submitted = false;
+
+  previewImg: string | null = null;
+  stream: MediaStream | null = null;
+
+  public blockFormGroup!: FormGroup;
+
+  goDownLocations = [
     { id: 1, label: "Kishangarh" },
     { id: 2, label: "Moradabad" },
     { id: 3, label: "Banswara"}
@@ -63,126 +71,123 @@ export class BlocksManagementComponent {
     { id: 8, label: "Sand Blast"},
     { id: 9, label: "Fire Flame"},
     { id: 10, label: "Leather Finish"},
-]
+  ]
 
-
-    ngOnInit(){
-      this.isMobile = this.platform.ANDROID || this.platform.IOS;
-      const state = history.state as { formData?: Product };
-      this.buildForm();
-      if (state?.formData) {
-        this.blockFormGroup = new FormGroup({
-          id: new FormControl(state.formData.id),
-          productCode : new FormControl(state.formData.productCode),
-          godownLocation : new FormControl(state.formData.godownLocation),
-          productQuality : new FormControl(state.formData.productQuality),
-          productLength : new FormControl(state.formData.productLength),
-          productWidth : new FormControl(state.formData.productWeight),
-          productHeight : new FormControl(state.formData.productHeight),
-          productWeight : new FormControl(state.formData.productWeight),
-          exFactoryCost : new FormControl(state.formData.exFactoryCost),
-          royaltyCost : new FormControl(state.formData.royaltyCost),
-          freightCost : new FormControl(state.formData.freightCost),
-          inHouseCost : new FormControl(state.formData.inHouseCost),
-          sellingCost : new FormControl(state.formData.sellingCost),
-          status : new FormControl(state.formData.status),
-          remarks :new FormControl(state.formData.description),
-        })
-        this.productService.downloadImage(state.formData.imageUrl).subscribe((base64Image) => {
-          this.previewImg = base64Image;
-          this.updatedImage = false;
-        });
-        this.isUpdate = true;
-      }
+  ngOnInit(){
+    this.isMobile = this.platform.ANDROID || this.platform.IOS;
+    const state = history.state as { formData?: Product };
+    this.buildForm(state?.formData);
+    if (state?.formData?.imageUrl) {
+      this.productService.downloadImage(state.formData.imageUrl).subscribe(base64Image => {
+        this.previewImg = base64Image;
+        this.updatedImage = false;
+      });
     }
+    this.isUpdate = !!state?.formData;
+  }
 
-    buildForm(){
-      this.blockFormGroup = new FormGroup({
-        productCode : new FormControl(''),
-        godownLocation : new FormControl(''),
-        productQuality : new FormControl(''),
-        productLength : new FormControl(''),
-        productWidth : new FormControl(''),
-        productHeight : new FormControl(''),
-        productWeight : new FormControl(''),
-        exFactoryCost : new FormControl(''),
-        royaltyCost : new FormControl(''),
-        freightCost : new FormControl(''),
-        inHouseCost : new FormControl(''),
-        sellingCost : new FormControl(''),
-        remarks : new FormControl('')
-      })
+  buildForm(data?: Product) {
+  this.blockFormGroup = new FormGroup({
+    id: new FormControl(data?.id),
+    productCode: new FormControl(data?.productCode || '', Validators.required),
+    godownLocation: new FormControl(data?.godownLocation || '', Validators.required),
+    productQuality: new FormControl(data?.productQuality || '', Validators.required),
+    productLength: new FormControl(data?.productLength || '', Validators.required),
+    productWidth: new FormControl(data?.productWidth || '', Validators.required),
+    productHeight: new FormControl(data?.productHeight || '', Validators.required),
+    productWeight: new FormControl(data?.productWeight || '', Validators.required),
+    exFactoryCost: new FormControl(data?.exFactoryCost || '', Validators.required),
+    royaltyCost: new FormControl(data?.royaltyCost || '', Validators.required),
+    freightCost: new FormControl(data?.freightCost || '', Validators.required),
+    inHouseCost: new FormControl(data?.inHouseCost || '', Validators.required),
+    sellingCost: new FormControl(data?.sellingCost || '', Validators.required),
+    status: new FormControl(data?.status || '', Validators.required),
+    remarks: new FormControl(data?.description || '', Validators.required)
+  });
+  }
+
+  saveBlockDetails(block: any): void {
+    if (!block) return;
+    this.submitted = true;
+    if (this.previewImg===null ) {
+      this.toastService.showError("Please Add Image")
+      return;
     }
+    if(this.blockFormGroup.invalid){
+      return;
+    };
 
-    saveBlockDetails(block: any){
-      const state = history.state as { formData?: Product };
-      if(block!=null && block!=undefined){
-        this.isLoading = true;
-        if(!this.updatedImage){
-          this.productService.postApiCall(this.prepareResponseObject(block,state.formData?.imageUrl ?? '')).subscribe(() => {
-            this.buildForm();
-            this.previewImg =null;
-            if(this.isUpdate){
-              this.toastService.showSuccess("Slab details updated successfully.");
-            }else{
-              this.toastService.showSuccess("Added new slab successfully.");
-            }
-            this.isUpdate = false;
-            this.isLoading = false;
-          })
+    this.isSubmitting = true;
+    const state = history.state as { formData?: Product };
+    const existingImageUrl = state.formData?.imageUrl ?? '';
+
+    if (this.updatedImage && this.previewImg) {
+      this.productService.uploadImage(this.previewImg).subscribe({
+        next: (imageUrl) => {
+          this.saveBlock(block, imageUrl);
+        },
+        error: () => {
+          this.isSubmitting = false;
+          this.toastService.showError('Image upload failed.');
         }
-        else{
-          this.productService.uploadImage(this.previewImg).subscribe((data)=>{
-            const imageUrl = data;
-            this.productService.postApiCall(this.prepareResponseObject(block,imageUrl)).subscribe(() => {
-              // this.isLoading = false;
-              this.buildForm();
-              this.previewImg =null;
-              if(this.isUpdate){
-                this.toastService.showSuccess("Slab details updated successfully.");
-              }else{
-                this.toastService.showSuccess("Added new slab successfully.");
-              }
-              this.isUpdate = false; 
-              this.isLoading = false;
-            })
-          });
-        }
-        history.replaceState({}, document.title);
+      });
+    } else {
+      this.saveBlock(block, existingImageUrl);
+    }
+    history.replaceState({}, document.title);
+  }
+  private saveBlock(blockForm: any, imageUrl: string): void {
+    this.productService.postApiCall(this.prepareResponseObject(blockForm, imageUrl)).subscribe({
+      next: () => {
+        this.afterSave();
+      },
+      error: () => {
+        this.isSubmitting = false;
+        this.toastService.showError('Failed to save block details.');
       }
-    }
+    });
+  }
 
-    prepareResponseObject(block: any, imgUrl : string){
-     const blockObject = {
-        id : block.value.id,
-        category : 'Block',
-        productCode : block.value.productCode,
-        godownLocation : block.value.godownLocation,
-        productQuality : block.value.productQuality,
-        productLength : block.value.productLength,
-        productWidth : block.value.productWidth,
-        productHeight : block.value.productHeight,
-        productWeight : block.value.productWeight,
-        exFactoryCost : block.value.exFactoryCost,
-        royaltyCost : block.value.royaltyCost,
-        freightCost : block.value.freightCost,
-        inHouseCost : block.value.inHouseCost,
-        sellingCost : block.value.sellingCost,
-        description : block.value.remarks,
-        status : block.value.status,
-        imageUrl : imgUrl
-      }
-      return blockObject;
-    }
+  private afterSave(): void {
+    this.buildForm();
+    this.previewImg = null;
+    this.toastService.showSuccess(this.isUpdate ? 'Block details updated successfully.' : 'Added new block successfully.');
+    this.isUpdate = false;
+    this.isSubmitting = false;
+    this.submitted = false;
+  }
 
-    onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => this.previewImg = reader.result as string;
-      this.updatedImage = true;
-      reader.readAsDataURL(input.files[0]);
-    }
+  prepareResponseObject(block: FormGroup, imgUrl: string) {
+  const value = block.value;
+  return {
+    id: value.id,
+    category: 'Block',
+    productCode: value.productCode,
+    godownLocation: value.godownLocation,
+    productQuality: value.productQuality,
+    productLength: value.productLength,
+    productWidth: value.productWidth,
+    productHeight: value.productHeight,
+    productWeight: value.productWeight,
+    exFactoryCost: value.exFactoryCost,
+    royaltyCost: value.royaltyCost,
+    freightCost: value.freightCost,
+    inHouseCost: value.inHouseCost,
+    sellingCost: value.sellingCost,
+    description: value.remarks,
+    status: value.status,
+    imageUrl: imgUrl
+  };
+  }
+
+  onImageSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => this.previewImg = reader.result as string;
+    this.updatedImage = true;
+    reader.readAsDataURL(input.files[0]);
+  }
   }
 
   openCamera(): void {
