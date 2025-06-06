@@ -24,6 +24,7 @@ export class SlabsManagementComponent {
   isMobile = false;
   updatedImage =false;
   isUpdate = false;
+  isSubmitting = false;
 
   showCamera = false;
   previewImg: string | null = null;
@@ -65,6 +66,12 @@ export class SlabsManagementComponent {
     { id: 6, label: "Morchana Brown"},
     { id: 7, label: "Marine Black"},
     { id: 8, label: "Kesariya Green"},
+  ]
+
+  statusOption = [
+    { id: 1, label: "Available" },
+    { id: 2, label: "Hold" },
+    { id: 3, label: "Sold"}
   ]
 
   slabPieces :SlabPieces[] = [];
@@ -203,6 +210,7 @@ export class SlabsManagementComponent {
   }
 
   saveSlabDetails(slab: any){
+    this.isSubmitting = true;
     const state = history.state as { formData?: Product };
     if(slab!=null && slab!=undefined){
         // this.isLoading = true;
@@ -218,6 +226,7 @@ export class SlabsManagementComponent {
               this.toastService.showSuccess("Added new slab successfully.");
             }
             this.isUpdate = false;
+            this.isSubmitting = false;
           })
         }
         else{
@@ -235,6 +244,7 @@ export class SlabsManagementComponent {
                 this.toastService.showSuccess("Added new slab successfully.");
               }
               this.isUpdate = false; 
+              this.isSubmitting = false;
             })
           });
         }
