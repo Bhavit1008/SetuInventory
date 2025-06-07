@@ -38,10 +38,21 @@
     font-size: 14px;
     cursor: pointer;
     padding: 0;
+    margin: 10px;
     padding-bottom: 2px;
   }
   
   .edit-button:hover {
     color: #1a5dcc;
   }
+
+  .blurred {
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+/* Optional: Remove scroll from body when popup is open */
+body.modal-open {
+  overflow: hidden;
+}
   

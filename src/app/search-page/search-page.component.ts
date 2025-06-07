@@ -24,6 +24,8 @@ export class SearchPageComponent implements OnInit{
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   finalProducts: Product[] = [];  
+  selectedLinkId: string = 'All';
+
   categories= [
     { id: 1, label: "Slab" },
     { id: 2, label: "Block" },
@@ -134,6 +136,35 @@ export class SearchPageComponent implements OnInit{
       this.finalProducts = [...this.filteredProducts];
     }
     this.showAvailable = !this.showAvailable;
+  }
+
+  highlight(linkId: string, event: Event): void {
+    event.preventDefault(); // Prevent default anchor behavior
+    this.applyStatusFilter(linkId);
+    this.selectedLinkId = linkId;
+  }
+
+  getLinkStyle(linkId: string): { [key: string]: string } {
+    const isSelected = this.selectedLinkId === linkId;
+    return {
+      'flex-shrink': '0',
+      'padding': '10px 20px',
+      'font-size': '16px',
+      'text-decoration': 'none',
+      'color': isSelected ? 'Black' : 'grey',
+      'display': 'inline-block',
+      'cursor': 'pointer'
+    };
+  }
+
+  applyStatusFilter(status: any) {
+    this.filteredProducts = this.allProducts.filter(p =>
+      (!status || p.status.toLowerCase().includes(status.toLowerCase()))
+    );
+    this.finalProducts=[...this.filteredProducts];
+    if(status=='All'){
+      this.finalProducts=this.allProducts;
+    }
   }
  
 }
