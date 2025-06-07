@@ -21,7 +21,6 @@ export class ProductService {
     }
 
     const data: any[] = await response.json();
-    console.log('raw map :: ', data);
     const product: Product[] = data.map(raw => {
       const product = raw;
       return product;

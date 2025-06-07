@@ -5,6 +5,7 @@ import { SearchPageComponent } from './search-page/search-page.component';
 import { LoginManagementComponent } from './login-management/login-management.component';
 import { AuthGuard } from './auth.guard';
 import { ViewProductComponent } from './view-product/view-product.component';
+import { InventoryDashboardComponent } from './inventory-dashboard/inventory-dashboard.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -12,6 +13,7 @@ export const routes: Routes = [
     { path: 'blocks', component: BlocksManagementComponent ,canActivate: [AuthGuard]  },
     { path: 'search', component: SearchPageComponent ,canActivate: [AuthGuard]  },
     { path: 'view-product', component: ViewProductComponent ,canActivate: [AuthGuard]  },
+    { path: 'dashboard', component: InventoryDashboardComponent ,canActivate: [AuthGuard]  },
     { path: 'login', component: LoginManagementComponent},
     { path: '**', redirectTo: 'login' }
 ];
