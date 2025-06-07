@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule ,Validators} from '@angular/forms';
 import { ProductService } from '../services/product.service';
 import { Product } from '../model/product';
 import { SlabPieces } from '../model/slab-pieces';
@@ -18,17 +18,20 @@ import { ToastService } from '../services/toast.service';
 })
 export class SlabsManagementComponent {
   public stockFormGroup!: FormGroup;
-  isResultDialog = false;
-  @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
-  @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  slabPieceForm: FormGroup[] = [];
+  slabPieces :SlabPieces[] = [];
+
   isMobile = false;
-  updatedImage =false;
   isUpdate = false;
   isSubmitting = false;
-
+  submitted = false;
+  updatedImage =false;
   showCamera = false;
   previewImg: string | null = null;
   stream: MediaStream | null = null;
+
+  @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   goDownLocations = [
     { id: 1, label: "Kishangarh" },
@@ -74,85 +77,86 @@ export class SlabsManagementComponent {
     { id: 3, label: "Sold"}
   ]
 
-  slabPieces :SlabPieces[] = [];
+  constructor(
+    private fb: FormBuilder ,
+    private productService: ProductService,
+    private platform: Platform,
+    private toastService: ToastService
+  ){}
 
   ngOnInit(){
     this.isMobile = this.platform.ANDROID || this.platform.IOS;
     this.buildForm();
     const state = history.state as { formData?: Product };
     if (state?.formData) {
-      this.stockFormGroup = new FormGroup({
-        id: new FormControl(state.formData.id),
-        productCode : new FormControl(state.formData.productCode),
-        godownLocation : new FormControl(state.formData.godownLocation),
-        productQuality:new FormControl(state.formData.productQuality),
-        productFinished : new FormControl(state.formData.productFinished),
-        productLength : new FormControl(state.formData.productLength),
-        productWidth : new FormControl(state.formData.productWidth),
-        productPieces: new FormControl(state.formData.quantity),
-        productThickness:new FormControl(state.formData.productThickness),
-        quantity:new FormControl(state.formData.quantity),
-        exFactoryCost : new FormControl(state.formData.exFactoryCost),
-        miscellaneousCost : new FormControl(state.formData.miscellaneousCost),
-        freightCost : new FormControl(state.formData.freightCost),
-        inHouseCost : new FormControl(state.formData.inHouseCost),
-        sellingCost : new FormControl(state.formData.sellingCost),
-        status: new FormControl(state.formData.status),
-        remark :new FormControl(state.formData.description),
-      })
-      this.slabPieces = state.formData.pieces;
-      this.productService.downloadImage(state.formData.imageUrl).subscribe((base64Image) => {
-        this.previewImg = base64Image;
-        this.updatedImage = false;
-      });
-      for (const item of this.slabPieces) {
-        this.slabPieceForm.push(this.fb.group({
-          id: new FormControl(item.id),
-          length: new FormControl(item.length),
-          width: new FormControl(item.width),
-          lessLength: new FormControl(item.lessLength),
-          lessWidth: new FormControl(item.lessWidth),
-          totalArea: new FormControl(item.totalArea),
-          editable: new FormControl(item.editable),
-          remark:new FormControl(item.remark)
-        }));
-      }
+      this.patchFormWithData(state.formData);
       this.isUpdate = true;
     }
   }
 
-  constructor(private fb: FormBuilder ,  private productService: ProductService,
-    private platform: Platform,private toastService: ToastService){
-  }
-
   buildForm(){
     this.stockFormGroup = new FormGroup({
-      productCode: new FormControl(''),
-      godownLocation: new FormControl(''),
-      productQuality: new FormControl(''),
-      productFinished:new FormControl(''),
-      productLength: new FormControl(''),
-      productWidth:new FormControl(''),
-      productPieces: new FormControl(''),
-      productThickness:new FormControl(''),
-      quantity:new FormControl(''),
-      exFactoryCost:new FormControl(''),
-      miscellaneousCost:new FormControl(''),
-      freightCost:new FormControl(''),
-      inHouseCost: new FormControl(''),
-      sellingCost: new FormControl(''),
-      status:new FormControl(''),
-      remark:new FormControl(''),
+      productCode: new FormControl('', Validators.required),
+      godownLocation: new FormControl('',Validators.required),
+      productQuality: new FormControl('',Validators.required),
+      productFinished:new FormControl('',Validators.required),
+      productLength: new FormControl('',Validators.required),
+      productWidth:new FormControl('',Validators.required),
+      productThickness:new FormControl('',Validators.required),
+      quantity:new FormControl('',Validators.required),
+      exFactoryCost:new FormControl('',Validators.required),
+      miscellaneousCost:new FormControl('',Validators.required),
+      freightCost:new FormControl('',Validators.required),
+      inHouseCost: new FormControl('',Validators.required),
+      sellingCost: new FormControl('',Validators.required),
+      status:new FormControl('',Validators.required),
+      remark:new FormControl('',Validators.required),
     })
   }
 
-  slabPieceForm: FormGroup[] = [];
+  private patchFormWithData(formData: Product):void{
+    this.stockFormGroup = new FormGroup({
+      id: new FormControl(formData.id),
+      productCode : new FormControl(formData.productCode,Validators.required),
+      godownLocation : new FormControl(formData.godownLocation,Validators.required),
+      productQuality:new FormControl(formData.productQuality,Validators.required),
+      productFinished : new FormControl(formData.productFinished,Validators.required),
+      productLength : new FormControl(formData.productLength,Validators.required),
+      productWidth : new FormControl(formData.productWidth,Validators.required),
+      productThickness:new FormControl(formData.productThickness,Validators.required),
+      quantity:new FormControl(formData.quantity,Validators.required),
+      exFactoryCost : new FormControl(formData.exFactoryCost,Validators.required),
+      miscellaneousCost : new FormControl(formData.miscellaneousCost,Validators.required),
+      freightCost : new FormControl(formData.freightCost,Validators.required),
+      inHouseCost : new FormControl(formData.inHouseCost,Validators.required),
+      sellingCost : new FormControl(formData.sellingCost,Validators.required),
+      status: new FormControl(formData.status,Validators.required),
+      remark :new FormControl(formData.description,Validators.required),
+    })
+    this.slabPieces = formData.pieces;
+    for (const item of this.slabPieces) {
+      this.slabPieceForm.push(this.fb.group({
+        id: new FormControl(item.id),
+        length: new FormControl(item.length),
+        width: new FormControl(item.width),
+        lessLength: new FormControl(item.lessLength),
+        lessWidth: new FormControl(item.lessWidth),
+        totalArea: new FormControl(item.totalArea),
+        editable: new FormControl(item.editable),
+        remark:new FormControl(item.remark)
+      }));
+    }
+    this.productService.downloadImage(formData.imageUrl).subscribe((base64Image) => {
+      this.previewImg = base64Image;
+      this.updatedImage = false;
+    });
+  }
 
-  editUser(index: number) {
+  editSlabPiece(index: number) {
     this.slabPieceForm[index].patchValue({ editable: true });
   }
 
-  saveUser(index: number) {
+  saveSlabPiece(index: number) {
     this.slabPieces[index] = this.slabPieceForm[index].value;
     this.calculateSlabArea(index)
     this.slabPieces[index] = this.slabPieceForm[index].value;
@@ -162,96 +166,96 @@ export class SlabsManagementComponent {
     this.slabPieceForm[index].patchValue({ ...this.slabPieces[index], editable: false });
   }
 
-  deleteUser(index: number) {
+  calculateSlabArea(index: number){
+    const group = this.slabPieceForm.at(index) as FormGroup;
+    var length = parseFloat(group.value.length) || 0;
+    var width = parseFloat(group.value.width) || 0;
+    var lessLength = parseFloat(group.value.lessLength) || 0;
+    var lessWidth = parseFloat(group.value.lessWidth) || 0;
+    var totalSlabSize = (length * width) - (lessLength * lessWidth);
+   
+    group.patchValue({ 
+      totalArea: totalSlabSize,
+      editable: false 
+    });
+  }
+
+  deleteSlabPiece(index: number) {
     this.slabPieces.splice(index, 1);
     this.slabPieceForm.splice(index, 1);
   }
 
   addNewRow() {
-    let id =1;
-    if (this.slabPieces.length > 0) {
-      const lastAddedSlabPieces = this.slabPieces[this.slabPieceForm.length - 1];
-      id=lastAddedSlabPieces.id+1;
-    }
-    const newUser: SlabPieces = new SlabPieces();
-    newUser.id = id;
-    this.slabPieces.push(newUser);
+    const newId = this.slabPieces.length > 0 ? this.slabPieces[this.slabPieces.length - 1].id + 1 : 1;
+    const newSlab = new SlabPieces();
+    newSlab.id = newId;
+    this.slabPieces.push(newSlab);
     this.slabPieceForm.push(this.fb.group({
-      id: new FormControl(newUser.id),
-      length: new FormControl(newUser.length),
-      width: new FormControl(newUser.width),
-      lessLength: new FormControl(newUser.lessLength),
-      lessWidth: new FormControl(newUser.lessWidth),
-      totalArea: new FormControl(newUser.totalArea),
-      editable: new FormControl(newUser.editable),
-      remark:new FormControl(newUser.remark)
+      id: new FormControl(newSlab.id),
+      length: new FormControl(newSlab.length),
+      width: new FormControl(newSlab.width),
+      lessLength: new FormControl(newSlab.lessLength),
+      lessWidth: new FormControl(newSlab.lessWidth),
+      totalArea: new FormControl(newSlab.totalArea),
+      editable: new FormControl(newSlab.editable),
+      remark:new FormControl(newSlab.remark)
     }));
   }
 
+  saveSlabDetails(slabForm: any): void {
+    if (!slabForm) return;
+    this.submitted = true;
+    if (this.previewImg===null ) {
+      this.toastService.showError("Please Add Image")
+      return;
+    }
+    if(this.stockFormGroup.invalid){
+      return;
+    };
 
-  calculateSlabArea(index: number){
-    var totalSlabLength = parseFloat(this.slabPieceForm[index].value.length);
-    var totalSlabWidth = parseFloat(this.slabPieceForm[index].value.width);
-    var lessLength = parseFloat(this.slabPieceForm[index].value.lessLength);
-    var lessWidth = parseFloat(this.slabPieceForm[index].value.lessWidth);
-    var totalSlabSize = (totalSlabLength * totalSlabWidth) - (lessLength * lessWidth);
-    const group = this.slabPieceForm.at(index) as FormGroup;
-    group.patchValue({ 
-      totalArea: totalSlabSize,
-      editable: false 
-    });
-    console.log('entered slab size :: ', totalSlabSize);
-  }
-
-
-  getValues(){
-    const slabDetails = this.slabPieceForm.map(group=>group.value)
-    console.log('my form values :: ', slabDetails);
-  }
-
-  saveSlabDetails(slab: any){
     this.isSubmitting = true;
     const state = history.state as { formData?: Product };
-    if(slab!=null && slab!=undefined){
-        // this.isLoading = true;
-        if(!this.updatedImage){
-          this.productService.postApiCall(this.prepareResponseObject(slab,state.formData?.imageUrl ?? '')).subscribe(() => {
-            this.buildForm();
-            this.slabPieces = [];
-            this.slabPieceForm = [];
-            this.previewImg =null;
-            if(this.isUpdate){
-              this.toastService.showSuccess("Slab details updated successfully.");
-            }else{
-              this.toastService.showSuccess("Added new slab successfully.");
-            }
-            this.isUpdate = false;
-            this.isSubmitting = false;
-          })
+    const existingImageUrl = state.formData?.imageUrl ?? '';
+
+    if (this.updatedImage && this.previewImg) {
+      this.productService.uploadImage(this.previewImg).subscribe({
+        next: (imageUrl) => {
+          this.saveSlab(slabForm, imageUrl);
+        },
+        error: () => {
+          this.isSubmitting = false;
+          this.toastService.showError('Image upload failed.');
         }
-        else{
-          this.productService.uploadImage(this.previewImg).subscribe((data)=>{
-            const imageUrl = data;
-            this.productService.postApiCall(this.prepareResponseObject(slab,imageUrl)).subscribe(() => {
-              // this.isLoading = false;
-              this.buildForm();
-              this.slabPieces = [];
-              this.slabPieceForm = [];
-              this.previewImg =null;
-              if(this.isUpdate){
-                this.toastService.showSuccess("Slab details updated successfully.");
-              }else{
-                this.toastService.showSuccess("Added new slab successfully.");
-              }
-              this.isUpdate = false; 
-              this.isSubmitting = false;
-            })
-          });
-        }
-        
+      });
+    } else {
+      this.saveSlab(slabForm, existingImageUrl);
     }
     history.replaceState({}, document.title);
   }
+
+  private saveSlab(slabForm: any, imageUrl: string): void {
+    this.productService.postApiCall(this.prepareResponseObject(slabForm, imageUrl)).subscribe({
+      next: () => {
+        this.afterSave();
+      },
+      error: () => {
+        this.isSubmitting = false;
+        this.toastService.showError('Failed to save slab details.');
+      }
+    });
+  }
+
+  private afterSave(): void {
+    this.buildForm();
+    this.slabPieces = [];
+    this.slabPieceForm = [];
+    this.previewImg = null;
+    this.toastService.showSuccess(this.isUpdate ? 'Slab details updated successfully.' : 'Added new slab successfully.');
+    this.isUpdate = false;
+    this.isSubmitting = false;
+    this.submitted = false;
+  }
+
   prepareResponseObject(slab: any , imgUrl : string){
     const slabObject = {
       id : slab.value.id,
@@ -262,7 +266,6 @@ export class SlabsManagementComponent {
       productFinished : slab.value.productFinished,
       productLength : parseFloat(slab.value.productLength),
       productWidth : parseFloat(slab.value.productWidth),
-      numberOfPeice: parseInt(slab.value.productPieces),
       productThickness : parseFloat(slab.value.productThickness),
       quantity: parseInt(slab.value.quantity),
       exFactoryCost : parseFloat(slab.value.exFactoryCost),

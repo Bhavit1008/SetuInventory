@@ -2,19 +2,22 @@
   <form [formGroup]="stockFormGroup" #stockForm="ngForm">
     <div class="form-group" style="margin: 10px;">
       <label>Product code: </label>
-      <input type="text" class="form-control" name="productCode" formControlName="productCode">
+      <input type="text" class="form-control" name="productCode" formControlName="productCode"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productCode')?.invalid }">
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label for="godownLocation">Locations: </label>
-      <select name="godownLocation" id="godownLocation" class="form-control" formControlName="godownLocation" required>
+      <select name="godownLocation" id="godownLocation" class="form-control" formControlName="godownLocation"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('godownLocation')?.invalid }">
         <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
       </select>
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label for="productQuality">Product Quality: </label>
-      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality" required>
+      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productQuality')?.invalid }">
         <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
       </select>
     </div>
@@ -22,7 +25,7 @@
     <div class="form-group" style="margin: 10px;">
       <label for="productFinished">Product Finishes: </label>
       <select name="productFinished" id="productFinished" class="form-control" formControlName="productFinished"
-        required>
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productFinished')?.invalid }">
         <option *ngFor="let quality of finishesRange" [value]="quality.label">{{ quality.label }}</option>
       </select>
     </div>
@@ -30,59 +33,77 @@
     <div class="row" style="padding-left: 5px;">
       <div class=" form-group col-md-3" style="margin: 5px;">
         <label>Length: </label>
-        <input type="number" class="form-control" name="productLength" formControlName="productLength">
+        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+          name="productLength" formControlName="productLength"
+          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productLength')?.invalid }">
       </div>
       <div class="form-group col-md-3" style="margin: 5px;">
         <label>Width: </label>
-        <input type="number" class="form-control" name="productWidth" formControlName="productWidth">
+        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+          name="productWidth" formControlName="productWidth"
+          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productWidth')?.invalid }">
       </div>
       <div class="form-group col-md-3" style="margin: 5px;">
         <label>Quantity: </label>
-        <input type="number" class="form-control" name="quantity" formControlName="quantity">
+        <input type="number" min="1" oninput="this.value = this.value < 1 ? '' : this.value" class="form-control"
+          name="quantity" formControlName="quantity"
+          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('quantity')?.invalid }">
       </div>
     </div>
     <div class="form-group" style="margin: 10px;">
       <label for="productThickness">Thickness: </label>
       <select name="productThickness" id="productThickness" class="form-control" formControlName="productThickness"
-        required>
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productThickness')?.invalid }">
         <option *ngFor="let quality of thicknessRange" [value]="quality.label">{{ quality.label }} mm</option>
       </select>
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>Ex-factory cost/per sqft: </label>
-      <input type="number" class="form-control" name="exFactoryCost" formControlName="exFactoryCost">
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="exFactoryCost" formControlName="exFactoryCost"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('exFactoryCost')?.invalid }">
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>Freight/per sqft: </label>
-      <input type="number" class="form-control" name="freightCost" formControlName="freightCost">
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="freightCost" formControlName="freightCost"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('freightCost')?.invalid }">
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>Miscellaneous Cost/per sqft: </label>
-      <input type="number" class="form-control" name="miscellaneousCost" formControlName="miscellaneousCost">
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="miscellaneousCost" formControlName="miscellaneousCost"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('miscellaneousCost')?.invalid }">
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>In-House Cost/per sqft: </label>
-      <input type="number" class="form-control" name="inHouseCost" formControlName="inHouseCost">
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="inHouseCost" formControlName="inHouseCost"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('inHouseCost')?.invalid }">
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>Selling Cost/per sqft:</label>
-      <input type="number" class="form-control" name="sellingCost" formControlName="sellingCost">
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="sellingCost" formControlName="sellingCost"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('sellingCost')?.invalid }">
     </div>
     <div class="form-group" style="margin: 10px;">
       <label for="status">Status: </label>
-      <select name="status" id="status" class="form-control" formControlName="status" required>
+      <select name="status" id="status" class="form-control" formControlName="status"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('status')?.invalid }">
         <option *ngFor="let status of statusOption" [value]="status.label">{{ status.label }}</option>
       </select>
     </div>
 
     <div class="form-group" style="margin: 10px;">
       <label>Remarks</label>
-      <input type="text" class="form-control" name="remark" formControlName="remark">
+      <input type="text" class="form-control" name="remark" formControlName="remark"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('remark')?.invalid }">
     </div>
     <div class="form-group" style="margin: 10px">
       <label>Upload or Take a Photo</label>
@@ -136,21 +157,26 @@
               <span>{{ form.value.id }}</span>
             </td>
             <td>
-              <input *ngIf="form.value.editable" formControlName="length" class="form-control"
+              <input *ngIf="form.value.editable" type="number" min="0"
+                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="length" class="form-control"
                 placeholder="Enter length">
               <span *ngIf="!form.value.editable">{{ form.value.length }}</span>
             </td>
             <td>
-              <input *ngIf="form.value.editable" formControlName="width" class="form-control" placeholder="Enter width">
+              <input *ngIf="form.value.editable" type="number" min="0"
+                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="width" class="form-control"
+                placeholder="Enter width">
               <span *ngIf="!form.value.editable">{{ form.value.width }}</span>
             </td>
             <td>
-              <input *ngIf="form.value.editable" formControlName="lessLength" class="form-control"
-                placeholder="Enter length">
+              <input *ngIf="form.value.editable" type="number" min="0"
+                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="lessLength"
+                class="form-control" placeholder="Enter length">
               <span *ngIf="!form.value.editable">{{ form.value.lessLength }}</span>
             </td>
             <td>
-              <input *ngIf="form.value.editable" formControlName="lessWidth" class="form-control"
+              <input *ngIf="form.value.editable" type="number" min="0"
+                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="lessWidth" class="form-control"
                 placeholder="Enter width">
               <span *ngIf="!form.value.editable">{{ form.value.lessWidth }}</span>
             </td>
@@ -163,13 +189,13 @@
               <span *ngIf="!form.value.editable">{{ form.value.remark }}</span>
             </td>
             <td>
-              <button *ngIf="!form.value.editable" (click)="editUser(i)" class="btn btn-primary btn-sm"
+              <button *ngIf="!form.value.editable" (click)="editSlabPiece(i)" class="btn btn-primary btn-sm"
                 style="margin: 10px;">Edit</button>
-              <button *ngIf="form.value.editable" (click)="saveUser(i)" class="btn btn-success btn-sm"
+              <button *ngIf="form.value.editable" (click)="saveSlabPiece(i)" class="btn btn-success btn-sm"
                 style="margin: 10px;">Save</button>
               <button *ngIf="form.value.editable" (click)="cancelEdit(i)" class="btn btn-warning btn-sm"
                 style="margin: 10px;">Cancel</button>
-              <button (click)="deleteUser(i)" class="btn btn-danger btn-sm">Delete</button>
+              <button (click)="deleteSlabPiece(i)" class="btn btn-danger btn-sm">Delete</button>
             </td>
           </tr>
         </tbody>

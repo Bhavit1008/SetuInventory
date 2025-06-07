@@ -55,7 +55,41 @@
   <!-- Main content: Results -->
   <div class="content" [class.blur]="sidebarVisible && isMobile">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <h3 class="mb-0 me-3">Results</h3>
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap"
+     style="
+       display: flex;
+       justify-content: center;
+       gap: 10px;
+       padding: 20px;
+       flex-wrap: nowrap;
+       overflow-x: auto;
+       width: 100%;
+       scrollbar-width: none;     /* Firefox */
+       -ms-overflow-style: none;  /* IE 10+ */
+     "
+     onscroll="this.style.scrollbarWidth='none';" 
+>
+  <a [ngStyle]="getLinkStyle('All')" (click)="highlight('All', $event)" class="nav-link" href="search">
+    ALL PRODUCTS
+  </a>
+  <a [ngStyle]="getLinkStyle('Available')" (click)="highlight('Available', $event)" class="nav-link">
+    IN STOCK
+  </a>
+  <a [ngStyle]="getLinkStyle('Processing')" (click)="highlight('Processing', $event)" class="nav-link">
+    PROCESSING
+  </a>
+  <a [ngStyle]="getLinkStyle('Hold')" (click)="highlight('Hold', $event)" class="nav-link">
+    HOLD
+  </a>
+  <a [ngStyle]="getLinkStyle('Sold')" (click)="highlight('Sold', $event)" class="nav-link">
+    SOLD
+  </a>
+  <a [ngStyle]="getLinkStyle('Delete')" (click)="highlight('Delete', $event)" class="nav-link">
+    DELETED HISTORY
+  </a>
+</div>
+
+
       <div class="d-flex align-items-center gap-2">
         <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
         <!-- <button class="available-button" type="button" (click)="availableProduct()">{{ showAvailable ? 'Available
