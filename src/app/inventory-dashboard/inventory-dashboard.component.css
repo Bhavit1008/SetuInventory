@@ -1,30 +1,19 @@
 .charts1 {
-  margin-top: 15px;
-  margin-left: 15px;
+  margin: 15px 15px 0;
+  padding: 0 10px;
   display: flex;
-  padding-left: 10px;
-  padding-right: 10px;
   gap: 20px;
   flex-wrap: wrap;
   font-family: 'Poppins', sans-serif;
 }
 
 .charts2 {
-    margin-left: 15px;
-    margin-right: 15px;
-    margin-bottom: 50px;
-    margin-top: 25px;
+  margin: 25px 15px 50px;
   font-family: 'Poppins', sans-serif;
 }
-.charts2 > div {
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  transition: box-shadow 0.3s ease;
-}
 
-.charts1 > div {
+.charts1 > div,
+.charts2 > div {
   background: #fff;
   padding: 20px;
   border-radius: 10px;
@@ -37,6 +26,18 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
+.charts1 > div {
+  width: 48.75%;
+}
+
+.echart {
+  height: 300px;
+}
+
+.echart-lg {
+  height: 400px;
+}
+
 h4 {
   margin-bottom: 15px;
   color: #2c3e50;
@@ -47,85 +48,10 @@ h4 {
   letter-spacing: 0.05em;
 }
 
-hr {
-  margin: 40px 0;
-  border: none;
-  border-top: 1px solid #ddd;
-}
-
-.inventory-grid {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-
-.card {
-  background: #fefefe;
-  border-radius: 8px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  padding: 15px;
-  width: 180px;
-  transition: transform 0.2s ease;
-  cursor: pointer;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.card img {
-  border-radius: 6px;
-  margin-bottom: 10px;
-  object-fit: cover;
-  height: 120px;
-  width: 100%;
-}
-
-.card p {
-  margin: 5px 0;
-  color: #34495e;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.badge {
-  display: inline-block;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  color: white;
-  user-select: none;
-}
-
-.badge.available {
-  background-color: #6FCF97;  /* pastel mint green */
-}
-
-.badge.hold {
-  background-color: #F2C94C;  /* warm mustard yellow */
-  color: #333;
-}
-
-.badge.sold {
-  background-color: #EB5757;  /* soft red */
-}
 .footer {
   text-align: center;
   margin-top: 40px;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.footer h4 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  color: #333;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .footer-svg {
@@ -134,11 +60,9 @@ hr {
   height: 25px;
   vertical-align: middle;
 }
-/* Responsive */
+
 @media (max-width: 900px) {
-  .charts1 > div {
-    width: 100% !important;
-  }
+  .charts1 > div,
   .charts2 > div {
     width: 100% !important;
   }

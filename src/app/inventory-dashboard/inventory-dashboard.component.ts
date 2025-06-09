@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartData, ChartType } from 'chart.js';
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -13,6 +13,7 @@ import { ProductService } from '../services/product.service';
   styleUrl: './inventory-dashboard.component.css'
 })
 export class InventoryDashboardComponent {
+  isMobile: boolean = false;
   allInventory: Product[] = [];
 
   statusLabels = ['Available', 'Hold', 'Sold'];
@@ -30,7 +31,9 @@ export class InventoryDashboardComponent {
  
 
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService) {
+    this.isMobile = window.innerWidth <= 768;
+  }
 
   ngOnInit() {
     this.productService.fetchAllsProducts().then(products => {
@@ -106,69 +109,83 @@ export class InventoryDashboardComponent {
     };
   }
   prepareProductQualityGroupedData() {
-  // Reset map
-  this.productQualityStatusMap = {};
+    // Reset map
+    this.productQualityStatusMap = {};
 
-  // Aggregate counts by quality and status
-  this.allInventory.forEach(item => {
-    const quality = item.productQuality || 'Unknown';
-    const status = item.status || 'Unknown';
+    // Aggregate counts by quality and status
+    this.allInventory.forEach(item => {
+      const quality = item.productQuality || 'Unknown';
+      const status = item.status || 'Unknown';
 
-    if (!this.productQualityStatusMap[quality]) {
-      this.productQualityStatusMap[quality] = { Available: 0, Hold: 0, Sold: 0 };
-    }
-    this.productQualityStatusMap[quality][status] = (this.productQualityStatusMap[quality][status] || 0) + 1;
-  });
-
-  // Extract labels and datasets
-  this.productQualityLabels = Object.keys(this.productQualityStatusMap);
-  const availableData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Available'] || 0);
-  const holdData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Hold'] || 0);
-  const soldData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Sold'] || 0);
-
-  // Setup ECharts options
-  this.productQualityGroupedChartOptions = {
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {
-      data: ['Available', 'Hold', 'Sold']
-    },
-    xAxis: {
-      type: 'category',
-      data: this.productQualityLabels
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        name: 'Available',
-        type: 'bar',
-        data: availableData,
-        itemStyle: {
-          color: '#4CAF50' 
-        },
-        barWidth: 15
-      },
-      {
-        name: 'Hold',
-        type: 'bar',
-        data: holdData,itemStyle: {
-          color: '#FFC107' 
-        },
-        barWidth: 15
-      },
-      {
-        name: 'Sold',
-        type: 'bar',
-        data: soldData,
-        itemStyle: {
-          color: '#F44336'
-        },
-        barWidth: 15
+      if (!this.productQualityStatusMap[quality]) {
+        this.productQualityStatusMap[quality] = { Available: 0, Hold: 0, Sold: 0 };
       }
-    ]
-  };
-}
+      this.productQualityStatusMap[quality][status] = (this.productQualityStatusMap[quality][status] || 0) + 1;
+    });
+
+    // Extract labels and datasets
+    this.productQualityLabels = Object.keys(this.productQualityStatusMap);
+    const availableData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Available'] || 0);
+    const holdData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Hold'] || 0);
+    const soldData = this.productQualityLabels.map(q => this.productQualityStatusMap[q]['Sold'] || 0);
+
+    // Setup ECharts options
+    this.productQualityGroupedChartOptions = {
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data: ['Available', 'Hold', 'Sold']
+      },
+      grid: {
+        left: 10,
+        right: 10,
+        bottom: 70, 
+        top: 40,
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: this.productQualityLabels,
+        axisLabel: {
+          interval: 0, 
+          rotate: this.isMobile ? 45 : 0, 
+          fontSize: this.isMobile ? 10 : 12,
+          overflow: 'truncate'
+        }
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [
+        {
+          name: 'Available',
+          type: 'bar',
+          data: availableData,
+          itemStyle: {
+            color: '#4CAF50'
+          },
+          barWidth: this.isMobile ? 5 : 15
+        },
+        {
+          name: 'Hold',
+          type: 'bar',
+          data: holdData,
+          itemStyle: {
+            color: '#FFC107'
+          },
+          barWidth: this.isMobile ? 5 : 15
+        },
+        {
+          name: 'Sold',
+          type: 'bar',
+          data: soldData,
+          itemStyle: {
+            color: '#F44336'
+          },
+          barWidth: this.isMobile ? 5 : 15
+        }
+      ]
+    };
+  }
 }

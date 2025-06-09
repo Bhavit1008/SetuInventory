@@ -26,12 +26,6 @@
         <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
       </select>
 
-      <label for="status">Status: </label>
-      <select name="status" id="status" class="form-control" formControlName="status" required>
-        <option value="">-- Select Category --</option>
-        <option *ngFor="let s of status" [value]="s.label">{{ s.label }}</option>
-      </select>
-
       <label>Product Code</label>
       <input type="text" formControlName="productCode" />
 
@@ -55,46 +49,30 @@
   <!-- Main content: Results -->
   <div class="content" [class.blur]="sidebarVisible && isMobile">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap"
-     style="
-       display: flex;
-       justify-content: center;
-       gap: 10px;
-       padding: 20px;
-       flex-wrap: nowrap;
-       overflow-x: auto;
-       width: 100%;
-       scrollbar-width: none;     /* Firefox */
-       -ms-overflow-style: none;  /* IE 10+ */
-     "
-     onscroll="this.style.scrollbarWidth='none';" 
->
-  <a [ngStyle]="getLinkStyle('All')" (click)="highlight('All', $event)" class="nav-link" href="search">
-    ALL PRODUCTS
-  </a>
-  <a [ngStyle]="getLinkStyle('Available')" (click)="highlight('Available', $event)" class="nav-link">
-    IN STOCK
-  </a>
-  <a [ngStyle]="getLinkStyle('Processing')" (click)="highlight('Processing', $event)" class="nav-link">
-    PROCESSING
-  </a>
-  <a [ngStyle]="getLinkStyle('Hold')" (click)="highlight('Hold', $event)" class="nav-link">
-    HOLD
-  </a>
-  <a [ngStyle]="getLinkStyle('Sold')" (click)="highlight('Sold', $event)" class="nav-link">
-    SOLD
-  </a>
-  <a [ngStyle]="getLinkStyle('Delete')" (click)="highlight('Delete', $event)" class="nav-link">
-    DELETED HISTORY
-  </a>
-</div>
+      <div class="product-status-filter-bar">
+        <a [ngStyle]="getLinkStyle('All')" (click)="highlight('All', $event)" class="filter-tab" href="search">
+          ALL PRODUCTS
+        </a>
+        <a [ngStyle]="getLinkStyle('Available')" (click)="highlight('Available', $event)" class="filter-tab">
+          IN STOCK
+        </a>
+        <a [ngStyle]="getLinkStyle('Processing')" (click)="highlight('Processing', $event)" class="filter-tab">
+          PROCESSING
+        </a>
+        <a [ngStyle]="getLinkStyle('Hold')" (click)="highlight('Hold', $event)" class="filter-tab">
+          HOLD
+        </a>
+        <a [ngStyle]="getLinkStyle('Sold')" (click)="highlight('Sold', $event)" class="filter-tab">
+          SOLD
+        </a>
+        <a [ngStyle]="getLinkStyle('Delete')" (click)="highlight('Delete', $event)" class="filter-tab">
+          DELETED HISTORY
+        </a>
+      </div>
 
 
       <div class="d-flex align-items-center gap-2">
         <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
-        <!-- <button class="available-button" type="button" (click)="availableProduct()">{{ showAvailable ? 'Available
-          Products' : 'All Products' }}</button>
-        <button class="sort-button" type="button" (click)="sortData()">Sort by price</button> -->
       </div>
     </div>
     <div *ngIf="isLoading">
@@ -110,10 +88,34 @@
       </div>
     </div>
     <div class="card-grid">
-      <app-product-card *ngFor="let product of finalProducts" [product]="product" />
+      <app-product-card *ngFor="let product of finalProducts" [product]="product" (changeStatus)="openPopup($event)" />
     </div>
     <div *ngIf="!isLoading && finalProducts.length === 0" class="no-results">
       <p>No products found. Please try adjusting your filters or check back later.</p>
+    </div>
+  </div>
+  <div *ngIf="isPopupOpen" class="popup-overlay">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h5 class="product-code">{{ product.productCode }}</h5>
+        <button (click)="closePopup()" class="close-btn">&times;</button>
+      </div>
+
+      <form [formGroup]="popupForm" (ngSubmit)="handleOk()">
+        <div class="form-group">
+          <label for="statusDropdown">Update Status:</label>
+          <select id="statusDropdown" class="form-control" formControlName="status">
+            <option *ngFor="let s of statusList" [value]="s.label">{{ s.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="popupTextarea">Remark:</label>
+          <textarea id="popupTextarea" placeholder="Enter description..." rows="4" formControlName="remark"></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">OK</button>
+      </form>
     </div>
   </div>
 </div>
