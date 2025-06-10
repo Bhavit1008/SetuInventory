@@ -1,19 +1,19 @@
-<div class="charts1" style="display: flex; gap: 20px; flex-wrap: wrap;">
-    <div style="width: 48.75%;">
+<div class="charts1">
+    <div>
         <h4>Status Distribution</h4>
-        <div echarts [options]="statusChartOptions" style="height: 300px;"></div>
+        <div echarts [options]="statusChartOptions" class="echart"></div>
     </div>
 
-    <div style="width: 48.75%;">
+    <div>
         <h4>Inventory by Godown</h4>
-        <div echarts [options]="godownChartOptions" style="height: 300px;"></div>
+        <div echarts [options]="godownChartOptions" class="echart"></div>
     </div>
 </div>
 
 <div class="charts2">
-    <div style="width: 100%;">
+    <div>
         <h4>Product Quality with Status Breakdown</h4>
-        <div echarts [options]="productQualityGroupedChartOptions" style="height: 400px;"></div>
+        <div echarts [options]="productQualityGroupedChartOptions" class="echart-lg"></div>
     </div>
 </div>
 

@@ -1,70 +1,13 @@
 <div class="product-card">
-    <div class="card-header">
-        <h4>{{ product.productCode }}</h4>
-    </div>
-    <button class="edit-button" (click)="editProduct(product); $event.stopPropagation()">Edit</button>
-    <button class="edit-button" (click)="viewProduct(product)">View</button>
-    <p><strong>Category:</strong> {{ product.category }}</p>
-    <p><strong>Location:</strong> {{ product.godownLocation }}</p>
-    <p><strong>Product Finish:</strong> {{ product.productFinished }}</p>
-    <p><strong>Quality:</strong> {{ product.productQuality }}</p>
-    <p><strong>Description:</strong> {{ product.description }}</p>
-
-    <div style="display: flex; justify-content: center; gap: 10px; padding: 20px; flex-wrap: nowrap; overflow-x: auto;">
-  <a style="color: grey; margin: 5px;" (click)="openPopup('Processing')">
-    PROCESSING
-  </a>
-  <a style="color: grey; margin: 5px;" (click)="openPopup('Hold')">
-    HOLD
-  </a>
-  <a style="color: grey; margin: 5px;" (click)="openPopup('Sold')">
-    SOLD
-  </a>
-  <a style="color: RED; margin: 5px;" (click)="openPopup('Delete')">
-    DELETE
-  </a>
-</div>
-
-</div>
-
-
-<!-- Popup Modal -->
-<div
-  *ngIf="isPopupOpen"
-  style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-         background-color: grey; display: flex; justify-content: center; align-items: center; z-index: 1000;">
-  
-  <div
-    style="background: white; padding: 20px; border-radius: 10px;
-           width: 90%; max-width: 400px; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative;">
-    
-    <!-- Close button -->
-    <button
-      (click)="closePopup()"
-      style="position: absolute; top: 8px; right: 12px; border: none;
-             background: none; font-size: 22px; cursor: pointer; color: #555;">
-      &times;
-    </button>
-
-    <!-- Label -->
-    <label for="popupTextarea" style="display: block; font-weight: bold;">{{ product.productCode }}:</label>
-
-    <!-- Textarea -->
-    <textarea
-      #popupInput
-      id="popupTextarea"
-      placeholder="Enter description for status change..."
-      rows="5"
-      style="width: 100%; margin-top: 10px; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;"
-    ></textarea>
-
-    <!-- OK Button -->
-    <button
-      (click)="handleOk(popupInput.value, popUpOrigin,product)"
-      style="margin-top: 15px; width: 100%; padding: 10px;
-             background-color: #007BFF; color: white; border: none;
-             border-radius: 5px; cursor: pointer; font-size: 16px;">
-      OK
-    </button>
+  <div class="card-header">
+    <h4>{{ product.productCode }}</h4>
   </div>
+  <button class="edit-button" (click)="editProduct(product); $event.stopPropagation()">Edit</button>
+  <button class="edit-button" (click)="viewProduct(product)">View</button>
+  <p><strong>Category:</strong> {{ product.category }}</p>
+  <p><strong>Location:</strong> {{ product.godownLocation }}</p>
+  <p><strong>Product Finish:</strong> {{ product.productFinished }}</p>
+  <p><strong>Quality:</strong> {{ product.productQuality }}</p>
+  <p><strong>Description:</strong> {{ product.description }}</p>
+  <button class="status-update" (click)="onChangeStatusClick()">Update Status</button>
 </div>

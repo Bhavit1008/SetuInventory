@@ -5,6 +5,7 @@ import { Product } from '../model/product';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { ProductService } from '../services/product.service';
 import { ProductCardComponent } from '../product-card/product-card.component';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-search-page',
@@ -19,8 +20,11 @@ export class SearchPageComponent implements OnInit{
   sortAsc = true;
   isLoading = true;
   showAvailable = true;
+  isPopupOpen = false;
+  product: Product = new Product();
 
   searchForm: FormGroup;
+  popupForm: FormGroup;
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   finalProducts: Product[] = [];  
@@ -48,11 +52,13 @@ export class SearchPageComponent implements OnInit{
     { id: 8, label: "Kesariya Green"},
   ]
 
-  status = [
-    { id: 1, label: "Available" },
-    { id: 2, label: "Hold" },
-    { id: 3, label: "Sold"}
-  ]
+  
+  statusList = [
+    { label: 'Available' },
+    { label: 'Processing' },
+    { label: 'Hold' },
+    { label: 'Sold' },
+  ];
 
   ngOnInit() {
     this.productService.fetchAllsProducts().then(products => {
@@ -65,6 +71,7 @@ export class SearchPageComponent implements OnInit{
       this.checkMobile();
       window.addEventListener('resize', () => this.checkMobile());
     }
+    this.selectedLinkId = 'All';
   }
   checkMobile() {
     if (typeof window !== 'undefined') {
@@ -87,7 +94,7 @@ export class SearchPageComponent implements OnInit{
     }
   }
 
-  constructor(private fb: FormBuilder, private productService: ProductService) {
+  constructor(private fb: FormBuilder, private productService: ProductService,private toastService : ToastService) {
     this.searchForm = this.fb.group({
       category: [''],
       godonLocations: [''],
@@ -99,9 +106,12 @@ export class SearchPageComponent implements OnInit{
       minQuantity: [''],
       maxQuantity: ['']
     });
+    this.popupForm = this.fb.group({
+      status: [''],
+      remark: ['']
+    });
   }
 
-  // Apply the filter based on input
   applyFilter() {
     const {godonLocations,productQuality,status, productCode, category, minPrice, maxPrice,minQuantity ,maxQuantity} = this.searchForm.value;
 
@@ -129,31 +139,18 @@ export class SearchPageComponent implements OnInit{
     this.sortAsc ? this.filteredProducts.sort((a, b) => a.sellingCost - b.sellingCost) : this.filteredProducts.sort((a, b) => b.sellingCost - a.sellingCost);
     this.sortAsc = !this.sortAsc;
   }
-  availableProduct() {
-    if (this.showAvailable) {
-      this.finalProducts = this.filteredProducts.filter(p => p.status.toLowerCase().includes('available'));
-    } else {
-      this.finalProducts = [...this.filteredProducts];
-    }
-    this.showAvailable = !this.showAvailable;
-  }
 
   highlight(linkId: string, event: Event): void {
-    event.preventDefault(); // Prevent default anchor behavior
+    event.preventDefault();
     this.applyStatusFilter(linkId);
     this.selectedLinkId = linkId;
   }
 
-  getLinkStyle(linkId: string): { [key: string]: string } {
-    const isSelected = this.selectedLinkId === linkId;
+  getLinkStyle(status: string) {
     return {
-      'flex-shrink': '0',
-      'padding': '10px 20px',
-      'font-size': '16px',
-      'text-decoration': 'none',
-      'color': isSelected ? 'Black' : 'grey',
-      'display': 'inline-block',
-      'cursor': 'pointer'
+      backgroundColor: this.selectedLinkId === status ? '#2c7be5' : '#fff',
+      color: this.selectedLinkId === status ? '#fff' : '#333',
+      border: '1px solid ' + (this.selectedLinkId === status ? '#2c7be5' : '#ddd')
     };
   }
 
@@ -166,5 +163,40 @@ export class SearchPageComponent implements OnInit{
       this.finalProducts=this.allProducts;
     }
   }
- 
+
+  openPopup(product: Product) {
+    this.product = product;
+    this.isPopupOpen = true;
+    document.body.style.overflow = 'hidden';
+
+    this.popupForm = this.fb.group({
+      status: [''],
+      remark: ['']
+    });
+  }
+
+  closePopup(): void {
+    this.isPopupOpen = false;
+    this.ngOnInit();
+    document.body.style.overflow = '';
+  }
+
+  handleOk(): void {
+    const status = this.popupForm.value.status;
+    const remark = this.popupForm.value.remark;
+
+    const existingRemark = this.product.description ? this.product.description + ' | ' : '';
+    const updatedProduct = {
+      ...this.product,
+      status,
+      description: existingRemark + remark
+    };
+
+    this.productService.postApiCall(updatedProduct).subscribe(() => {
+      this.toastService.showSuccess("Status updated successfully.");
+      this.applyStatusFilter('All');
+      this.closePopup();
+    });
+  }
+
 }
