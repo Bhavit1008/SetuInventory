@@ -6,6 +6,8 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { ProductService } from '../services/product.service';
 import { ProductCardComponent } from '../product-card/product-card.component';
 import { ToastService } from '../services/toast.service';
+import { Intransit } from '../model/intransit';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-search-page',
@@ -58,6 +60,7 @@ export class SearchPageComponent implements OnInit{
     { label: 'Processing' },
     { label: 'Hold' },
     { label: 'Sold' },
+    { label: 'Recieve' },
   ];
 
   ngOnInit() {
@@ -181,22 +184,47 @@ export class SearchPageComponent implements OnInit{
     document.body.style.overflow = '';
   }
 
-  handleOk(): void {
-    const status = this.popupForm.value.status;
-    const remark = this.popupForm.value.remark;
+  async handleOk(){
+  console.log('handleOk called');
 
-    const existingRemark = this.product.description ? this.product.description + ' | ' : '';
-    const updatedProduct = {
-      ...this.product,
-      status,
-      description: existingRemark + remark
-    };
+  const status = this.popupForm.value.status;
+  const remark = this.popupForm.value.remark;
+  console.log('Form values - status:', status, 'remark:', remark);
 
-    this.productService.postApiCall(updatedProduct).subscribe(() => {
+  let inTransitObj: any = null;
+
+  if (status === 'Recieve') {
+    try {
+      console.log('Calling getIntransitApiCall...');
+      inTransitObj = await firstValueFrom(this.productService.getIntransitApiCall(this.product));
+      console.log('inTransit result:', inTransitObj);
+    } catch (error) {
+      console.error('Error in getIntransitApiCall:', error);
+      return;
+    }
+  }
+
+  const existingRemark = this.product.description ? this.product.description + ' | ' : '';
+  let updatedProduct = {
+    ...this.product,
+    status: inTransitObj?.toLocation ? 'Available' : status,
+    description: existingRemark + remark,
+    godownLocation: inTransitObj?.toLocation ?? this.product.godownLocation
+  };
+
+  console.log('Final updated product:', updatedProduct);
+
+  this.productService.postApiCall(updatedProduct).subscribe({
+    next: () => {
+      console.log('postApiCall success');
       this.toastService.showSuccess("Status updated successfully.");
       this.applyStatusFilter('All');
       this.closePopup();
-    });
+    },
+    error: (err) => {
+      console.error('postApiCall error:', err);
+    }
+  });
   }
 
 }

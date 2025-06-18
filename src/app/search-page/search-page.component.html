@@ -65,6 +65,9 @@
         <a [ngStyle]="getLinkStyle('Sold')" (click)="highlight('Sold', $event)" class="filter-tab">
           SOLD
         </a>
+        <a [ngStyle]="getLinkStyle('InTransit')" (click)="highlight('InTransit', $event)" class="filter-tab">
+          Intransit
+        </a>
         <a [ngStyle]="getLinkStyle('Delete')" (click)="highlight('Delete', $event)" class="filter-tab">
           DELETED HISTORY
         </a>

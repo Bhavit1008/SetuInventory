@@ -1,0 +1,62 @@
+<div class="container">
+  <form [formGroup]="inTransitFormGroup" #inTransitForm="ngForm">
+    <div class="form-group" style="margin: 10px;">
+      <label>Product code: </label>
+      <p class="form-control" name="productCode">{{product.productCode}}</p>
+    </div>
+
+
+    <div class="form-group" style="margin: 10px;">
+      <label for="fromLocation">From: </label>
+      <select name="fromLocation" id="fromLocation" class="form-control" formControlName="fromLocation">
+        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+      </select>
+    </div>
+
+     <div class="form-group" style="margin: 10px;">
+      <label for="toLocation">To: </label>
+      <select name="toLocation" id="toLocation" class="form-control" formControlName="toLocation">
+        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin: 10px;">
+      <label>Weight (tons): </label>
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="productWeight" id="productWeight" formControlName="productWeight">
+    </div>
+
+    <div class="form-group" style="margin: 10px;">
+      <label>Challan number: </label>
+      <input type="text"  class="form-control"
+        name="challanNumber" formControlName="challanNumber" id="challanNumber">
+    </div>
+
+    <div class="form-group" style="margin: 10px;">
+      <label>Driver Contact: </label>
+      <input type="text"  class="form-control"
+        name="driverContact" formControlName="driverContact" id="driverContact">
+    </div>
+    
+
+    <div class="form-group" style="margin: 10px;">
+      <label>Remarks: </label>
+      <input type="text" id="description" class="form-control" name="description" formControlName="description">
+    </div>
+
+    <div class="form-group" style="margin: 10px;">
+        <label for="dateOfLoading">Select Date:</label>
+        <input type="date" class="form-control" id="dateOfLoading" formControlName="dateOfLoading">
+    </div>
+    
+
+    <button type="submit" (click)="saveInTransitDetails(inTransitForm)" class="btn btn-primary"  style="margin: 10px;">
+      <ng-container>
+        Submit
+      </ng-container>
+      <!-- <ng-template #loading>
+        <span class="spinner"></span> Submitting...
+      </ng-template> -->
+    </button>
+  </form>
+</div>

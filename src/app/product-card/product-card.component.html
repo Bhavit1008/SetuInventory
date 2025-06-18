@@ -4,6 +4,7 @@
   </div>
   <button class="edit-button" (click)="editProduct(product); $event.stopPropagation()">Edit</button>
   <button class="edit-button" (click)="viewProduct(product)">View</button>
+  <button class="edit-button" (click)="addIntransit(product)">InTransit</button>
   <p><strong>Category:</strong> {{ product.category }}</p>
   <p><strong>Location:</strong> {{ product.godownLocation }}</p>
   <p><strong>Product Finish:</strong> {{ product.productFinished }}</p>
