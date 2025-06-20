@@ -2,7 +2,7 @@
 
 .container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     width: 100%;
     min-height: 100vh;
     background-color: #f8f9fa;
@@ -93,6 +93,7 @@
   /* Content area styles */
   .content {
     flex: 1;
+    width: 75%;
     padding: 24px;
     transition: filter 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
   will-change: filter, transform, opacity;
