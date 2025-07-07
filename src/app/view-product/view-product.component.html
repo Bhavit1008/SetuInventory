@@ -20,11 +20,12 @@
             <div><strong>Finish:</strong> {{ product.productFinished }}</div>
             <div><strong>Length:</strong> {{ product.productLength }} ft</div>
             <div><strong>Width:</strong> {{ product.productWidth }} ft</div>
-            <div><strong>Height:</strong> {{ product.productHeight }} ft</div>
+            <div *ngIf="product.category==='Block'"><strong>Height:</strong> {{ product.productHeight }} ft</div>
             <div><strong>Thickness:</strong> {{ product.productThickness }} mm</div>
             <div><strong>Weight:</strong> {{ product.productWeight }} kg</div>
             <div><strong>Location:</strong> {{ product.godownLocation }}</div>
             <div><strong>Quantity:</strong> {{ product.quantity }}</div>
+            <div *ngIf="product.category==='Slab'"><strong>Total Area:</strong> {{ product.totalArea }}</div>
         </div>
     </div>
 

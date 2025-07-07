@@ -22,5 +22,6 @@ export class Product {
   status:string ='';
   description: string = '';
   pieces: SlabPieces[] = [];
-  imageUrl: string=''; 
+  imageUrl: string='';
+  totalArea: number=0; 
   }

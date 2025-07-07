@@ -257,6 +257,8 @@ export class SlabsManagementComponent {
   }
 
   prepareResponseObject(slab: any , imgUrl : string){
+    console.log('slab pieces :: ', this.slabPieces);
+    this.calculateTotalAreaOfSlabs();
     const slabObject = {
       id : slab.value.id,
       category : "Slab",
@@ -276,9 +278,21 @@ export class SlabsManagementComponent {
       status: slab.value.status,
       description : slab.value.remark,
       pieces : this.slabPieces,
-      imageUrl : imgUrl
+      imageUrl : imgUrl,
+      totalArea: this.calculateTotalAreaOfSlabs()
     }
     return slabObject;
+  }
+
+  calculateTotalAreaOfSlabs(){
+    var totalArea = 0;
+     for(var i=0;i<this.slabPieces.length;i++){
+      if(this.slabPieces[i].totalArea!=undefined || this.slabPieces[i].totalArea!=null){
+          totalArea = totalArea + this.slabPieces[i].totalArea;
+      }
+     }
+     console.log('total Area :: ',totalArea);
+     return totalArea;
   }
 
   openCamera(): void {

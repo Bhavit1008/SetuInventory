@@ -176,6 +176,13 @@ export class SearchPageComponent implements OnInit{
       status: [''],
       remark: ['']
     });
+
+    if(product.status === 'InTransit'){
+      this.statusList = [];
+      this.statusList.push(
+        { label: 'Recieve' }
+      );
+    }
   }
 
   closePopup(): void {

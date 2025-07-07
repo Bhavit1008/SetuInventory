@@ -16,6 +16,7 @@ export class ViewProductComponent {
   constructor(private router: Router) {
     const nav = this.router.getCurrentNavigation();
     this.product = nav?.extras?.state?.['product'];
+    console.log('product :: ',this.product);
   }
 
   getStatusClass(status: string): string {

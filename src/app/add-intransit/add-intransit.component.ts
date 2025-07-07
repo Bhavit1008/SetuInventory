@@ -48,7 +48,7 @@ export class AddIntransitComponent {
       this.inTransitFormGroup = new FormGroup({
         id: new FormControl(),
         productCode: new FormControl(),
-        fromLocation: new FormControl(),
+        fromLocation: new FormControl(this.product.godownLocation),
         toLocation: new FormControl(),
         productWeight: new FormControl(),
         challanNumber: new FormControl(),

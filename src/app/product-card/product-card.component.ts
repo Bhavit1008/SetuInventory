@@ -20,6 +20,13 @@ export class ProductCardComponent {
   @ViewChild('popupContainer') popupContainer!: ElementRef<HTMLElement>;
   constructor(private router: Router) {}
 
+  inTransit = true;
+
+  ngOnInit(){
+    if(this.product.status === 'InTransit'){
+      this.inTransit = false;
+    }
+  }
   
   editProduct(product: Product) {
     if(product.category.toLowerCase()==='slab'){
