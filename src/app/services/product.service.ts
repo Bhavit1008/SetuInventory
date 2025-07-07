@@ -34,6 +34,18 @@ export class ProductService {
     return this.httpClient.post(ProductService.backendHost+'addProduct', body,{'headers':headers})
   }
 
+  postIntransitApiCall(data: any){
+    const headers = { 'content-type': 'application/json'}  
+    const body=JSON.stringify(data);
+    return this.httpClient.post(ProductService.backendHost+'addTransit', body,{'headers':headers})
+  }
+
+  getIntransitApiCall(data: any): Observable<any>{
+    const headers = { 'content-type': 'application/json'}  
+    const body=JSON.stringify(data);
+    return this.httpClient.post(ProductService.backendHost+'getIntansit', body,{'headers':headers})
+  }
+
   uploadImage(data: any){
     const blob = this.dataURLtoBlob(data);
     const formData = new FormData();

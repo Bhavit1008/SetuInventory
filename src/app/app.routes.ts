@@ -6,6 +6,7 @@ import { LoginManagementComponent } from './login-management/login-management.co
 import { AuthGuard } from './auth.guard';
 import { ViewProductComponent } from './view-product/view-product.component';
 import { InventoryDashboardComponent } from './inventory-dashboard/inventory-dashboard.component';
+import { AddIntransitComponent } from './add-intransit/add-intransit.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -14,6 +15,7 @@ export const routes: Routes = [
     { path: 'search', component: SearchPageComponent ,canActivate: [AuthGuard]  },
     { path: 'view-product', component: ViewProductComponent ,canActivate: [AuthGuard]  },
     { path: 'dashboard', component: InventoryDashboardComponent ,canActivate: [AuthGuard]  },
+    { path: 'intransit', component: AddIntransitComponent, canActivate: [AuthGuard]},
     { path: 'login', component: LoginManagementComponent},
     { path: '**', redirectTo: 'login' }
 ];

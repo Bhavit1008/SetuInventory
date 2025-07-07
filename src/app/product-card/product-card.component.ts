@@ -20,6 +20,7 @@ export class ProductCardComponent {
   @ViewChild('popupContainer') popupContainer!: ElementRef<HTMLElement>;
   constructor(private router: Router) {}
 
+  
   editProduct(product: Product) {
     if(product.category.toLowerCase()==='slab'){
       this.router.navigate(['/slab'], {
@@ -34,6 +35,12 @@ export class ProductCardComponent {
   }
   viewProduct(product: Product) {
     this.router.navigate(['/view-product'], {
+      state: { product: product }
+    });
+  }
+
+  addIntransit(product: Product){
+    this.router.navigate(['/intransit'], {
       state: { product: product }
     });
   }

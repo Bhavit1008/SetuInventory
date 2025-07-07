@@ -1,7 +1,7 @@
 import { SlabPieces } from "./slab-pieces";
 
 export class Product {
-  id: number = 0;
+  id: string = '';
   category: string = '';
   productCode: string = '';
   godownLocation: string = '';
