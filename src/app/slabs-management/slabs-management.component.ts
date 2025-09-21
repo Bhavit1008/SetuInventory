@@ -121,7 +121,6 @@ export class SlabsManagementComponent {
  private patchFormWithData(formData?: Product): void {
   if (!formData) return;
 
-  // ✅ patch scalar fields
   this.stockFormGroup.patchValue({
     id: formData.id ?? null,
     productCode: formData.productCode ?? null,
@@ -141,7 +140,6 @@ export class SlabsManagementComponent {
     remark: formData.description ?? null
   });
 
-  // ✅ patch pieces safely
   this.slabPieces = Array.isArray(formData.pieces) ? formData.pieces : [];
   this.slabPieceForm = this.slabPieces.map(item =>
     this.fb.group({
@@ -156,8 +154,6 @@ export class SlabsManagementComponent {
     })
   );
   
-
-  // ✅ image handling
   if (formData.imageUrl) {
     this.productService.downloadImage(formData.imageUrl).subscribe(
       base64 => {
