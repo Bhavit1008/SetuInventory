@@ -13,6 +13,7 @@ export class Product {
   productWidth:number=0;
   productWeight: number=0;
   quantity: number=0;
+  size: number=0;
   exFactoryCost: number=0;
   freightCost: number = 0;
   miscellaneousCost: number = 0;

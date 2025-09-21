@@ -50,6 +50,14 @@
           [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('quantity')?.invalid }">
       </div>
     </div>
+
+     <div class="form-group" style="margin: 10px;">
+      <label>Total size: </label>
+      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
+        name="size" formControlName="size"
+        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('size')?.invalid }">
+    </div>
+
     <div class="form-group" style="margin: 10px;">
       <label for="productThickness">Thickness: </label>
       <select name="productThickness" id="productThickness" class="form-control" formControlName="productThickness"

@@ -39,6 +39,12 @@ export class ProductCardComponent {
     });
   }
 
+  processBlockToSlab(product: Product){
+    this.router.navigate(['/slab'], {
+        state: { formData: product }
+      });
+  }
+
   addIntransit(product: Product){
     this.router.navigate(['/intransit'], {
       state: { product: product }
