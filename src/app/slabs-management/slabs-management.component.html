@@ -1,224 +1,529 @@
-<div class="container">
-  <form [formGroup]="stockFormGroup" #stockForm="ngForm">
-    <div class="form-group" style="margin: 10px;">
-      <label>Product code: </label>
-      <input type="text" class="form-control" name="productCode" formControlName="productCode"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productCode')?.invalid }">
-    </div>
+<div class="slab-page" [class.dark]="isDark">
 
-    <div class="form-group" style="margin: 10px;">
-      <label for="godownLocation">Locations: </label>
-      <select name="godownLocation" id="godownLocation" class="form-control" formControlName="godownLocation"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('godownLocation')?.invalid }">
-        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label for="productQuality">Product Quality: </label>
-      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productQuality')?.invalid }">
-        <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label for="productFinished">Product Finishes: </label>
-      <select name="productFinished" id="productFinished" class="form-control" formControlName="productFinished"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productFinished')?.invalid }">
-        <option *ngFor="let quality of finishesRange" [value]="quality.label">{{ quality.label }}</option>
-      </select>
-    </div>
-
-    <div class="row" style="padding-left: 5px;">
-      <div class=" form-group col-md-3" style="margin: 5px;">
-        <label>Length: </label>
-        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-          name="productLength" formControlName="productLength"
-          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productLength')?.invalid }">
-      </div>
-      <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Width: </label>
-        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-          name="productWidth" formControlName="productWidth"
-          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productWidth')?.invalid }">
-      </div>
-      <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Quantity: </label>
-        <input type="number" min="1" oninput="this.value = this.value < 1 ? '' : this.value" class="form-control"
-          name="quantity" formControlName="quantity"
-          [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('quantity')?.invalid }">
-      </div>
-    </div>
-
-     <div class="form-group" style="margin: 10px;">
-      <label>Total size: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="size" formControlName="size"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('size')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label for="productThickness">Thickness: </label>
-      <select name="productThickness" id="productThickness" class="form-control" formControlName="productThickness"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('productThickness')?.invalid }">
-        <option *ngFor="let quality of thicknessRange" [value]="quality.label">{{ quality.label }} mm</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Ex-factory cost/per sqft: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="exFactoryCost" formControlName="exFactoryCost"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('exFactoryCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Freight/per sqft: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="freightCost" formControlName="freightCost"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('freightCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Miscellaneous Cost/per sqft: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="miscellaneousCost" formControlName="miscellaneousCost"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('miscellaneousCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>In-House Cost/per sqft: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="inHouseCost" formControlName="inHouseCost"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('inHouseCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Selling Cost/per sqft:</label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="sellingCost" formControlName="sellingCost"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('sellingCost')?.invalid }">
-    </div>
-    <div class="form-group" style="margin: 10px;">
-      <label for="status">Status: </label>
-      <select name="status" id="status" class="form-control" formControlName="status"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('status')?.invalid }">
-        <option *ngFor="let status of statusOption" [value]="status.label">{{ status.label }}</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Remarks</label>
-      <input type="text" class="form-control" name="remark" formControlName="remark"
-        [ngClass]="{ 'is-invalid': submitted && stockFormGroup.get('remark')?.invalid }">
-    </div>
-    <div class="form-group" style="margin: 10px">
-      <label>Upload or Take a Photo</label>
-      <div class="d-flex align-items-center gap-2 mb-3">
-        <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
-        <button class="btn btn-primary" (click)="fileInput.click()">
-          Add Image
-        </button>
-
-        <button *ngIf="!isMobile" class="btn btn-primary" (click)="openCamera()">
-          Take a Photo
-        </button>
-      </div>
-
-      <div *ngIf="!isMobile && showCamera" class="camera-modal p-3 rounded shadow-lg">
-        <div class="video-wrapper mb-3">
-          <video #video autoplay class="video-frame rounded border w-100"></video>
-        </div>
-
-        <div class="d-flex justify-content-between">
-          <button class="btn btn-success me-2" (click)="capturePhoto()">Capture</button>
-          <button class="btn btn-danger" (click)="closeCamera()">Cancel</button>
-        </div>
-
-        <canvas #canvas style="display:none;"></canvas>
-      </div>
-
-      <div *ngIf="previewImg">
-        <img [src]="previewImg" alt="Captured Image" style="margin-top: 10px; max-width: 25vw;">
-      </div>
-    </div>
-
-    <div class="container mt-4">
-      <h2 class="text-center">Enter Slab Details</h2>
-
-      <table class="table table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Length</th>
-            <th>Wsidth</th>
-            <th colspan="2">Less</th>
-            <th>Size</th>
-            <th>Remarks</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let form of slabPieceForm; let i = index" [formGroup]="form">
-            <td>
-              <span>{{ form.value.id }}</span>
-            </td>
-            <td>
-              <input *ngIf="form.value.editable" type="number" min="0"
-                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="length" class="form-control"
-                placeholder="Enter length">
-              <span *ngIf="!form.value.editable">{{ form.value.length }}</span>
-            </td>
-            <td>
-              <input *ngIf="form.value.editable" type="number" min="0"
-                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="width" class="form-control"
-                placeholder="Enter width">
-              <span *ngIf="!form.value.editable">{{ form.value.width }}</span>
-            </td>
-            <td>
-              <input *ngIf="form.value.editable" type="number" min="0"
-                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="lessLength"
-                class="form-control" placeholder="Enter length">
-              <span *ngIf="!form.value.editable">{{ form.value.lessLength }}</span>
-            </td>
-            <td>
-              <input *ngIf="form.value.editable" type="number" min="0"
-                oninput="this.value = this.value < 0 ? '' : this.value" formControlName="lessWidth" class="form-control"
-                placeholder="Enter width">
-              <span *ngIf="!form.value.editable">{{ form.value.lessWidth }}</span>
-            </td>
-            <td>
-              <span>{{ form.value.totalArea }}</span>
-            </td>
-            <td>
-              <input *ngIf="form.value.editable" formControlName="remark" class="form-control"
-                placeholder="Enter Remarks">
-              <span *ngIf="!form.value.editable">{{ form.value.remark }}</span>
-            </td>
-            <td>
-              <button *ngIf="!form.value.editable" (click)="editSlabPiece(i)" class="btn btn-primary btn-sm"
-                style="margin: 10px;">Edit</button>
-              <button *ngIf="form.value.editable" (click)="saveSlabPiece(i)" class="btn btn-success btn-sm"
-                style="margin: 10px;">Save</button>
-              <button *ngIf="form.value.editable" (click)="cancelEdit(i)" class="btn btn-warning btn-sm"
-                style="margin: 10px;">Cancel</button>
-              <button (click)="deleteSlabPiece(i)" class="btn btn-danger btn-sm">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <button (click)="addNewRow()" class="btn btn-success mb-2">+ Add New Row</button>
-
-    </div>
-    <button type="submit" class="btn btn-primary" (click)="saveSlabDetails(stockForm)" style="margin: 10px;">
-      <ng-container *ngIf="!isSubmitting; else loading">
-        Submit
-      </ng-container>
-      <ng-template #loading>
-        <span class="spinner"></span> Submitting...
-      </ng-template>
+  <!-- ===== HEADER ===== -->
+  <header class="top-bar">
+    <button class="icon-btn" (click)="goBack()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
     </button>
+
+    <div class="header-center">
+      <span class="header-tag">SLAB ENTRY</span>
+      <h1 class="header-title">{{ blockData?.productCode || 'New Entry' }}</h1>
+    </div>
+
+    <div class="header-right">
+      <button class="icon-btn theme-toggle" (click)="toggleTheme()" [title]="isDark ? 'Light mode' : 'Dark mode'">
+        <svg *ngIf="!isDark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg *ngIf="isDark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <button class="icon-btn" (click)="fileInput.click()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <form [formGroup]="stockFormGroup" #stockForm="ngForm" class="main-layout" autocomplete="off">
+
+    <!-- ========== LEFT PANEL ========== -->
+    <aside class="left-panel">
+
+      <!-- Block Summary Card -->
+      <div class="panel-card block-summary">
+        <div class="card-badge">
+          <span class="badge-num">1</span>
+          <span class="badge-label">BLOCK INFO</span>
+        </div>
+
+        <div class="summary-row">
+          <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>
+          <span class="row-label">Block Number</span>
+          <span class="row-val accent">{{ blockData?.productCode || '—' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row">
+          <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span class="row-label">Product</span>
+          <span class="row-val">{{ blockData?.productQuality || '—' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row">
+          <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="row-label">Location</span>
+          <span class="row-val">{{ blockData?.godownLocation || '—' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row">
+          <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          <span class="row-label">Block Size (cm)</span>
+          <span class="row-val">{{ blockData?.productLength || '—' }} × {{ blockData?.productWidth || '—' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+      </div>
+
+      <!-- Block Photo -->
+      <div class="panel-card block-photo-card">
+        <div class="card-badge">
+          <span class="badge-num">2</span>
+          <span class="badge-label">BLOCK PHOTO</span>
+        </div>
+
+        <div class="photo-zone" (click)="fileInput.click()">
+          <div *ngIf="!previewImg" class="photo-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span>Tap to add photo</span>
+          </div>
+          <img *ngIf="previewImg" [src]="previewImg" alt="Block Photo" class="block-photo-img">
+          <div *ngIf="previewImg" class="photo-overlay">
+            <span>Change</span>
+          </div>
+        </div>
+
+        <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
+
+        <div class="photo-actions">
+          <button type="button" class="photo-btn" (click)="fileInput.click()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+          </button>
+          <button *ngIf="!isMobile" type="button" class="photo-btn" (click)="openCamera()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+          </button>
+        </div>
+
+        <!-- Camera modal -->
+        <div *ngIf="!isMobile && showCamera" class="camera-modal">
+          <video #video autoplay class="camera-video"></video>
+          <canvas #canvas style="display:none;"></canvas>
+          <div class="camera-controls">
+            <button type="button" class="cam-capture" (click)="capturePhoto()">● Capture</button>
+            <button type="button" class="cam-cancel"  (click)="closeCamera()">✕ Cancel</button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ========== CENTER PANEL ========== -->
+    <main class="center-panel">
+
+      <!-- Slab Details -->
+      <div class="panel-card">
+        <div class="card-badge">
+          <span class="badge-num">4</span>
+          <span class="badge-label">SLAB DETAILS</span>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productCode')?.invalid">
+            <label class="fg-label">Block Number</label>
+            <input type="text" class="fg-input" formControlName="productCode" placeholder="e.g. SMH0315">
+          </div>
+          <div class="field-group">
+            <label class="fg-label">Slab Number</label>
+            <input type="text" class="fg-input" placeholder="e.g. 1, 2, 3...">
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('godownLocation')?.invalid">
+            <label class="fg-label">Godown Location</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="godownLocation">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let g of goDownLocations" [value]="g.label">{{ g.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productQuality')?.invalid">
+            <label class="fg-label">Material</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="productQuality">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let q of productQuality" [value]="q.label">{{ q.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productFinished')?.invalid">
+            <label class="fg-label">Finish</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="productFinished">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let f of finishesRange" [value]="f.label">{{ f.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productThickness')?.invalid">
+            <label class="fg-label">Thickness (mm)</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="productThickness">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let t of thicknessRange" [value]="t.label">{{ t.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('status')?.invalid">
+            <label class="fg-label">Status</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="status">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let s of statusOption" [value]="s.label">{{ s.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group size-group" [class.err]="submitted && (stockFormGroup.get('productLength')?.invalid || stockFormGroup.get('productWidth')?.invalid)">
+            <label class="fg-label">Size (cm) L × W</label>
+            <div class="size-row">
+              <input type="number" min="0" class="fg-input size-in" formControlName="productLength" placeholder="L">
+              <span class="size-x">×</span>
+              <input type="number" min="0" class="fg-input size-in" formControlName="productWidth" placeholder="W">
+            </div>
+          </div>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('quantity')?.invalid">
+            <label class="fg-label">Quantity</label>
+            <input type="number" min="1" class="fg-input" formControlName="quantity" placeholder="1">
+          </div>
+          <div class="field-group full-width" [class.err]="submitted && stockFormGroup.get('remark')?.invalid">
+            <label class="fg-label">Remarks</label>
+            <input type="text" class="fg-input" formControlName="remark" placeholder="Add any notes...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Slab Entry Grid -->
+      <div class="panel-card">
+        <div class="card-badge-row">
+          <div class="card-badge">
+            <span class="badge-num">5</span>
+            <span class="badge-label">SLAB ENTRY GRID</span>
+          </div>
+          <button type="button" class="add-slab-btn" (click)="addNewRow()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Slab
+          </button>
+        </div>
+
+        <div class="grid-scroll">
+          <table class="slab-grid">
+            <thead>
+              <tr>
+                <th>Slab No.</th>
+                <th>Length (cm)</th>
+                <th>Width (cm)</th>
+                <th colspan="2">Less (L × W)</th>
+                <th>Sqft</th>
+                <th>Remarks</th>
+                <th>Photo</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="slabPieces.length === 0" class="empty-row">
+                <td colspan="9">
+                  <div class="empty-msg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    No slab pieces yet — click "Add Slab" to start
+                  </div>
+                </td>
+              </tr>
+              <tr *ngFor="let form of slabPieceForm; let i = index" [formGroup]="form" class="grid-row">
+                <td><span class="piece-badge">{{ form.value.id }}</span></td>
+                <td>
+                  <input *ngIf="form.value.editable" type="number" min="0" formControlName="length" class="grid-input" placeholder="L">
+                  <span *ngIf="!form.value.editable" class="cell-val">{{ form.value.length || '—' }}</span>
+                </td>
+                <td>
+                  <input *ngIf="form.value.editable" type="number" min="0" formControlName="width" class="grid-input" placeholder="W">
+                  <span *ngIf="!form.value.editable" class="cell-val">{{ form.value.width || '—' }}</span>
+                </td>
+                <td>
+                  <input *ngIf="form.value.editable" type="number" min="0" formControlName="lessLength" class="grid-input" placeholder="L">
+                  <span *ngIf="!form.value.editable" class="cell-val">{{ form.value.lessLength || '—' }}</span>
+                </td>
+                <td>
+                  <input *ngIf="form.value.editable" type="number" min="0" formControlName="lessWidth" class="grid-input" placeholder="W">
+                  <span *ngIf="!form.value.editable" class="cell-val">{{ form.value.lessWidth || '—' }}</span>
+                </td>
+                <td><span class="sqft-val">{{ form.value.totalArea || '0' }}</span></td>
+                <td>
+                  <input *ngIf="form.value.editable" formControlName="remark" class="grid-input remark-input" placeholder="Note">
+                  <span *ngIf="!form.value.editable" class="cell-val muted">{{ form.value.remark || '—' }}</span>
+                </td>
+
+                <!-- ── Per-slab photo cell ── -->
+                <td>
+                  <ng-container *ngIf="form.get('imageBase64')?.value; else noSlabPhoto">
+                    <div class="slab-thumb-wrap" (click)="openSlabPhotoModal(i)" title="Change photo">
+                      <img [src]="form.get('imageBase64')?.value" class="slab-thumb-img" [alt]="'Slab ' + form.value.id">
+                      <button type="button" class="slab-thumb-remove"
+                              (click)="$event.stopPropagation(); removeSlabImage(i)"
+                              title="Remove photo">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-template #noSlabPhoto>
+                    <button type="button" class="photo-mini-btn" (click)="openSlabPhotoModal(i)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                      </svg>
+                      Photo
+                    </button>
+                  </ng-template>
+                </td>
+
+                <td class="action-cell">
+                  <button *ngIf="!form.value.editable" type="button" (click)="editSlabPiece(i)" class="act edit-act">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button *ngIf="form.value.editable" type="button" (click)="saveSlabPiece(i)" class="act save-act">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button *ngIf="form.value.editable" type="button" (click)="cancelEdit(i)" class="act cancel-act">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                  <button type="button" (click)="deleteSlabPiece(i)" class="act del-act">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="add-row-dashed" (click)="addNewRow()">
+          + Add New Slab
+        </button>
+      </div>
+
+      <!-- Live Summary -->
+      <div class="panel-card live-summary-card">
+        <div class="card-badge">
+          <span class="badge-num">6</span>
+          <span class="badge-label">LIVE SUMMARY <span class="auto-tag">Auto calculated</span></span>
+        </div>
+
+        <div class="summary-stats">
+          <div class="stat-box">
+            <span class="stat-num">{{ slabPieces.length }}</span>
+            <span class="stat-label">Total Slabs</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{{ totalSlabSqft | number:'1.2-2' }}</span>
+            <span class="stat-label">Total Sqft</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{{ avgSlabSize | number:'1.2-2' }}</span>
+            <span class="stat-label">Avg Slab (sqft)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{{ stockFormGroup.get('quantity')?.value || 0 }}</span>
+            <span class="stat-label">Quantity</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
+        <button type="button" class="btn-draft">Save as Draft</button>
+        <button type="submit" class="btn-save" (click)="saveSlabDetails(stockForm)" [disabled]="isSubmitting">
+          <ng-container *ngIf="!isSubmitting">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Slab Entry
+          </ng-container>
+          <ng-container *ngIf="isSubmitting">
+            <span class="spinner"></span> Saving...
+          </ng-container>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- ========== RIGHT PANEL ========== -->
+    <aside class="right-panel">
+
+      <!-- Final Cost Engine -->
+      <div class="panel-card cost-engine-card">
+        <div class="card-badge">
+          <span class="badge-num">7</span>
+          <span class="badge-label">FINAL COST ENGINE</span>
+        </div>
+
+        <div class="engine-row">
+          <span class="eng-label">Total Cost / Sqft</span>
+          <span class="eng-val">₹{{ totalCostPerSqft | number:'1.0-0' }}</span>
+        </div>
+        <div class="engine-divider"></div>
+        <div class="engine-row">
+          <span class="eng-label">Total Saleable Sqft</span>
+          <span class="eng-val">{{ totalSlabSqft | number:'1.2-2' }}</span>
+        </div>
+        <div class="engine-divider"></div>
+        <div class="engine-row">
+          <span class="eng-label">Quantity</span>
+          <span class="eng-val">{{ stockFormGroup.get('quantity')?.value || 0 }}</span>
+        </div>
+      </div>
+
+      <!-- Key Highlights -->
+      <div class="panel-card highlights-card">
+        <div class="card-badge">
+          <span class="badge-label" style="padding-left:0">KEY HIGHLIGHTS</span>
+        </div>
+        <ul class="highlights-list">
+          <li><span class="hl-dot"></span>Per sqft &amp; area tracking</li>
+          <li><span class="hl-dot"></span>Auto sqft calculations</li>
+          <li><span class="hl-dot"></span>Real-time live summary</li>
+          <li><span class="hl-dot"></span>Cost breakdown engine</li>
+          <li><span class="hl-dot"></span>Inventory ready output</li>
+          <li><span class="hl-dot"></span>Fast &amp; error free entry</li>
+        </ul>
+      </div>
+
+      <!-- Status Badge -->
+      <div class="panel-card status-card">
+        <div class="card-badge">
+          <span class="badge-label" style="padding-left:0">CURRENT STATUS</span>
+        </div>
+        <div class="status-select-wrap">
+          <div class="select-wrap full-select">
+            <select class="fg-select" formControlName="status">
+              <option value="" disabled selected>Set Status</option>
+              <option *ngFor="let s of statusOption" [value]="s.label">{{ s.label }}</option>
+            </select>
+            <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="status-pill" [ngClass]="stockFormGroup.get('status')?.value?.toLowerCase() || 'none'">
+            {{ stockFormGroup.get('status')?.value || 'Not Set' }}
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
   </form>
-</div>
+
+  <!-- ===================================================================
+       SLAB PHOTO MODAL
+       Opens when the user clicks "Photo" in any grid row.
+       The slab number is shown prominently in the orange badge so
+       there is zero ambiguity about which slab is being photographed.
+       =================================================================== -->
+  <div class="slab-photo-overlay"
+       *ngIf="slabPhotoModalIndex !== null"
+       (click)="closeSlabPhotoModal()">
+
+    <div class="slab-photo-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="spm-header">
+        <div class="spm-id-badge">
+          <span class="spm-id-num">{{ slabPieceForm[slabPhotoModalIndex!].value.id }}</span>
+        </div>
+        <div class="spm-title-col">
+          <span class="spm-eyebrow">SLAB PHOTO</span>
+          <span class="spm-title">Slab #{{ slabPieceForm[slabPhotoModalIndex!].value.id }}</span>
+        </div>
+        <button type="button" class="spm-close" (click)="closeSlabPhotoModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Live camera view -->
+      <div *ngIf="showSlabCamera" class="spm-camera-zone">
+        <video #slabVideo autoplay playsinline class="spm-video"></video>
+        <canvas #slabCanvas style="display:none;"></canvas>
+        <div class="spm-camera-ctrls">
+          <button type="button" class="spm-capture-btn" (click)="captureSlabPhoto()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="8"/>
+              <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            </svg>
+            Capture Slab #{{ slabPieceForm[slabPhotoModalIndex!].value.id }}
+          </button>
+          <button type="button" class="spm-cancel-cam-btn"
+                  (click)="showSlabCamera = false; stopSlabCamera()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Action buttons shown when camera is not open -->
+      <div *ngIf="!showSlabCamera" class="spm-actions">
+
+        <!-- Upload from gallery -->
+        <label class="spm-action-btn spm-upload-btn">
+          <input type="file" accept="image/*" (change)="onSlabImageSelected($event)" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Upload Photo</span>
+          <span class="spm-action-hint">JPG, PNG, HEIC</span>
+        </label>
+
+        <!-- Desktop: open webcam stream -->
+        <button *ngIf="!isMobile" type="button" class="spm-action-btn spm-camera-btn"
+                (click)="openSlabCamera()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Take Photo</span>
+          <span class="spm-action-hint">Use webcam</span>
+        </button>
+
+        <!-- Mobile: native camera via capture="environment" -->
+        <label *ngIf="isMobile" class="spm-action-btn spm-camera-btn">
+          <input type="file" accept="image/*" capture="environment"
+                 (change)="onSlabImageSelected($event)" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Take Photo</span>
+          <span class="spm-action-hint">Camera</span>
+        </label>
+
+      </div>
+
+      <!-- Contextual hint footer -->
+      <div class="spm-hint">
+        Photo will be tagged to
+        <strong>Slab #{{ slabPieceForm[slabPhotoModalIndex!].value.id }}</strong>
+        &nbsp;—&nbsp;
+        {{ slabPieceForm[slabPhotoModalIndex!].value.length || '?' }} ×
+        {{ slabPieceForm[slabPhotoModalIndex!].value.width  || '?' }} cm
+      </div>
+
+    </div><!-- /.slab-photo-modal -->
+  </div><!-- /.slab-photo-overlay -->
+
+</div><!-- /.slab-page -->

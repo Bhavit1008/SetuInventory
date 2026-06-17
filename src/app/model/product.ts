@@ -15,6 +15,7 @@ export class Product {
   quantity: number=0;
   size: number=0;
   exFactoryCost: number=0;
+  rate: number=0;
   freightCost: number = 0;
   miscellaneousCost: number = 0;
   inHouseCost: number=0;
@@ -24,4 +25,12 @@ export class Product {
   description: string = '';
   pieces: SlabPieces[] = [];
   imageUrl: string=''; 
+  // otherCost: number=0;
+  // rateQty: number=1;
+  // royaltyQty: number=1;
+  // freightQty: number=1;
+  // totalCost: number=0;
+  origin: string = '';
+  material: string = '';
+  product: string = '';
   }

@@ -1,144 +1,412 @@
-<div class="container">
+<div class="block-page" (click)="closeDropdowns()">
   <form [formGroup]="blockFormGroup" #blockForm="ngForm">
-    <div class="form-group" style="margin: 10px;">
-      <label>Product code: </label>
-      <input type="text" class="form-control" name="productCode" formControlName="productCode"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productCode')?.invalid }">
-    </div>
 
+    <!-- ═══════════════════════ BLOCK DETAILS ═══════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">BLOCK DETAILS</div>
 
-    <div class="form-group" style="margin: 10px;">
-      <label for="godownLocation">Locations: </label>
-      <select name="godownLocation" id="godownLocation" class="form-control" formControlName="godownLocation"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('godownLocation')?.invalid }">
-        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label for="productQuality">Product Quality: </label>
-      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productQuality')?.invalid }">
-        <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
-      </select>
-    </div>
-
-    <div class="row" style="padding-left: 5px;">
-      <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Length: </label>
-        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-          name="productLength" formControlName="productLength"
-          [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productLength')?.invalid }">
+      <!-- Location -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('godownLocation')?.invalid">
+        <span class="field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </span>
+        <label class="field-label">Godown location</label>
+        <div class="custom-dd" (click)="toggleDropdown('godownLocation', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('godownLocation')?.value">
+              {{ blockFormGroup.get('godownLocation')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'godownLocation'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'godownLocation'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let g of goDownLocations"
+                 [class.dd-option-selected]="blockFormGroup.get('godownLocation')?.value === g.label"
+                 (click)="selectOption('godownLocation', g.label); $event.stopPropagation()">
+              <span>{{ g.label }}</span>
+              <svg *ngIf="blockFormGroup.get('godownLocation')?.value === g.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Height: </label>
-        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-          name="productHeight" formControlName="productHeight"
-          [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productHeight')?.invalid }">
+      <!-- Origin -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('origin')?.invalid">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </span>
+        <label class="field-label">Origin</label>
+        <div class="custom-dd" (click)="toggleDropdown('origin', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('origin')?.value">
+              {{ blockFormGroup.get('origin')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'origin'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'origin'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let g of origin"
+                 [class.dd-option-selected]="blockFormGroup.get('origin')?.value === g.label"
+                 (click)="selectOption('origin', g.label); $event.stopPropagation()">
+              <span>{{ g.label }}</span>
+              <svg *ngIf="blockFormGroup.get('origin')?.value === g.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group col-md-3" style="margin: 5px;">
-        <label>Width: </label>
-        <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-          name="productWidth" formControlName="productWidth"
-          [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productWidth')?.invalid }">
+      <!-- Material -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('material')?.invalid">
+        <span class="field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <path d="M3.27 6.96L12 12.01l8.73-5.05" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>
+        </span>
+        <label class="field-label">Material</label>
+        <div class="custom-dd" (click)="toggleDropdown('material', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('material')?.value">
+              {{ blockFormGroup.get('material')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'material'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'material'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let g of material"
+                 [class.dd-option-selected]="blockFormGroup.get('material')?.value === g.label"
+                 (click)="selectOption('material', g.label); $event.stopPropagation()">
+              <span>{{ g.label }}</span>
+              <svg *ngIf="blockFormGroup.get('material')?.value === g.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('product')?.invalid">
+        <span class="field-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </span>
+        <label class="field-label">Product</label>
+        <div class="custom-dd" (click)="toggleDropdown('product', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('product')?.value">
+              {{ blockFormGroup.get('product')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'product'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'product'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let g of product"
+                 [class.dd-option-selected]="blockFormGroup.get('product')?.value === g.label"
+                 (click)="selectOption('product', g.label); $event.stopPropagation()">
+              <span>{{ g.label }}</span>
+              <svg *ngIf="blockFormGroup.get('product')?.value === g.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quality / Color -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('productQuality')?.invalid">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+        </span>
+        <label class="field-label">Quality / Color</label>
+        <div class="custom-dd" (click)="toggleDropdown('productQuality', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('productQuality')?.value">
+              {{ blockFormGroup.get('productQuality')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'productQuality'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'productQuality'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let q of productQuality"
+                 [class.dd-option-selected]="blockFormGroup.get('productQuality')?.value === q.label"
+                 (click)="selectOption('productQuality', q.label); $event.stopPropagation()">
+              <span>{{ q.label }}</span>
+              <svg *ngIf="blockFormGroup.get('productQuality')?.value === q.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('status')?.invalid">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 8 12 12 14 14"/>
+          </svg>
+        </span>
+        <label class="field-label">Status</label>
+        <div class="custom-dd" (click)="toggleDropdown('status', $event)">
+          <span class="dd-trigger">
+            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('status')?.value">
+              {{ blockFormGroup.get('status')?.value || 'Select' }}
+            </span>
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'status'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </span>
+          <div class="dd-panel" *ngIf="openDropdown === 'status'" (click)="$event.stopPropagation()">
+            <div class="dd-option"
+                 *ngFor="let s of statusOption"
+                 [class.dd-option-selected]="blockFormGroup.get('status')?.value === s.label"
+                 (click)="selectOption('status', s.label); $event.stopPropagation()">
+              <span class="status-badge" [ngClass]="'status-' + s.label.toLowerCase()">{{ s.label }}</span>
+              <svg *ngIf="blockFormGroup.get('status')?.value === s.label"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Block Number -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('productCode')?.invalid">
+        <span class="field-icon field-icon-hash">#</span>
+        <label class="field-label">Block Number</label>
+        <div class="block-code-wrap">
+          <!-- Auto-generated prefix from dropdowns (read-only) -->
+          <span class="block-code-prefix" *ngIf="autoPrefix">{{ autoPrefix }}-</span>
+          <!-- User types only their custom suffix -->
+          <input type="text"
+                 class="field-input block-suffix-input"
+                 placeholder="0315"
+                 [value]="userBlockSuffix"
+                 (input)="onBlockSuffixInput($event)">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════ PHYSICAL DETAILS ═══════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">PHYSICAL DETAILS</div>
+
+      <!-- Size -->
+      <div class="field-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </span>
+        <label class="field-label">Size (inch)</label>
+        <div class="dim-group">
+          <div class="dim-field-wrap">
+            <input type="number" min="0" class="dim-in" placeholder="0"
+                   formControlName="productLength"
+                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   [class.dim-invalid]="submitted && blockFormGroup.get('productLength')?.invalid">
+            <span class="dim-sub">L</span>
+          </div>
+          <span class="dim-sep">×</span>
+          <div class="dim-field-wrap">
+            <input type="number" min="0" class="dim-in" placeholder="0"
+                   formControlName="productWidth"
+                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   [class.dim-invalid]="submitted && blockFormGroup.get('productWidth')?.invalid">
+            <span class="dim-sub">W</span>
+          </div>
+          <span class="dim-sep">×</span>
+          <div class="dim-field-wrap">
+            <input type="number" min="0" class="dim-in" placeholder="0"
+                   formControlName="productHeight"
+                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   [class.dim-invalid]="submitted && blockFormGroup.get('productHeight')?.invalid">
+            <span class="dim-sub">H</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weight -->
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('productWeight')?.invalid">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 2a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3z"/>
+            <path d="M6.5 7h11l1.5 13H5L6.5 7z"/>
+          </svg>
+        </span>
+        <label class="field-label">Weight (Tons)</label>
+        <input type="number" min="0"
+               class="field-input"
+               placeholder="0"
+               formControlName="productWeight"
+               oninput="this.value = this.value < 0 ? '' : this.value">
       </div>
     </div>
 
-    <div class="form-group" style="margin: 10px;">
-      <label>Weight (tons): </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="productWeight" formControlName="productWeight"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('productWeight')?.invalid }">
+    <!-- ═══════════════════════ COST INFORMATION ═══════════════════════ -->
+    <!-- <div class="section-card">
+      <div class="section-header">COST INFORMATION (PER TON)</div>
+
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('exFactoryCost')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Ex Mine Cost</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="exFactoryCost" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('rate')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Rate</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="rate" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('royaltyCost')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Royalty</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="royaltyCost" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('freightCost')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Freight</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="freightCost" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('otherCost')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Other</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="otherCost" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+
+      <div class="field-row total-row">
+        <label class="field-label total-label">Total Cost / Per Ton</label>
+        <span class="total-value">
+          ₹ {{ (blockFormGroup.get('totalCost')?.value || 0) | number:'1.0-2' }}
+        </span>
+      </div>
+    </div> -->
+
+    <!-- ═══════════════════════ SELLING ═══════════════════════
+    <div class="section-card">
+      <div class="section-header">SELLING</div>
+      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('sellingCost')?.invalid">
+        <span class="field-icon rupee-icon">₹</span>
+        <label class="field-label">Selling Cost</label>
+        <input type="number" min="0" class="field-input" placeholder="0"
+               formControlName="sellingCost" oninput="this.value = this.value < 0 ? '' : this.value">
+      </div>
+    </div> -->
+
+    <!-- ═══════════════════════ REMARKS ═══════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">REMARKS</div>
+      <div class="field-row remarks-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </span>
+        <input type="text" class="field-input remarks-input"
+               placeholder="Enter any remarks (optional)"
+               formControlName="remarks">
+      </div>
     </div>
 
-    <div class="form-group" style="margin: 10px;">
-      <label>Ex-factory cost/per ton: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="exFactoryCost" formControlName="exFactoryCost"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('exFactoryCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Royalty per ton: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="royaltyCost" formControlName="royaltyCost"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('royaltyCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Freight/per ton: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="freightCost" formControlName="freightCost"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('freightCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>In-House Cost/per ton: </label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="inHouseCost" formControlName="inHouseCost"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('inHouseCost')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Selling Cost/per ton:</label>
-      <input type="number" min="0" oninput="this.value = this.value < 0 ? '' : this.value" class="form-control"
-        name="sellingCost" formControlName="sellingCost"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('sellingCost')?.invalid }">
-    </div>
-    <div class="form-group" style="margin: 10px;">
-      <label for="status">Status: </label>
-      <select name="status" id="status" class="form-control" formControlName="status"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('status')?.invalid }">
-        <option *ngFor="let status of statusOption" [value]="status.label">{{ status.label }}</option>
-      </select>
-    </div>
-
-    <div class="form-group" style="margin: 10px;">
-      <label>Remarks: </label>
-      <input type="text" class="form-control" name="remarks" formControlName="remarks"
-        [ngClass]="{ 'is-invalid': submitted && blockFormGroup.get('remarks')?.invalid }">
-    </div>
-
-    <div class="form-group" style="margin: 10px">
-      <label>Upload or Take a Photo</label>
-      <div class="d-flex align-items-center gap-2 mb-3">
+    <!-- ═══════════════════════ BLOCK PHOTO ═══════════════════════ -->
+    <div class="section-card">
+      <div class="section-header">BLOCK PHOTO</div>
+      <div class="photo-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </span>
+        <span class="photo-label">Block Photo</span>
         <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
-        <button class="btn btn-primary" (click)="fileInput.click()">
-          Add Image
-        </button>
-
-        <button *ngIf="!isMobile" class="btn btn-primary" (click)="openCamera()">
-          Take a Photo
-        </button>
-      </div>
-
-      <div *ngIf="!isMobile && showCamera" class="camera-modal p-3 rounded shadow-lg">
-        <div class="video-wrapper mb-3">
-          <video #video autoplay class="video-frame rounded border w-100"></video>
+        <div class="photo-actions">
+          <button type="button" class="add-photo-btn" (click)="fileInput.click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Photo
+          </button>
+          <button type="button" *ngIf="!isMobile" class="add-photo-btn camera-btn-secondary" (click)="openCamera()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            Camera
+          </button>
         </div>
-
-        <div class="d-flex justify-content-between">
-          <button class="btn btn-success me-2" (click)="capturePhoto()">Capture</button>
-          <button class="btn btn-danger" (click)="closeCamera()">Cancel</button>
-        </div>
-
-        <canvas #canvas style="display:none;"></canvas>
       </div>
-
-      <div *ngIf="previewImg">
-        <img [src]="previewImg" alt="Captured Image" style="margin-top: 10px; max-width: 25vw;">
+      <div *ngIf="previewImg" class="photo-preview">
+        <img [src]="previewImg" alt="Block Photo">
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary" (click)="saveBlockDetails(blockForm)" style="margin: 10px;">
-      <ng-container *ngIf="!isSubmitting; else loading">
-        Submit
-      </ng-container>
-      <ng-template #loading>
-        <span class="spinner"></span> Submitting...
-      </ng-template>
-    </button>
+    <!-- Camera modal -->
+    <div *ngIf="!isMobile && showCamera" class="camera-modal" (click)="closeCamera()">
+      <div class="camera-inner" (click)="$event.stopPropagation()">
+        <video #video autoplay class="video-frame"></video>
+        <canvas #canvas style="display:none;"></canvas>
+        <div class="camera-actions">
+          <button type="button" class="btn-capture" (click)="capturePhoto()">Capture</button>
+          <button type="button" class="btn-cam-cancel" (click)="closeCamera()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ SAVE ═══════════════════════ -->
+    <div class="save-wrap">
+      <button type="submit" class="save-btn" (click)="saveBlockDetails(blockForm)">
+        <ng-container *ngIf="!isSubmitting; else loadingTpl">SAVE BLOCK DATA</ng-container>
+        <ng-template #loadingTpl>
+          <span class="btn-spinner"></span> SUBMITTING...
+        </ng-template>
+      </button>
+    </div>
+
   </form>
 </div>
