@@ -1,12 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, HostListener, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { Platform } from '@angular/cdk/platform';
 import { ToastService } from '../services/toast.service';
-import { combineLatest, Subscription } from 'rxjs';
-import { debounceTime, startWith } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+
+interface CatalogueItem {
+  id: string;
+  itemCode: string;
+  marbleName: string;
+  country: string;
+  materialType: string;
+  stoneFamily: string;
+}
 
 @Component({
   selector: 'app-blocks-management',
@@ -15,9 +24,10 @@ import { debounceTime, startWith } from 'rxjs/operators';
   templateUrl: './blocks-management.component.html',
   styleUrl: './blocks-management.component.css'
 })
-export class BlocksManagementComponent implements OnInit, OnDestroy {
+export class BlocksManagementComponent implements OnInit {
 
   constructor(
+    private http: HttpClient,
     private productService: ProductService,
     private platform: Platform,
     private toastService: ToastService
@@ -28,40 +38,30 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
 
   isMobile = false;
   showCamera = false;
-  updatedImage = false;
   isUpdate = false;
   isSubmitting = false;
   submitted = false;
 
-  previewImg: string | null = null;
+  previewImgs: string[] = [];
   stream: MediaStream | null = null;
-
-  private blockCodeSub!: Subscription;
   userBlockSuffix: string = '';
 
-  // ── Dropdown data ──────────────────────────────
+  // ── Catalogue / Stone selection ────────────────
+  catalogueItems: CatalogueItem[] = [];
+  selectedStone: CatalogueItem | null = null;
+  isLoadingStones = false;
 
+  // ── Static dropdown data ───────────────────────
   goDownLocations = [
     { id: 'KSH', label: 'Kishangarh' },
-    { id: 'MRD', label: 'Moradabad' },
-    { id: 'BNS', label: 'Banswara' },
+    { id: 'MRD', label: 'Moradabad'  },
+    { id: 'BNS', label: 'Banswara'   },
   ];
 
   statusOption = [
     { id: 1, label: 'Available' },
-    { id: 2, label: 'Hold' },
-    { id: 3, label: 'Sold' },
-  ];
-
-  productQuality = [
-    { id: 'BW',  label: 'Banswara White'  },
-    { id: 'BP',  label: 'Banswara Purple' },
-    { id: 'TOR', label: 'Torronto'        },
-    { id: 'TVB', label: 'Traventine B.'   },
-    { id: 'KAY', label: 'Kayampura'       },
-    { id: 'MCB', label: 'Morchana Brown'  },
-    { id: 'MNB', label: 'Marine Black'    },
-    { id: 'KGR', label: 'Kesariya Green'  },
+    { id: 2, label: 'Hold'      },
+    { id: 3, label: 'Sold'      },
   ];
 
   finishesRange = [
@@ -77,38 +77,7 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
     { id: 10, label: 'Leather Finish'      },
   ];
 
-  origin = [
-    { id: 'IND', label: 'INDIA'   },
-    { id: 'IRN', label: 'IRAN'    },
-    { id: 'ITA', label: 'ITALY'   },
-    { id: 'GRE', label: 'GREECE'  },
-    { id: 'TUR', label: 'TURKEY'  },
-    { id: 'BRZ', label: 'BRAZIL'  },
-    { id: 'VTN', label: 'VIETNAM' },
-    { id: 'AFR', label: 'AFRICA'  },
-  ];
-
-  material = [
-    { id: 'MB',  label: 'MARBLE'     },
-    { id: 'GR',  label: 'GRANITE'    },
-    { id: 'QT',  label: 'QUARTZ'     },
-    { id: 'QZT', label: 'QUARZITE'   },
-    { id: 'ON',  label: 'ONYX'       },
-    { id: 'TR',  label: 'TRAVENTINE' },
-    { id: 'SS',  label: 'SANDSTONE'  },
-  ];
-
-  product = [
-    { id: 'WW', label: 'WISPER WHITE'  },
-    { id: 'LH', label: 'LAVENDER HAZE' },
-    { id: 'DB', label: 'DUSKY BLOOM'   },
-    { id: 'WR', label: 'WISPER RED'    },
-    { id: 'SV', label: 'SILVER VIEL'   },
-    { id: 'SE', label: 'SUN VIEL'      },
-  ];
-
   // ── Custom dropdown state ──────────────────────
-
   openDropdown: string | null = null;
 
   toggleDropdown(name: string, event: Event): void {
@@ -122,37 +91,30 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:click')
-  closeDropdowns(): void {
-    this.openDropdown = null;
-  }
+  closeDropdowns(): void { this.openDropdown = null; }
 
   // ── Form ───────────────────────────────────────
-
   public blockFormGroup!: FormGroup;
 
   // ── Lifecycle ──────────────────────────────────
-
   ngOnInit(): void {
     this.isMobile = this.platform.ANDROID || this.platform.IOS;
     const state = history.state as { formData?: Product };
     this.buildForm(state?.formData);
 
-    // Restore user-typed suffix when editing an existing block
     if (state?.formData?.productCode) {
       const parts = state.formData.productCode.split('-');
       this.userBlockSuffix = parts[parts.length - 1];
     }
 
-    if (state?.formData?.imageUrl) {
-      this.productService.downloadImage(state.formData.imageUrl).subscribe(base64Image => {
-        this.previewImg = base64Image;
-        this.updatedImage = false;
-      });
-    }
+    const existingUrls: string[] = state?.formData?.imageUrls?.length
+      ? state.formData.imageUrls
+      : state?.formData?.imageUrl ? [state.formData.imageUrl] : [];
+    this.previewImgs = [...existingUrls];
 
     this.isUpdate = !!state?.formData;
 
-    this.listenForBlockCodeChanges();
+    this.loadCatalogueItems(state?.formData);
 
     const costFields = ['exFactoryCost', 'royaltyCost', 'freightCost'];
     costFields.forEach(field => {
@@ -162,96 +124,66 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.blockCodeSub?.unsubscribe();
+  // ── Catalogue loading ──────────────────────────
+  private async loadCatalogueItems(formData?: Product): Promise<void> {
+    this.isLoadingStones = true;
+    try {
+      this.catalogueItems = await firstValueFrom(
+        this.http.get<CatalogueItem[]>('https://setu-crm.onrender.com/catalogue/all')
+      );
+      // When editing, pre-select the stone that matches saved values.
+      // Prefer the persisted link; fall back to a name match for blocks saved
+      // before catalogueItemId existed.
+      if (formData?.catalogueItemId) {
+        this.selectedStone = this.catalogueItems.find(i => i.id === formData.catalogueItemId) ?? null;
+      }
+      if (!this.selectedStone && formData?.productQuality) {
+        this.selectedStone = this.catalogueItems.find(
+          i => i.marbleName?.toLowerCase() === formData.productQuality?.toLowerCase()
+        ) ?? null;
+      }
+    } catch {
+      this.toastService.showError('Could not load catalogue stones.');
+    } finally {
+      this.isLoadingStones = false;
+    }
   }
 
-  // ── Block code auto-generation ─────────────────
-
-  /**
-   * Returns the id of the item whose label matches, from the given array.
-   * Handles both string and number ids — always returns a string.
-   */
-  private getIdByLabel(arr: { id: string | number; label: string }[], label: string): string {
-    return String(arr.find(item => item.label === label)?.id || '');
+  onStoneSelected(itemCode: string): void {
+    const stone = this.catalogueItems.find(i => i.itemCode === itemCode);
+    if (!stone) return;
+    this.selectedStone = stone;
+    this.openDropdown = null;
+    this.blockFormGroup.patchValue({
+      origin:         stone.country,
+      material:       stone.materialType,
+      productQuality: stone.marbleName,
+    }, { emitEvent: false });
+    this.refreshBlockCode();
   }
 
-  private listenForBlockCodeChanges(): void {
-    // startWith ensures combineLatest fires immediately even if only one field changes,
-    // instead of waiting for all four to emit at least once.
-    const origin$ = this.blockFormGroup.get('origin')!.valueChanges.pipe(
-      startWith(this.blockFormGroup.get('origin')!.value)
-    );
-    const material$ = this.blockFormGroup.get('material')!.valueChanges.pipe(
-      startWith(this.blockFormGroup.get('material')!.value)
-    );
-    const product$ = this.blockFormGroup.get('product')!.valueChanges.pipe(
-      startWith(this.blockFormGroup.get('product')!.value)
-    );
-    const quality$ = this.blockFormGroup.get('productQuality')!.valueChanges.pipe(
-      startWith(this.blockFormGroup.get('productQuality')!.value)
-    );
-
-    this.blockCodeSub = combineLatest([origin$, material$, product$, quality$])
-      .pipe(debounceTime(100))
-      .subscribe(([origin, material, product, quality]) => {
-        this.updateBlockCode(origin, material, product, quality);
-      });
-  }
-
-  private updateBlockCode(
-    originLabel: string,
-    materialLabel: string,
-    productLabel: string,
-    qualityLabel: string
-  ): void {
-    const originId   = this.getIdByLabel(this.origin,         originLabel   || '');
-    const materialId = this.getIdByLabel(this.material,       materialLabel || '');
-    const productId  = this.getIdByLabel(this.product,        productLabel  || '');
-    const qualityId  = this.getIdByLabel(this.productQuality, qualityLabel  || '');
-
-    const parts = [originId, materialId, productId, qualityId].filter(v => v.length > 0);
-    const prefix = parts.join('-');
-    const fullCode = this.userBlockSuffix
-      ? `${prefix}-${this.userBlockSuffix}`
-      : prefix;
-
-    this.blockFormGroup.get('productCode')!.setValue(fullCode, { emitEvent: false });
-  }
-
-  /** Getter used in the template to show the auto-generated prefix separately */
+  // ── Block code ─────────────────────────────────
   get autoPrefix(): string {
-    const o = this.blockFormGroup?.get('origin')?.value;
-    const m = this.blockFormGroup?.get('material')?.value;
-    const p = this.blockFormGroup?.get('product')?.value;
-    const q = this.blockFormGroup?.get('productQuality')?.value;
+    return this.selectedStone?.itemCode ?? '';
+  }
 
-    return [
-      this.getIdByLabel(this.origin,         o || ''),
-      this.getIdByLabel(this.material,       m || ''),
-      this.getIdByLabel(this.product,        p || ''),
-      this.getIdByLabel(this.productQuality, q || ''),
-    ].filter(v => v.length > 0).join('-');
+  private refreshBlockCode(): void {
+    const prefix   = this.autoPrefix;
+    const fullCode = this.userBlockSuffix ? `${prefix}-${this.userBlockSuffix}` : prefix;
+    this.blockFormGroup.get('productCode')!.setValue(fullCode, { emitEvent: false });
   }
 
   onBlockSuffixInput(event: Event): void {
     this.userBlockSuffix = (event.target as HTMLInputElement).value;
-
-    const o = this.blockFormGroup.get('origin')?.value;
-    const m = this.blockFormGroup.get('material')?.value;
-    const p = this.blockFormGroup.get('product')?.value;
-    const q = this.blockFormGroup.get('productQuality')?.value;
-    this.updateBlockCode(o, m, p, q);
+    this.refreshBlockCode();
   }
 
   // ── Cost calculation ───────────────────────────
-
   private recalculateTotalCost(): void {
     const get = (key: string): number =>
       parseFloat(this.blockFormGroup.get(key)?.value) || 0;
 
     const total = get('exFactoryCost') + get('royaltyCost') + get('freightCost');
-
     this.blockFormGroup.get('totalCost')?.setValue(
       total > 0 ? total : null,
       { emitEvent: false }
@@ -259,7 +191,6 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
   }
 
   // ── Form builder ───────────────────────────────
-
   buildForm(data?: Product): void {
     this.blockFormGroup = new FormGroup({
       id:             new FormControl(data?.id),
@@ -270,73 +201,77 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
       productWidth:   new FormControl(data?.productWidth   || '', Validators.required),
       productHeight:  new FormControl(data?.productHeight  || '', Validators.required),
       productWeight:  new FormControl(data?.productWeight  || '', Validators.required),
-   exFactoryCost:  new FormControl(data?.exFactoryCost  || ''),   // ← removed required
-    royaltyCost:    new FormControl(data?.royaltyCost    || ''),   // ← removed required
-    freightCost:    new FormControl(data?.freightCost    || ''),   // ← removed required
-    inHouseCost:    new FormControl(data?.inHouseCost    || ''),
-    sellingCost:    new FormControl(data?.sellingCost    || ''),   // ← removed required
-      status:         new FormControl(data?.status         || '', Validators.required),
+      exFactoryCost:  new FormControl(data?.exFactoryCost  || ''),
+      royaltyCost:    new FormControl(data?.royaltyCost    || ''),
+      freightCost:    new FormControl(data?.freightCost    || ''),
+      inHouseCost:    new FormControl(data?.inHouseCost    || ''),
+      sellingCost:    new FormControl(data?.sellingCost    || ''),
+      status:         new FormControl(data?.status         || 'Available', Validators.required),
       remarks:        new FormControl(data?.description    || ''),
       origin:         new FormControl(data?.origin         || ''),
       material:       new FormControl(data?.material       || ''),
-      product:        new FormControl(data?.product        || ''),
     });
   }
 
   // ── Save ───────────────────────────────────────
-
   saveBlockDetails(block: any): void {
     if (!block) return;
     this.submitted = true;
 
-    if (this.previewImg === null) {
-      this.toastService.showError('Please Add Image');
+    if (this.previewImgs.length === 0) {
+      this.toastService.showError('Please add at least one image');
       return;
     }
     if (this.blockFormGroup.invalid) { return; }
 
     this.isSubmitting = true;
-    const state = history.state as { formData?: Product };
-    const existingImageUrl = state.formData?.imageUrl ?? '';
-
-    if (this.updatedImage && this.previewImg) {
-      this.productService.uploadImage(this.previewImg).subscribe({
-        next: (imageUrl) => { this.saveBlock(block, imageUrl); },
-        error: () => {
-          this.isSubmitting = false;
-          this.toastService.showError('Image upload failed.');
-        }
-      });
-    } else {
-      this.saveBlock(block, existingImageUrl);
-    }
     history.replaceState({}, document.title);
+
+    this.uploadAllImages().then(urls => {
+      this.saveBlock(block, urls);
+    }).catch(() => {
+      this.isSubmitting = false;
+      this.toastService.showError('Image upload failed.');
+    });
   }
 
-  private saveBlock(blockForm: any, imageUrl: string): void {
-    this.productService.postApiCall(this.prepareResponseObject(blockForm, imageUrl)).subscribe({
-      next: () => { this.afterSave(); },
+  private async uploadAllImages(): Promise<string[]> {
+    const urls: string[] = [];
+    for (const img of this.previewImgs) {
+      if (img.startsWith('data:')) {
+        const url = await firstValueFrom(this.productService.uploadImage(img));
+        urls.push(url);
+      } else {
+        urls.push(img);
+      }
+    }
+    return urls;
+  }
+
+  private saveBlock(blockForm: any, imageUrls: string[]): void {
+    this.productService.postApiCall(this.prepareResponseObject(blockForm, imageUrls)).subscribe({
+      next:  () => this.afterSave(),
       error: () => {
         this.isSubmitting = false;
         this.toastService.showError('Failed to save block details.');
       }
     });
-
   }
 
   private afterSave(): void {
     this.userBlockSuffix = '';
+    this.selectedStone   = null;
     this.buildForm();
-    this.previewImg = null;
+    this.previewImgs = [];
     this.toastService.showSuccess(
       this.isUpdate ? 'Block details updated successfully.' : 'Added new block successfully.'
     );
-    this.isUpdate = false;
+    this.isUpdate    = false;
     this.isSubmitting = false;
-    this.submitted = false;
+    this.submitted   = false;
   }
 
-  prepareResponseObject(block: FormGroup, imgUrl: string) {
+  prepareResponseObject(block: FormGroup, imageUrls: string[]) {
     const value = block.value;
     return {
       id:             value.productCode + '-' + Date.now(),
@@ -350,24 +285,28 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
       productWeight:  value.productWeight,
       description:    value.remarks,
       status:         value.status,
-      imageUrl:       imgUrl,
+      imageUrl:       imageUrls[0] || '',
+      imageUrls:      imageUrls,
       origin:         value.origin,
       material:       value.material,
-      product:        value.product,
+      catalogueItemId: this.selectedStone?.id || '',
     };
   }
 
   // ── Image / Camera ─────────────────────────────
-
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = () => { this.previewImg = reader.result as string; };
-      this.updatedImage = true;
-      reader.readAsDataURL(input.files[0]);
+    if (input.files) {
+      Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => { this.previewImgs.push(reader.result as string); };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
     }
   }
+
+  removeImage(index: number): void { this.previewImgs.splice(index, 1); }
 
   openCamera(): void {
     this.showCamera = true;
@@ -375,7 +314,7 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
       this.stream = stream;
       this.videoRef.nativeElement.srcObject = stream;
     }).catch(() => {
-      alert('Camera access denied or unavailable.');
+      this.toastService.showError('Camera access denied or unavailable.');
       this.showCamera = false;
     });
   }
@@ -386,10 +325,9 @@ export class BlocksManagementComponent implements OnInit, OnDestroy {
     canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d')?.drawImage(video, 0, 0);
-    this.previewImg = canvas.toDataURL('image/png');
+    this.previewImgs.push(canvas.toDataURL('image/png'));
     this.stopCamera();
-    this.showCamera   = false;
-    this.updatedImage = true;
+    this.showCamera = false;
   }
 
   closeCamera(): void { this.stopCamera(); this.showCamera = false; }

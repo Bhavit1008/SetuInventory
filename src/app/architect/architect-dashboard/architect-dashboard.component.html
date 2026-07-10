@@ -1,0 +1,104 @@
+<div class="arch-page">
+
+  <header class="arch-toolbar">
+    <button class="arch-icon-btn" *ngIf="layout.isMobile" (click)="layout.toggleNav()" aria-label="Open navigation">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <div class="arch-titles">
+      <h1>Architect &amp; Interior Directory</h1>
+      <p>Build and manage relationships with architects &amp; interior designers</p>
+    </div>
+    <div class="arch-actions">
+      <button class="arch-btn" (click)="goToDirectory()">View Directory</button>
+      <button class="arch-btn arch-btn-primary" (click)="addArchitect()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Architect
+      </button>
+    </div>
+  </header>
+
+  <div class="arch-stat-grid">
+    <div class="arch-stat-card">
+      <span class="arch-stat-icon icon-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5.5L21 8v13" stroke-linejoin="round"/><path d="M9 21v-6h6v6"/></svg>
+      </span>
+      <span class="arch-stat-body">
+        <span class="arch-stat-label">Total Architects</span>
+        <span class="arch-stat-value">{{ totalArchitects }}</span>
+        <span class="arch-stat-sub">All cities</span>
+      </span>
+    </div>
+    <div class="arch-stat-card">
+      <span class="arch-stat-icon icon-success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>
+      </span>
+      <span class="arch-stat-body">
+        <span class="arch-stat-label">Onboarded</span>
+        <span class="arch-stat-value">{{ onboardedCount }}</span>
+        <span class="arch-stat-sub">Active partners</span>
+      </span>
+    </div>
+    <div class="arch-stat-card">
+      <span class="arch-stat-icon icon-info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3.2"/><path d="M2.5 19c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><path d="M17 8a2.6 2.6 0 1 1 0 5.2"/><path d="M20 19c0-2.6-1.6-4.7-4-5.5"/></svg>
+      </span>
+      <span class="arch-stat-body">
+        <span class="arch-stat-label">Active Leads</span>
+        <span class="arch-stat-value">{{ leadsCount }}</span>
+        <span class="arch-stat-sub">In pipeline</span>
+      </span>
+    </div>
+    <div class="arch-stat-card">
+      <span class="arch-stat-icon icon-warning">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+      </span>
+      <span class="arch-stat-body">
+        <span class="arch-stat-label">Overdue Follow-ups</span>
+        <span class="arch-stat-value">{{ overdueCount }}</span>
+        <span class="arch-stat-sub">Needs attention</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="arch-card">
+      <div class="arch-card-header">
+        <h2>Upcoming Follow-ups</h2>
+        <button class="arch-btn" style="padding:5px 12px;font-size:12px" (click)="goToFollowUps()">View All</button>
+      </div>
+      <div class="follow-list" *ngIf="upcomingFollowUps.length; else noFollowUps">
+        <div class="follow-item" *ngFor="let f of upcomingFollowUps" (click)="openArchitect(f.architectId)">
+          <span class="follow-dot" [class.overdue]="isOverdue(f)"></span>
+          <div class="follow-body">
+            <span class="follow-title">{{ f.title }}</span>
+            <span class="follow-sub">{{ f.architectName }}</span>
+          </div>
+          <span class="follow-date">{{ f.dueDate }}</span>
+        </div>
+      </div>
+      <ng-template #noFollowUps><div class="arch-empty">No upcoming follow-ups.</div></ng-template>
+    </div>
+
+    <div class="arch-card">
+      <div class="arch-card-header">
+        <h2>Recently Added</h2>
+        <button class="arch-btn" style="padding:5px 12px;font-size:12px" (click)="goToDirectory()">View All</button>
+      </div>
+      <div class="recent-list" *ngIf="recentArchitects.length; else noRecent">
+        <div class="recent-item" *ngFor="let a of recentArchitects" (click)="openArchitect(a.id)">
+          <div class="recent-avatar">
+            <img *ngIf="a.photoUrl" [src]="a.photoUrl" [alt]="a.companyName">
+            <span *ngIf="!a.photoUrl">{{ a.companyName.charAt(0) }}</span>
+          </div>
+          <div class="follow-body">
+            <span class="follow-title">{{ a.companyName }}</span>
+            <span class="follow-sub">{{ a.city || '—' }}</span>
+          </div>
+          <span class="arch-pill" [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+        </div>
+      </div>
+      <ng-template #noRecent><div class="arch-empty">No architects added yet.</div></ng-template>
+    </div>
+  </div>
+
+</div>

@@ -1,9 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Product } from '../model/product';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
+import { map } from 'rxjs/internal/operators/map';
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;   // current page index (0-based)
+  size: number;
+  first: boolean;
+  last: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -13,46 +23,94 @@ export class ProductService {
 
   constructor(private httpClient: HttpClient) {}
 
-  async fetchAllsProducts(): Promise<Product[]> {
+  /**
+   * Newest-first paginated product listing, optionally scoped to a category
+   * ("Block" / "Slab"). Backs the Block Inventory / Slab Inventory pages.
+   */
+  getProductsPage(category: string | null, page: number, size: number): Observable<PageResponse<Product>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (category) params = params.set('category', category);
+    return this.httpClient.get<PageResponse<Product>>(ProductService.backendHost + 'products', { params }).pipe(
+      map(res => ({ ...res, content: res.content.map(raw => this.normalizeProduct(raw)) }))
+    );
+  }
 
-    const response = await fetch(ProductService.backendHost+'getAllProducts');
+  async fetchAllsProducts(): Promise<Product[]> {
+    const response = await fetch(ProductService.backendHost + 'getAllProducts');
     if (!response.ok) {
       throw new Error('Failed to fetch data: ' + response.status);
     }
 
     const data: any[] = await response.json();
-    const product: Product[] = data.map(raw => {
-      const product = raw;
-      return product;
-    });
+    return data.map(raw => this.normalizeProduct(raw));
+  }
+
+  /**
+   * Mongo documents can legitimately have null/missing fields (e.g. status,
+   * imageUrls on older records) since the backend model has no non-null
+   * defaults. Fill those in with the Product class's defaults here, once,
+   * so every consumer downstream (filters, cards, sorting) can trust the
+   * non-nullable types Product already declares instead of null-checking
+   * everywhere.
+   */
+  private normalizeProduct(raw: any): Product {
+    const product = new Product();
+    for (const key of Object.keys(product) as (keyof Product)[]) {
+      const value = raw?.[key];
+      if (value !== null && value !== undefined) {
+        (product as any)[key] = value;
+      }
+    }
     return product;
   }
 
-  postApiCall(data: any){
-    const headers = { 'content-type': 'application/json'}  
-    const body=JSON.stringify(data);
-    return this.httpClient.post(ProductService.backendHost+'addProduct', body,{'headers':headers})
+  postApiCall(data: any) {
+    const headers = { 'content-type': 'application/json' };
+    const body = JSON.stringify(data);
+    return this.httpClient.post(ProductService.backendHost + 'addProduct', body, { 'headers': headers });
   }
 
-  postIntransitApiCall(data: any){
-    const headers = { 'content-type': 'application/json'}  
-    const body=JSON.stringify(data);
-    return this.httpClient.post(ProductService.backendHost+'addTransit', body,{'headers':headers})
+  /**
+   * Update only the status of a product.
+   * Sends the full product with the new status to the addProduct endpoint
+   * (which handles both create and update via upsert).
+   */
+  updateProductStatus(product: Product, newStatus: string): Observable<any> {
+    const updated = { ...product, status: newStatus };
+    const headers = { 'content-type': 'application/json' };
+    const body = JSON.stringify(updated);
+    return this.httpClient.post(ProductService.backendHost + 'addProduct', body, { 'headers': headers });
   }
 
-  getIntransitApiCall(data: any): Observable<any>{
-    const headers = { 'content-type': 'application/json'}  
-    const body=JSON.stringify(data);
-    return this.httpClient.post(ProductService.backendHost+'getIntansit', body,{'headers':headers})
+  /**
+   * Delete a product by ID.
+   * Backend handles Cloudinary image cleanup for both block and slab-piece images.
+   */
+  deleteProduct(productId: string): Observable<any> {
+    return this.httpClient.delete(ProductService.backendHost + 'deleteProduct/' + productId, {
+      responseType: 'text'
+    });
   }
 
-  uploadImage(data: any){
+  postIntransitApiCall(data: any) {
+    const headers = { 'content-type': 'application/json' };
+    const body = JSON.stringify(data);
+    return this.httpClient.post(ProductService.backendHost + 'addTransit', body, { 'headers': headers });
+  }
+
+  getIntransitApiCall(data: any): Observable<any> {
+    const headers = { 'content-type': 'application/json' };
+    const body = JSON.stringify(data);
+    return this.httpClient.post(ProductService.backendHost + 'getIntansit', body, { 'headers': headers });
+  }
+
+  uploadImage(data: any) {
     const blob = this.dataURLtoBlob(data);
     const formData = new FormData();
     formData.append('image', blob);
 
-    return this.httpClient.post(ProductService.backendHost+'upload-image', formData, {
-      responseType: 'text'  
+    return this.httpClient.post(ProductService.backendHost + 'upload-image', formData, {
+      responseType: 'text'
     });
   }
 

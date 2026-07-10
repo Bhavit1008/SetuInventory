@@ -1,0 +1,268 @@
+<div class="cat-page" [class.dark]="layout.darkMode">
+
+  <!-- Loading -->
+  <div class="list-loading" *ngIf="isLoading">
+    <span class="spinner spinner-dark"></span>
+    <span>Loading marble…</span>
+  </div>
+
+  <!-- Not found -->
+  <div class="list-empty" *ngIf="!isLoading && notFound">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p>This marble could not be found. It may have been deleted.</p>
+    <button class="btn-add-first" (click)="goToList()">Back to Saved Items</button>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !notFound && marble as m">
+
+    <!-- Toolbar -->
+    <header class="cat-toolbar">
+      <div class="toolbar-left">
+        <div class="breadcrumb">
+          <a href="javascript:void(0)" (click)="goToList()">Marble Master</a>
+          <span class="crumb-sep">&rsaquo;</span>
+          <span class="crumb-current">{{ m['marbleName'] }}</span>
+        </div>
+        <h1 class="page-title">{{ m['marbleName'] }}</h1>
+        <p class="page-subtitle">Product Code: {{ m['itemCode'] }}</p>
+      </div>
+
+      <div class="toolbar-actions">
+        <button type="button" class="btn-ghost" (click)="goToList()">Back</button>
+        <button type="button" class="btn-outline" (click)="remove()">Delete</button>
+        <button type="button" class="btn-primary" (click)="edit()">Edit Marble</button>
+      </div>
+    </header>
+
+    <div class="form-grid">
+
+      <!-- 1. Basic Information -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">1</span>Basic Information</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Marble Name</span><span class="kv-value">{{ val('marbleName') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Collection Name</span><span class="kv-value">{{ val('collectionName') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Product Code</span><span class="kv-value">{{ val('itemCode') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Alternate / Trade Name</span><span class="kv-value">{{ val('alternateTradeName') }}</span></div>
+          <div class="kv-row"><span class="kv-label">SKU Code</span><span class="kv-value">{{ val('skuCode') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Material Type</span><span class="kv-value">{{ val('materialType') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Stone Family</span><span class="kv-value">{{ val('stoneFamily') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 2. Origin Details -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">2</span>Origin Details</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Country</span><span class="kv-value">{{ val('country') }}</span></div>
+          <div class="kv-row"><span class="kv-label">State / Province</span><span class="kv-value">{{ val('state') }}</span></div>
+          <div class="kv-row"><span class="kv-label">City</span><span class="kv-value">{{ val('city') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Village / Region</span><span class="kv-value">{{ val('villageRegion') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Quarry / Mine Name</span><span class="kv-value">{{ val('quarryMineName') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mine Owner</span><span class="kv-value">{{ val('mineOwner') }}</span></div>
+          <div class="kv-row"><span class="kv-label">GPS Coordinates</span><span class="kv-value">{{ val('gpsCoordinates') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Elevation</span><span class="kv-value">{{ val('elevation') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mine Status</span><span class="kv-value">{{ val('mineStatus') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 3. Material Characteristics -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">3</span>Material Characteristics</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Material Nature</span><span class="kv-value">{{ val('materialNature') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Fragility</span><span class="kv-value">{{ val('fragility') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Porosity</span><span class="kv-value">{{ val('porosity') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Water Absorption (%)</span><span class="kv-value">{{ val('waterAbsorption') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Density (kg/m&sup3;)</span><span class="kv-value">{{ val('density') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Specific Gravity</span><span class="kv-value">{{ val('specificGravity') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Compressive Strength (MPa)</span><span class="kv-value">{{ val('compressiveStrength') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Flexural Strength (MPa)</span><span class="kv-value">{{ val('flexuralStrength') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mohs Hardness</span><span class="kv-value">{{ val('mohsHardness') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 4. Appearance -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">4</span>Appearance</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Primary Color</span><span class="kv-value">{{ val('primaryColor') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Secondary Color</span><span class="kv-value">{{ val('secondaryColor') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Accent Color</span><span class="kv-value">{{ val('accentColor') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Background Tone</span><span class="kv-value">{{ val('backgroundTone') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Vein Color</span><span class="kv-value">{{ val('veinColor') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Vein Pattern</span><span class="kv-value">{{ val('veinPattern') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Surface Texture</span><span class="kv-value">{{ val('surfaceTexture') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Movement</span><span class="kv-value">{{ val('movement') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Transparency</span><span class="kv-value">{{ val('transparency') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 5. Finish Compatibility -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">5</span>Finish Compatibility</div>
+        <div class="section-body">
+          <div class="kv-row kv-row-block"><span class="kv-label">Finishes</span><span class="kv-value">{{ list('finishCompatibility') }}</span></div>
+          <div class="kv-row kv-row-block" *ngIf="m['finishOthers']"><span class="kv-label">Other</span><span class="kv-value">{{ val('finishOthers') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 6. Applications -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">6</span>Applications</div>
+        <div class="section-body">
+          <div class="kv-row kv-row-block"><span class="kv-label">Applications</span><span class="kv-value">{{ list('applications') }}</span></div>
+          <div class="kv-row kv-row-block" *ngIf="m['applicationsOthers']"><span class="kv-label">Other</span><span class="kv-value">{{ val('applicationsOthers') }}</span></div>
+        </div>
+      </div>
+
+      <!-- 7. Technical Recommendation -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">7</span>Technical Recommendation</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Bookmatch</span><span class="kv-value">{{ val('bookmatch') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Back Net Required</span><span class="kv-value">{{ val('backNetRequired') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Resin Filling Required</span><span class="kv-value">{{ val('resinFillingRequired') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Epoxy Required</span><span class="kv-value">{{ val('epoxyRequired') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Fiberglass Required</span><span class="kv-value">{{ val('fiberglassRequired') }}</span></div>
+          <div class="kv-row kv-row-block"><span class="kv-label">Suitable Thickness</span><span class="kv-value">{{ list('suitableThickness') }}</span></div>
+          <div class="kv-row kv-row-block" *ngIf="m['suitableThicknessOther']"><span class="kv-label">Other Thickness</span><span class="kv-value">{{ val('suitableThicknessOther') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Quality Notes -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">8</span>Quality Notes (Common Issues)</div>
+        <div class="section-body">
+          <div class="kv-row kv-row-block"><span class="kv-label">Issues</span><span class="kv-value">{{ list('qualityIssues') }}</span></div>
+          <div class="kv-row kv-row-block" *ngIf="m['otherIssues']"><span class="kv-label">Other Issues</span><span class="kv-value">{{ val('otherIssues') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Commercial Information -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">9</span>Commercial Information</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Availability</span><span class="kv-value">{{ val('availability') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mine Status</span><span class="kv-value">{{ val('commercialMineStatus') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Production Capacity</span><span class="kv-value">{{ val('productionCapacity') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Export Availability</span><span class="kv-value">{{ val('exportAvailability') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Approx Blocks / Month</span><span class="kv-value">{{ val('approxBlocksPerMonth') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Lead Time</span><span class="kv-value">{{ val('leadTime') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Maintenance Guide -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">10</span>Maintenance Guide</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Recommended Sealer</span><span class="kv-value">{{ val('recommendedSealer') }}</span></div>
+          <div class="kv-row kv-row-block"><span class="kv-label">Cleaning Instructions</span><span class="kv-value">{{ val('cleaningInstructions') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Outdoor Recommendation</span><span class="kv-value">{{ val('outdoorRecommendation') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Chemical Resistance</span><span class="kv-value">{{ val('chemicalResistance') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Heat Resistance</span><span class="kv-value">{{ val('heatResistance') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Scratch Resistance</span><span class="kv-value">{{ val('scratchResistance') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Sustainability -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">11</span>Sustainability</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Eco Friendly</span><span class="kv-value">{{ val('ecoFriendly') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Recyclable</span><span class="kv-value">{{ val('recyclable') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Natural Stone Certification</span><span class="kv-value">{{ val('naturalStoneCertification') }}</span></div>
+          <div class="kv-row kv-row-block"><span class="kv-label">Additional Notes</span><span class="kv-value">{{ val('sustainabilityNotes') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Media -->
+      <div class="section-card section-card-wide">
+        <div class="section-header"><span class="section-badge">12</span>Media</div>
+        <div class="media-view-grid">
+          <div class="media-view-tile" *ngIf="m['mainSlabPhotoUrl']">
+            <span class="media-view-label">Main Slab Photo</span>
+            <img [src]="m['mainSlabPhotoUrl']" [alt]="m['marbleName']"/>
+          </div>
+          <div class="media-view-tile" *ngIf="m['bookmatchPhotoUrl']">
+            <span class="media-view-label">Bookmatch Photo</span>
+            <img [src]="m['bookmatchPhotoUrl']" [alt]="m['marbleName']"/>
+          </div>
+          <div class="media-view-tile" *ngIf="m['blockPhotoUrl']">
+            <span class="media-view-label">Block Photo</span>
+            <img [src]="m['blockPhotoUrl']" [alt]="m['marbleName']"/>
+          </div>
+          <div class="media-view-tile" *ngIf="m['mineQuarryPhotoUrl']">
+            <span class="media-view-label">Mine / Quarry Photo</span>
+            <img [src]="m['mineQuarryPhotoUrl']" [alt]="m['marbleName']"/>
+          </div>
+          <div class="media-view-tile" *ngIf="m['quarryVideoUrl']">
+            <span class="media-view-label">Quarry / Mine Video</span>
+            <video [src]="m['quarryVideoUrl']" controls></video>
+          </div>
+          <div class="media-view-tile" *ngIf="m['view360Url']">
+            <span class="media-view-label">360&deg; View</span>
+            <img [src]="m['view360Url']" [alt]="m['marbleName']"/>
+          </div>
+          <p class="no-media" *ngIf="!m['mainSlabPhotoUrl'] && !m['bookmatchPhotoUrl'] && !m['blockPhotoUrl'] && !m['mineQuarryPhotoUrl'] && !m['quarryVideoUrl'] && !m['view360Url']">
+            No media uploaded for this marble.
+          </p>
+        </div>
+      </div>
+
+      <!-- Marketing Information -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">13</span>Marketing Information</div>
+        <div class="section-body">
+          <div class="kv-row kv-row-block"><span class="kv-label">Short Description</span><span class="kv-value">{{ val('shortDescription') }}</span></div>
+          <div class="kv-row kv-row-block"><span class="kv-label">Luxury Description</span><span class="kv-value">{{ val('luxuryDescription') }}</span></div>
+          <div class="kv-row"><span class="kv-label">USP</span><span class="kv-value">{{ val('usp') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Best Selling Points</span><span class="kv-value">{{ val('bestSellingPoints') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Keywords</span><span class="kv-value">{{ val('keywords') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Suitable Interior Style</span><span class="kv-value">{{ val('suitableInteriorStyle') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Internal Information -->
+      <div class="section-card">
+        <div class="section-header"><span class="section-badge">14</span>Internal Information</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Preferred Supplier</span><span class="kv-value">{{ val('preferredSupplier') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Purchase Manager</span><span class="kv-value">{{ val('purchaseManager') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Supplier Contact</span><span class="kv-value">{{ val('supplierContact') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mine Contact</span><span class="kv-value">{{ val('mineContact') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Created By</span><span class="kv-value">{{ val('createdBy') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Remarks</span><span class="kv-value">{{ val('remarks') }}</span></div>
+        </div>
+      </div>
+
+      <!-- Stone DNA -->
+      <div class="section-card section-card-wide">
+        <div class="section-header"><span class="section-badge">15</span>Stone DNA (SETU Exclusive)</div>
+        <div class="section-body">
+          <div class="kv-row"><span class="kv-label">Origin Map / Location</span><span class="kv-value">{{ val('originMapLocation') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Quarry Age (Approx.)</span><span class="kv-value">{{ val('quarryAge') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Geological Formation</span><span class="kv-value">{{ val('geologicalFormation') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Mineral Composition</span><span class="kv-value">{{ val('mineralComposition') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Typical Block Size</span><span class="kv-value">{{ val('typicalBlockSize') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Average Recovery (%)</span><span class="kv-value">{{ val('averageRecoveryPercent') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Average Recovery (Sqft/Ton)</span><span class="kv-value">{{ val('averageRecoverySqftPerTon') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Recommended Finish</span><span class="kv-value">{{ val('recommendedFinish') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Premium Grade</span><span class="kv-value">{{ val('premiumGrade') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Best Matching Materials</span><span class="kv-value">{{ val('bestMatchingMaterials') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Similar Stones</span><span class="kv-value">{{ val('similarStones') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Price Category</span><span class="kv-value">{{ val('priceCategory') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Rarity Index (1-10)</span><span class="kv-value">{{ val('rarityIndex') }}</span></div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /.form-grid -->
+
+  </ng-container>
+
+</div>

@@ -1,0 +1,786 @@
+<div class="cat-page" [class.dark]="layout.darkMode">
+
+  <!-- ── Toolbar: breadcrumb / title / actions ─────── -->
+  <header class="cat-toolbar">
+    <div class="toolbar-left">
+      <div class="breadcrumb">
+        <a href="javascript:void(0)" (click)="switchTab('saved')">Marble Master</a>
+        <span class="crumb-sep">&rsaquo;</span>
+        <span class="crumb-current">{{ activeTab === 'saved' ? 'Saved Items' : (editId ? 'Edit Marble' : 'Add Marble') }}</span>
+      </div>
+      <h1 class="page-title">{{ activeTab === 'saved' ? 'Saved Items' : (editId ? 'Edit Marble' : 'Add Marble') }}</h1>
+      <p class="page-subtitle" *ngIf="activeTab === 'add'">{{ editId ? 'Update marble master information' : 'Create / Edit marble master information' }}</p>
+      <p class="page-subtitle" *ngIf="activeTab === 'saved'">Browse previously saved marbles</p>
+    </div>
+
+    <div class="toolbar-actions" *ngIf="activeTab === 'add'">
+      <button type="button" class="btn-ghost" (click)="goBack()">Cancel</button>
+      <button type="button" class="btn-outline" [disabled]="isSaving" (click)="saveDraft()" *ngIf="!editId">Save as Draft</button>
+      <button type="submit" form="marbleForm" class="btn-primary" [disabled]="isSaving">
+        <span class="spinner" *ngIf="isSaving"></span>
+        {{ isSaving ? 'Saving…' : (editId ? 'Update Marble' : 'Save Marble') }}
+      </button>
+    </div>
+    <div class="toolbar-actions" *ngIf="activeTab === 'saved'">
+      <button type="button" class="btn-primary" (click)="switchTab('add')">+ Add Marble</button>
+    </div>
+  </header>
+
+  <!-- ── Step tracker (jumps to section) ───────────── -->
+  <nav class="step-tracker" *ngIf="activeTab === 'add' && !isLoadingEdit">
+    <a class="step-pill" (click)="scrollToSection('sec-basic')"><span class="step-num">1</span> Basic Info</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-origin')"><span class="step-num">2</span> Origin</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-material')"><span class="step-num">3</span> Material</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-appearance')"><span class="step-num">4</span> Appearance</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-technical')"><span class="step-num">5</span> Technical</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-commercial')"><span class="step-num">6</span> Commercial</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-media')"><span class="step-num">7</span> Media &amp; Marketing</a>
+    <span class="step-line"></span>
+    <a class="step-pill" (click)="scrollToSection('sec-review')"><span class="step-num">8</span> Review</a>
+  </nav>
+
+  <!-- ════════════════ ADD TAB ════════════════ -->
+  <ng-container *ngIf="activeTab === 'add'">
+
+    <div class="list-loading" *ngIf="isLoadingEdit">
+      <span class="spinner spinner-dark"></span>
+      <span>Loading marble…</span>
+    </div>
+
+    <form id="marbleForm" [formGroup]="form" (ngSubmit)="save()" autocomplete="off" *ngIf="!isLoadingEdit">
+
+      <div class="form-grid">
+
+        <!-- ══ 1. Basic Information ══ -->
+        <div class="section-card" id="sec-basic">
+          <div class="section-header"><span class="section-badge">1</span>Basic Information</div>
+          <div class="section-body">
+
+            <div class="field-row" [class.row-invalid]="submitted && f['marbleName'].invalid">
+              <label class="field-label">Marble Name *</label>
+              <input class="field-input" type="text" formControlName="marbleName" placeholder="e.g. Statuario White"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Collection Name</label>
+              <input class="field-input" type="text" formControlName="collectionName" placeholder="e.g. LUNA Collection"/>
+            </div>
+            <div class="field-row" [class.row-invalid]="submitted && f['itemCode'].invalid">
+              <label class="field-label">Product Code *</label>
+              <input class="field-input" type="text" formControlName="itemCode" placeholder="e.g. LUNA-STW-001"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Alternate / Trade Name</label>
+              <input class="field-input" type="text" formControlName="alternateTradeName" placeholder="e.g. Statuario"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">SKU Code</label>
+              <input class="field-input" type="text" formControlName="skuCode" placeholder="e.g. STW001"/>
+            </div>
+            <div class="field-row" [class.row-invalid]="submitted && f['materialType'].invalid">
+              <label class="field-label">Material Type *</label>
+              <select class="field-select" formControlName="materialType">
+                <option value="" disabled>Select material type</option>
+                <option *ngFor="let o of materialTypeOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row" [class.row-invalid]="submitted && f['stoneFamily'].invalid">
+              <label class="field-label">Stone Family *</label>
+              <select class="field-select" formControlName="stoneFamily">
+                <option value="" disabled>Select stone family</option>
+                <option *ngFor="let o of stoneFamilyOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ 2. Origin Details ══ -->
+        <div class="section-card" id="sec-origin">
+          <div class="section-header"><span class="section-badge">2</span>Origin Details</div>
+          <div class="section-body">
+
+            <div class="field-row" [class.row-invalid]="submitted && f['country'].invalid">
+              <label class="field-label">Country *</label>
+              <select class="field-select" formControlName="country">
+                <option value="" disabled>Select country</option>
+                <option *ngFor="let o of countryOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">State / Province</label>
+              <input class="field-input" type="text" formControlName="state" placeholder="Enter state / province"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">City</label>
+              <input class="field-input" type="text" formControlName="city" placeholder="Enter city"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Village / Region</label>
+              <input class="field-input" type="text" formControlName="villageRegion" placeholder="Enter village / region"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Quarry / Mine Name</label>
+              <input class="field-input" type="text" formControlName="quarryMineName" placeholder="Enter quarry / mine name"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mine Owner</label>
+              <input class="field-input" type="text" formControlName="mineOwner" placeholder="Enter mine owner"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">GPS Coordinates</label>
+              <input class="field-input" type="text" formControlName="gpsCoordinates" placeholder="e.g. 36.8035, 30.6938"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Elevation</label>
+              <input class="field-input" type="text" formControlName="elevation" placeholder="e.g. 350 m"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mine Status</label>
+              <select class="field-select" formControlName="mineStatus">
+                <option value="" disabled>Select status</option>
+                <option *ngFor="let o of mineStatusOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ 3. Material Characteristics ══ -->
+        <div class="section-card" id="sec-material">
+          <div class="section-header"><span class="section-badge">3</span>Material Characteristics</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Material Nature</label>
+              <select class="field-select" formControlName="materialNature">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of materialNatureOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Fragility</label>
+              <select class="field-select" formControlName="fragility">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of levelOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Porosity</label>
+              <select class="field-select" formControlName="porosity">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of levelOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Water Absorption (%)</label>
+              <input class="field-input" type="number" step="0.01" formControlName="waterAbsorption" placeholder="e.g. 0.15"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Density (kg/m&sup3;)</label>
+              <input class="field-input" type="number" step="1" formControlName="density" placeholder="e.g. 2650"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Specific Gravity</label>
+              <input class="field-input" type="number" step="0.01" formControlName="specificGravity" placeholder="e.g. 2.65"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Compressive Strength (MPa)</label>
+              <input class="field-input" type="number" step="1" formControlName="compressiveStrength" placeholder="e.g. 120"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Flexural Strength (MPa)</label>
+              <input class="field-input" type="number" step="1" formControlName="flexuralStrength" placeholder="e.g. 15"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mohs Hardness</label>
+              <input class="field-input" type="number" step="0.1" formControlName="mohsHardness" placeholder="e.g. 4"/>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ 4. Appearance ══ -->
+        <div class="section-card" id="sec-appearance">
+          <div class="section-header"><span class="section-badge">4</span>Appearance</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Primary Color</label>
+              <input class="field-input" type="text" formControlName="primaryColor" placeholder="Select color"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Secondary Color</label>
+              <input class="field-input" type="text" formControlName="secondaryColor" placeholder="Select color"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Accent Color</label>
+              <input class="field-input" type="text" formControlName="accentColor" placeholder="Select color"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Background Tone</label>
+              <input class="field-input" type="text" formControlName="backgroundTone" placeholder="e.g. White"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Vein Color</label>
+              <input class="field-input" type="text" formControlName="veinColor" placeholder="e.g. Grey"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Vein Pattern</label>
+              <select class="field-select" formControlName="veinPattern">
+                <option value="" disabled>Select pattern</option>
+                <option *ngFor="let o of veinPatternOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Surface Texture</label>
+              <select class="field-select" formControlName="surfaceTexture">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of surfaceTextureOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Movement</label>
+              <select class="field-select" formControlName="movement">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of movementOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Transparency</label>
+              <select class="field-select" formControlName="transparency">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of transparencyOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ 5. Finish Compatibility ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">5</span>Finish Compatibility</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-option" *ngFor="let o of finishOptions">
+              <input type="checkbox" [checked]="isChecked(finishCompatibility, o)" (change)="toggle(finishCompatibility, o)"/>
+              <span>{{ o }}</span>
+            </label>
+          </div>
+          <div class="section-body" *ngIf="isChecked(finishCompatibility, 'Others')">
+            <div class="field-row">
+              <label class="field-label">Specify</label>
+              <input class="field-input" type="text" formControlName="finishOthers" placeholder="Specify other finish"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ 6. Applications ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">6</span>Applications</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-option" *ngFor="let o of applicationOptions">
+              <input type="checkbox" [checked]="isChecked(applications, o)" (change)="toggle(applications, o)"/>
+              <span>{{ o }}</span>
+            </label>
+          </div>
+          <div class="section-body" *ngIf="isChecked(applications, 'Others')">
+            <div class="field-row">
+              <label class="field-label">Specify</label>
+              <input class="field-input" type="text" formControlName="applicationsOthers" placeholder="Specify other application"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ 7. Technical Recommendation ══ -->
+        <div class="section-card" id="sec-technical">
+          <div class="section-header"><span class="section-badge">7</span>Technical Recommendation</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Bookmatch</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" value="Yes" formControlName="bookmatch"/> Yes</label>
+                <label class="radio-option"><input type="radio" value="No"  formControlName="bookmatch"/> No</label>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Back Net Required</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" value="Yes" formControlName="backNetRequired"/> Yes</label>
+                <label class="radio-option"><input type="radio" value="No"  formControlName="backNetRequired"/> No</label>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Resin Filling Required</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" value="Yes" formControlName="resinFillingRequired"/> Yes</label>
+                <label class="radio-option"><input type="radio" value="No"  formControlName="resinFillingRequired"/> No</label>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Epoxy Required</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" value="Yes" formControlName="epoxyRequired"/> Yes</label>
+                <label class="radio-option"><input type="radio" value="No"  formControlName="epoxyRequired"/> No</label>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Fiberglass Required</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" value="Yes" formControlName="fiberglassRequired"/> Yes</label>
+                <label class="radio-option"><input type="radio" value="No"  formControlName="fiberglassRequired"/> No</label>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="section-subheader">Suitable Thickness</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-option" *ngFor="let o of thicknessOptions">
+              <input type="checkbox" [checked]="isChecked(suitableThickness, o)" (change)="toggle(suitableThickness, o)"/>
+              <span>{{ o }}</span>
+            </label>
+          </div>
+          <div class="section-body" *ngIf="isChecked(suitableThickness, 'Other')">
+            <div class="field-row">
+              <label class="field-label">Specify</label>
+              <input class="field-input" type="text" formControlName="suitableThicknessOther" placeholder="Specify other thickness"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Quality Notes ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">8</span>Quality Notes (Common Issues)</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-option" *ngFor="let o of qualityIssueOptions">
+              <input type="checkbox" [checked]="isChecked(qualityIssues, o)" (change)="toggle(qualityIssues, o)"/>
+              <span>{{ o }}</span>
+            </label>
+          </div>
+          <div class="section-body">
+            <div class="field-row">
+              <label class="field-label">Other Issues</label>
+              <input class="field-input" type="text" formControlName="otherIssues" placeholder="Enter other issues"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Commercial Information ══ -->
+        <div class="section-card" id="sec-commercial">
+          <div class="section-header"><span class="section-badge">9</span>Commercial Information</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Availability</label>
+              <select class="field-select" formControlName="availability">
+                <option value="" disabled>Select availability</option>
+                <option *ngFor="let o of availabilityOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mine Status</label>
+              <select class="field-select" formControlName="commercialMineStatus">
+                <option value="" disabled>Select status</option>
+                <option *ngFor="let o of mineStatusOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Production Capacity</label>
+              <input class="field-input" type="text" formControlName="productionCapacity" placeholder="e.g. 500 blocks/month"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Export Availability</label>
+              <select class="field-select" formControlName="exportAvailability">
+                <option value="" disabled>Yes / No</option>
+                <option *ngFor="let o of yesNoOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Approx Blocks / Month</label>
+              <input class="field-input" type="text" formControlName="approxBlocksPerMonth" placeholder="e.g. 300"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Lead Time</label>
+              <input class="field-input" type="text" formControlName="leadTime" placeholder="e.g. 30-45 days"/>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Maintenance Guide ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">10</span>Maintenance Guide</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Recommended Sealer</label>
+              <input class="field-input" type="text" formControlName="recommendedSealer" placeholder="e.g. Sealer Name"/>
+            </div>
+            <div class="field-row field-row-block">
+              <label class="field-label">Cleaning Instructions</label>
+              <textarea class="field-textarea" formControlName="cleaningInstructions" rows="3" placeholder="Enter cleaning instructions"></textarea>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Outdoor Recommendation</label>
+              <select class="field-select" formControlName="outdoorRecommendation">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of outdoorRecoOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Chemical Resistance</label>
+              <select class="field-select" formControlName="chemicalResistance">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of resistanceOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Heat Resistance</label>
+              <select class="field-select" formControlName="heatResistance">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of resistanceOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Scratch Resistance</label>
+              <select class="field-select" formControlName="scratchResistance">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of resistanceOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Sustainability ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">11</span>Sustainability</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Eco Friendly</label>
+              <select class="field-select" formControlName="ecoFriendly">
+                <option value="" disabled>Yes / No</option>
+                <option *ngFor="let o of yesNoOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Recyclable</label>
+              <select class="field-select" formControlName="recyclable">
+                <option value="" disabled>Yes / No</option>
+                <option *ngFor="let o of yesNoOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Natural Stone Certification</label>
+              <select class="field-select" formControlName="naturalStoneCertification">
+                <option value="" disabled>Select certification</option>
+                <option *ngFor="let o of certificationOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row field-row-block">
+              <label class="field-label">Additional Notes</label>
+              <textarea class="field-textarea" formControlName="sustainabilityNotes" rows="3" placeholder="Enter notes"></textarea>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Media ══ -->
+        <div class="section-card section-card-wide" id="sec-media">
+          <div class="section-header"><span class="section-badge">12</span>Media</div>
+          <div class="media-grid">
+
+            <div class="media-tile">
+              <span class="media-label">Main Slab Photo</span>
+              <label class="media-drop">
+                <img *ngIf="f['mainSlabPhotoUrl'].value as src" [src]="src" class="media-preview"/>
+                <span class="media-placeholder" *ngIf="!f['mainSlabPhotoUrl'].value">Upload Image<br/><small>JPG, PNG (Max 5MB)</small></span>
+                <input type="file" accept="image/*" (change)="onMediaSelected($event, 'mainSlabPhotoUrl')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['mainSlabPhotoUrl']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['mainSlabPhotoUrl'].value" (click)="clearMedia('mainSlabPhotoUrl')">Remove</button>
+            </div>
+
+            <div class="media-tile">
+              <span class="media-label">Bookmatch Photo</span>
+              <label class="media-drop">
+                <img *ngIf="f['bookmatchPhotoUrl'].value as src" [src]="src" class="media-preview"/>
+                <span class="media-placeholder" *ngIf="!f['bookmatchPhotoUrl'].value">Upload Image<br/><small>JPG, PNG (Max 5MB)</small></span>
+                <input type="file" accept="image/*" (change)="onMediaSelected($event, 'bookmatchPhotoUrl')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['bookmatchPhotoUrl']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['bookmatchPhotoUrl'].value" (click)="clearMedia('bookmatchPhotoUrl')">Remove</button>
+            </div>
+
+            <div class="media-tile">
+              <span class="media-label">Block Photo</span>
+              <label class="media-drop">
+                <img *ngIf="f['blockPhotoUrl'].value as src" [src]="src" class="media-preview"/>
+                <span class="media-placeholder" *ngIf="!f['blockPhotoUrl'].value">Upload Image<br/><small>JPG, PNG (Max 5MB)</small></span>
+                <input type="file" accept="image/*" (change)="onMediaSelected($event, 'blockPhotoUrl')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['blockPhotoUrl']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['blockPhotoUrl'].value" (click)="clearMedia('blockPhotoUrl')">Remove</button>
+            </div>
+
+            <div class="media-tile">
+              <span class="media-label">Mine / Quarry Photo</span>
+              <label class="media-drop">
+                <img *ngIf="f['mineQuarryPhotoUrl'].value as src" [src]="src" class="media-preview"/>
+                <span class="media-placeholder" *ngIf="!f['mineQuarryPhotoUrl'].value">Upload Image<br/><small>JPG, PNG (Max 5MB)</small></span>
+                <input type="file" accept="image/*" (change)="onMediaSelected($event, 'mineQuarryPhotoUrl')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['mineQuarryPhotoUrl']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['mineQuarryPhotoUrl'].value" (click)="clearMedia('mineQuarryPhotoUrl')">Remove</button>
+            </div>
+
+            <div class="media-tile">
+              <span class="media-label">Quarry / Mine Video (Optional)</span>
+              <label class="media-drop">
+                <video *ngIf="f['quarryVideoUrl'].value as src" [src]="src" class="media-preview" controls></video>
+                <span class="media-placeholder" *ngIf="!f['quarryVideoUrl'].value">Upload Video<br/><small>MP4 (Max 50MB)</small></span>
+                <input type="file" accept="video/*" (change)="onMediaSelected($event, 'quarryVideoUrl')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['quarryVideoUrl']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['quarryVideoUrl'].value" (click)="clearMedia('quarryVideoUrl')">Remove</button>
+            </div>
+
+            <div class="media-tile">
+              <span class="media-label">360&deg; View (Optional)</span>
+              <label class="media-drop">
+                <img *ngIf="f['view360Url'].value as src" [src]="src" class="media-preview"/>
+                <span class="media-placeholder" *ngIf="!f['view360Url'].value">Upload 360&deg; Image<br/><small>JPG, PNG</small></span>
+                <input type="file" accept="image/*" (change)="onMediaSelected($event, 'view360Url')" hidden/>
+              </label>
+              <span class="media-uploading" *ngIf="isUploadingMedia['view360Url']">Uploading…</span>
+              <button type="button" class="media-clear" *ngIf="f['view360Url'].value" (click)="clearMedia('view360Url')">Remove</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Marketing Information ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">13</span>Marketing Information</div>
+          <div class="section-body">
+
+            <div class="field-row field-row-block">
+              <label class="field-label">Short Description</label>
+              <textarea class="field-textarea" formControlName="shortDescription" rows="2" placeholder="Enter short description"></textarea>
+            </div>
+            <div class="field-row field-row-block">
+              <label class="field-label">Luxury Description</label>
+              <textarea class="field-textarea" formControlName="luxuryDescription" rows="3" placeholder="Enter luxury / detailed description"></textarea>
+            </div>
+            <div class="field-row">
+              <label class="field-label">USP</label>
+              <input class="field-input" type="text" formControlName="usp" placeholder="Unique Selling Point"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Best Selling Points</label>
+              <input class="field-input" type="text" formControlName="bestSellingPoints" placeholder="Enter best selling points"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Keywords</label>
+              <input class="field-input" type="text" formControlName="keywords" placeholder="e.g. white, luxury, statuario, italy"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Suitable Interior Style</label>
+              <select class="field-select" formControlName="suitableInteriorStyle">
+                <option value="" disabled>Select style</option>
+                <option *ngFor="let o of interiorStyleOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Internal Information ══ -->
+        <div class="section-card">
+          <div class="section-header"><span class="section-badge">14</span>Internal Information</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Preferred Supplier</label>
+              <input class="field-input" type="text" formControlName="preferredSupplier" placeholder="Enter supplier name"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Purchase Manager</label>
+              <input class="field-input" type="text" formControlName="purchaseManager" placeholder="Enter name"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Supplier Contact</label>
+              <input class="field-input" type="text" formControlName="supplierContact" placeholder="Enter contact number"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mine Contact</label>
+              <input class="field-input" type="text" formControlName="mineContact" placeholder="Enter contact number"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Created By</label>
+              <input class="field-input" type="text" formControlName="createdBy" placeholder="Auto"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Remarks</label>
+              <input class="field-input" type="text" formControlName="remarks" placeholder="Enter remarks"/>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ Stone DNA (SETU Exclusive) ══ -->
+        <div class="section-card section-card-wide" id="sec-review">
+          <div class="section-header"><span class="section-badge">15</span>Stone DNA (SETU Exclusive) &mdash; Optional</div>
+          <div class="section-body">
+
+            <div class="field-row">
+              <label class="field-label">Origin Map / Location</label>
+              <input class="field-input" type="text" formControlName="originMapLocation" placeholder="Add map / location"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Quarry Age (Approx.)</label>
+              <input class="field-input" type="text" formControlName="quarryAge" placeholder="e.g. 100+ years"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Geological Formation</label>
+              <input class="field-input" type="text" formControlName="geologicalFormation" placeholder="e.g. Metamorphic"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Mineral Composition</label>
+              <input class="field-input" type="text" formControlName="mineralComposition" placeholder="e.g. Calcite, Dolomite"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Typical Block Size</label>
+              <input class="field-input" type="text" formControlName="typicalBlockSize" placeholder="e.g. 2.5m x 1.5m x 1.2m"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Average Recovery (%)</label>
+              <input class="field-input" type="text" formControlName="averageRecoveryPercent" placeholder="e.g. 65-70%"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Average Recovery (Sqft/Ton)</label>
+              <input class="field-input" type="text" formControlName="averageRecoverySqftPerTon" placeholder="e.g. 18-22 sqft/ton"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Recommended Finish</label>
+              <select class="field-select" formControlName="recommendedFinish">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of recommendedFinishOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Premium Grade</label>
+              <select class="field-select" formControlName="premiumGrade">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let o of gradeOptions" [value]="o">{{ o }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Best Matching Materials</label>
+              <input class="field-input" type="text" formControlName="bestMatchingMaterials" placeholder="Enter materials"/>
+            </div>
+            <div class="field-row">
+              <label class="field-label">Similar Stones</label>
+              <input class="field-input" type="text" formControlName="similarStones" placeholder="Enter similar stones"/>
+            </div>
+            <div class="field-row field-row-block">
+              <label class="field-label">Price Category</label>
+              <div class="radio-group radio-group-wrap">
+                <label class="radio-option" *ngFor="let o of priceCategoryOptions">
+                  <input type="radio" [value]="o" formControlName="priceCategory"/> {{ o }}
+                </label>
+              </div>
+            </div>
+            <div class="field-row field-row-block">
+              <label class="field-label">Rarity Index (1-10)</label>
+              <div class="slider-row">
+                <input type="range" min="1" max="10" step="1" formControlName="rarityIndex" class="field-slider"/>
+                <span class="slider-value">{{ f['rarityIndex'].value }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      <!-- /.form-grid -->
+
+      <div class="error-hint" *ngIf="submitted && form.invalid">
+        Please fill in all mandatory (*) fields.
+      </div>
+
+      <div class="save-bar">
+        <button type="button" class="btn-ghost" (click)="goBack()">Cancel</button>
+        <button type="button" class="btn-outline" [disabled]="isSaving" (click)="saveDraft()" *ngIf="!editId">Save as Draft</button>
+        <button type="submit" class="btn-primary btn-save-mobile" [disabled]="isSaving">
+          <span class="spinner" *ngIf="isSaving"></span>
+          {{ isSaving ? 'Saving…' : (editId ? 'Update Marble' : 'Save Marble') }}
+        </button>
+      </div>
+
+    </form>
+  </ng-container>
+
+  <!-- ════════════════ SAVED TAB ════════════════ -->
+  <ng-container *ngIf="activeTab === 'saved'">
+
+    <!-- Loading -->
+    <div class="list-loading" *ngIf="isLoading">
+      <span class="spinner spinner-dark"></span>
+      <span>Loading…</span>
+    </div>
+
+    <!-- Empty state -->
+    <div class="list-empty" *ngIf="!isLoading && items.length === 0">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <p>No catalogue items saved yet.</p>
+      <button class="btn-add-first" (click)="switchTab('add')">Add First Item</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="cat-grid" *ngIf="!isLoading && items.length > 0">
+      <div class="cat-card" *ngFor="let item of items" (click)="viewMarble(item.id)">
+        <div class="cat-card-img-wrap">
+          <img *ngIf="item['mainSlabPhotoUrl']" [src]="item['mainSlabPhotoUrl']" [alt]="item.marbleName" class="cat-card-img"/>
+          <div class="cat-card-img-placeholder" *ngIf="!item['mainSlabPhotoUrl']">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <span class="cat-card-code">{{ item.itemCode }}</span>
+          <button class="cat-item-delete" (click)="deleteItem(item.id); $event.stopPropagation()" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="cat-card-info">
+          <h3 class="cat-card-name">{{ item.marbleName }}</h3>
+          <div class="cat-card-chips">
+            <span class="meta-chip">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              {{ item.country }}
+            </span>
+            <span class="meta-chip">{{ item.materialType }}</span>
+            <span class="meta-chip meta-chip-quality">{{ item.stoneFamily }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

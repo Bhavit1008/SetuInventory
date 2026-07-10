@@ -1,0 +1,299 @@
+<div class="arch-page" *ngIf="!isLoading && architect as a">
+
+  <header class="arch-toolbar">
+    <button class="arch-icon-btn" (click)="goBack()" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="arch-titles">
+      <h1>{{ a.companyName }}</h1>
+      <p>{{ a.type }} <span *ngIf="a.city">· {{ a.city }}</span></p>
+    </div>
+    <div class="arch-actions">
+      <span class="arch-pill" [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+      <button class="arch-btn arch-btn-primary" (click)="editArchitect()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+    </div>
+  </header>
+
+  <div class="arch-card">
+    <div class="arch-tabs">
+      <button class="arch-tab" [class.active]="activeTab==='overview'" (click)="setTab('overview')">Overview</button>
+      <button class="arch-tab" [class.active]="activeTab==='details'" (click)="setTab('details')">Details</button>
+      <button class="arch-tab" [class.active]="activeTab==='status'" (click)="setTab('status')">Status &amp; Stage</button>
+      <button class="arch-tab" [class.active]="activeTab==='interactions'" (click)="setTab('interactions')">Interactions ({{ interactions.length }})</button>
+      <button class="arch-tab" [class.active]="activeTab==='samples'" (click)="setTab('samples')">Samples ({{ samples.length }})</button>
+      <button class="arch-tab" [class.active]="activeTab==='business'" (click)="setTab('business')">Business ({{ businessRecords.length }})</button>
+      <button class="arch-tab" [class.active]="activeTab==='documents'" (click)="setTab('documents')">Documents ({{ documents.length }})</button>
+      <button class="arch-tab" [class.active]="activeTab==='notes'" (click)="setTab('notes')">Notes ({{ notes.length }})</button>
+    </div>
+
+    <!-- ═══ OVERVIEW ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='overview'">
+      <div class="ov-layout">
+        <div class="ov-photo">
+          <img *ngIf="a.photoUrl" [src]="a.photoUrl" [alt]="a.companyName">
+          <svg *ngIf="!a.photoUrl" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 21V8l9-5.5L21 8v13" stroke-linejoin="round"/><path d="M9 21v-6h6v6"/></svg>
+        </div>
+        <div class="ov-info">
+          <div class="ov-row" *ngIf="a.contactPerson">
+            <span class="ov-label">Contact Person</span>
+            <span class="ov-value">{{ a.contactPerson }} <span *ngIf="a.designation" class="ov-sub">({{ a.designation }})</span></span>
+          </div>
+          <div class="ov-row" *ngIf="a.phone">
+            <span class="ov-label">Phone</span>
+            <span class="ov-value"><a [href]="'tel:'+a.phone">{{ a.phone }}</a></span>
+          </div>
+          <div class="ov-row" *ngIf="a.email">
+            <span class="ov-label">Email</span>
+            <span class="ov-value"><a [href]="'mailto:'+a.email">{{ a.email }}</a></span>
+          </div>
+          <div class="ov-row" *ngIf="a.officeAddress">
+            <span class="ov-label">Office</span>
+            <span class="ov-value">{{ a.officeAddress }}</span>
+          </div>
+          <div class="ov-row" *ngIf="a.about">
+            <span class="ov-label">About</span>
+            <span class="ov-value">{{ a.about }}</span>
+          </div>
+          <div class="ov-chips" *ngIf="a.specializations?.length">
+            <span class="arch-pill pill-default" *ngFor="let s of a.specializations">{{ s }}</span>
+          </div>
+        </div>
+        <div class="ov-key-info">
+          <span class="ov-kv"><strong>{{ a.yearEstablished || '—' }}</strong><small>Established</small></span>
+          <span class="ov-kv"><strong>{{ a.teamSize || '—' }}</strong><small>Team Size</small></span>
+          <span class="ov-kv"><strong>{{ a.type || '—' }}</strong><small>Firm Type</small></span>
+          <span class="ov-kv" *ngIf="a.website"><a [href]="a.website" target="_blank" rel="noopener">Website ↗</a></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DETAILS ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='details'">
+      <div class="kv-grid">
+        <div class="kv"><span class="kv-label">Office Address</span><span class="kv-value">{{ a.officeAddress || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">City / State</span><span class="kv-value">{{ a.city || '—' }}<span *ngIf="a.state">, {{ a.state }}</span></span></div>
+        <div class="kv"><span class="kv-label">Pincode</span><span class="kv-value">{{ a.pincode || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Map</span><span class="kv-value"><a *ngIf="a.mapLink" [href]="a.mapLink" target="_blank" rel="noopener">View on Map</a><ng-container *ngIf="!a.mapLink">—</ng-container></span></div>
+        <div class="kv"><span class="kv-label">Website</span><span class="kv-value">{{ a.website || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Instagram</span><span class="kv-value">{{ a.instagram || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">LinkedIn</span><span class="kv-value">{{ a.linkedin || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Project Type</span><span class="kv-value">{{ a.projectType || '—' }}</span></div>
+        <div class="kv kv-block"><span class="kv-label">Service Areas</span><span class="kv-value">{{ (a.serviceAreas || []).join(', ') || '—' }}</span></div>
+        <div class="kv kv-block"><span class="kv-label">Tags</span><span class="kv-value">{{ (a.tags || []).join(', ') || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Source</span><span class="kv-value">{{ a.source || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Lead Owner</span><span class="kv-value">{{ a.leadOwner || '—' }}</span></div>
+      </div>
+    </div>
+
+    <!-- ═══ STATUS & STAGE ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='status'">
+      <div class="status-block">
+        <span class="ov-label">Current Status</span>
+        <span class="arch-pill status-pill-lg" [ngClass]="statusPillClass(a.status)">{{ a.status }}</span>
+      </div>
+
+      <div class="stage-track">
+        <ng-container *ngFor="let s of stages; let i = index">
+          <div class="stage-node" [class.done]="i <= stageIndex(a.status)" (click)="setStatus(s)">
+            <span class="stage-dot"></span>
+            <span class="stage-label">{{ s }}</span>
+          </div>
+          <span class="stage-line" *ngIf="i < stages.length - 1" [class.done]="i < stageIndex(a.status)"></span>
+        </ng-container>
+      </div>
+
+      <div class="kv-grid" style="margin-top:20px">
+        <div class="kv"><span class="kv-label">First Contact Date</span><span class="kv-value">{{ a.firstContactDate || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Last Contact Date</span><span class="kv-value">{{ a.lastContactDate || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Onboarded Date</span><span class="kv-value">{{ a.onboardedDate || '—' }}</span></div>
+        <div class="kv"><span class="kv-label">Priority</span><span class="kv-value"><span class="arch-priority" *ngIf="a.priority" [ngClass]="'p-'+a.priority.toLowerCase()">{{ a.priority }}</span><ng-container *ngIf="!a.priority">—</ng-container></span></div>
+      </div>
+    </div>
+
+    <!-- ═══ INTERACTIONS ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='interactions'">
+      <div class="panel-toolbar">
+        <span class="panel-toolbar-title">Call / Meeting / Visit History</span>
+        <button class="arch-btn arch-btn-primary" (click)="showInteractionForm = !showInteractionForm">+ Log Interaction</button>
+      </div>
+
+      <form [formGroup]="interactionForm" class="inline-form" *ngIf="showInteractionForm">
+        <div class="arch-form-grid" style="padding:14px">
+          <div class="arch-form-group">
+            <label class="arch-label">Type</label>
+            <select class="arch-select" formControlName="type"><option *ngFor="let t of interactionTypes" [value]="t">{{ t }}</option></select>
+          </div>
+          <div class="arch-form-group"><label class="arch-label">Date</label><input type="date" class="arch-input" formControlName="date"></div>
+          <div class="arch-form-group"><label class="arch-label">Time</label><input type="time" class="arch-input" formControlName="time"></div>
+          <div class="arch-form-group"><label class="arch-label">Team</label><input class="arch-input" formControlName="team" placeholder="Ravi, Amit"></div>
+          <div class="arch-form-group full"><label class="arch-label">Notes</label><input class="arch-input" formControlName="notes"></div>
+        </div>
+        <div class="inline-form-actions">
+          <button class="arch-btn" type="button" (click)="showInteractionForm=false">Cancel</button>
+          <button class="arch-btn arch-btn-primary" type="button" (click)="saveInteraction()">Save</button>
+        </div>
+      </form>
+
+      <div class="timeline" *ngIf="interactions.length; else noInteractions">
+        <div class="timeline-item" *ngFor="let i of interactions">
+          <span class="arch-pill pill-default">{{ i.type }}</span>
+          <div class="timeline-body">
+            <span class="timeline-date">{{ i.date }} <span *ngIf="i.time">{{ i.time }}</span></span>
+            <span class="timeline-notes" *ngIf="i.notes">{{ i.notes }}</span>
+            <span class="timeline-notes" *ngIf="i.team?.length">Team: {{ i.team.join(', ') }}</span>
+          </div>
+          <button class="row-del-btn" (click)="deleteInteraction(i.id)" title="Delete">&times;</button>
+        </div>
+      </div>
+      <ng-template #noInteractions><div class="arch-empty">No interactions logged yet.</div></ng-template>
+    </div>
+
+    <!-- ═══ SAMPLES & MATERIALS ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='samples'">
+      <div class="panel-toolbar">
+        <span class="panel-toolbar-title">Samples Given / Materials Shown</span>
+        <button class="arch-btn arch-btn-primary" (click)="showSampleForm = !showSampleForm">+ Add Sample</button>
+      </div>
+
+      <form [formGroup]="sampleForm" class="inline-form" *ngIf="showSampleForm">
+        <div class="arch-form-grid" style="padding:14px">
+          <div class="arch-form-group"><label class="arch-label">Material Name</label><input class="arch-input" formControlName="materialName" placeholder="e.g. Calacatta Gold"></div>
+          <div class="arch-form-group">
+            <label class="arch-label">Category</label>
+            <select class="arch-select" formControlName="category"><option *ngFor="let c of sampleCategories" [value]="c">{{ c }}</option></select>
+          </div>
+          <div class="arch-form-group"><label class="arch-label">Pieces</label><input class="arch-input" formControlName="piecesCount" placeholder="e.g. 2"></div>
+          <div class="arch-form-group"><label class="arch-label">Date Given</label><input type="date" class="arch-input" formControlName="dateGiven"></div>
+        </div>
+        <div class="inline-form-actions">
+          <button class="arch-btn" type="button" (click)="showSampleForm=false">Cancel</button>
+          <button class="arch-btn arch-btn-primary" type="button" (click)="saveSample()">Save</button>
+        </div>
+      </form>
+
+      <div class="arch-grid" *ngIf="samples.length; else noSamples">
+        <div class="arch-tile" style="cursor:default" *ngFor="let s of samples">
+          <div class="arch-tile-body">
+            <span class="arch-tile-name">{{ s.materialName }}</span>
+            <span class="arch-tile-meta">{{ s.category }} · {{ s.piecesCount || '—' }} pcs · {{ s.dateGiven || '—' }}</span>
+            <div class="ov-chips">
+              <span class="arch-pill" [ngClass]="s.returned ? 'pill-completed' : 'pill-pending'">{{ s.returned ? 'Returned' : 'Not Returned' }}</span>
+              <button class="arch-btn" style="padding:4px 10px;font-size:11px" (click)="toggleReturned(s)">Toggle</button>
+              <button class="row-del-btn" (click)="deleteSample(s.id)">&times;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ng-template #noSamples><div class="arch-empty">No samples logged yet.</div></ng-template>
+    </div>
+
+    <!-- ═══ BUSINESS & ORDERS ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='business'">
+      <div class="panel-toolbar">
+        <span class="panel-toolbar-title">Enquiries, Quotations &amp; Orders</span>
+        <button class="arch-btn arch-btn-primary" (click)="showBusinessForm = !showBusinessForm">+ Add Enquiry</button>
+      </div>
+
+      <form [formGroup]="businessForm" class="inline-form" *ngIf="showBusinessForm">
+        <div class="arch-form-grid" style="padding:14px">
+          <div class="arch-form-group full"><label class="arch-label">Project Name</label><input class="arch-input" formControlName="projectName" placeholder="e.g. 5 Star Hotel Project"></div>
+          <div class="arch-form-group"><label class="arch-label">City</label><input class="arch-input" formControlName="city"></div>
+          <div class="arch-form-group">
+            <label class="arch-label">Type</label>
+            <select class="arch-select" formControlName="recordType"><option *ngFor="let t of businessTypes" [value]="t">{{ t }}</option></select>
+          </div>
+          <div class="arch-form-group">
+            <label class="arch-label">Status</label>
+            <select class="arch-select" formControlName="status"><option *ngFor="let s of businessStatuses" [value]="s">{{ s }}</option></select>
+          </div>
+          <div class="arch-form-group"><label class="arch-label">Date</label><input type="date" class="arch-input" formControlName="date"></div>
+          <div class="arch-form-group"><label class="arch-label">Value (₹)</label><input type="number" class="arch-input" formControlName="value"></div>
+        </div>
+        <div class="inline-form-actions">
+          <button class="arch-btn" type="button" (click)="showBusinessForm=false">Cancel</button>
+          <button class="arch-btn arch-btn-primary" type="button" (click)="saveBusinessRecord()">Save</button>
+        </div>
+      </form>
+
+      <div class="arch-table-scroll" *ngIf="businessRecords.length; else noBusiness">
+        <table class="arch-table">
+          <thead><tr><th>Enquiry #</th><th>Project</th><th>City</th><th>Type</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let b of businessRecords">
+              <td>{{ b.enquiryNumber }}</td>
+              <td>{{ b.projectName }}</td>
+              <td>{{ b.city || '—' }}</td>
+              <td>{{ b.recordType }}</td>
+              <td><span class="arch-pill" [ngClass]="businessPillClass(b.status)">{{ b.status }}</span></td>
+              <td>{{ b.date }}</td>
+              <td><button class="row-del-btn" (click)="deleteBusinessRecord(b.id)">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noBusiness><div class="arch-empty">No business records yet.</div></ng-template>
+    </div>
+
+    <!-- ═══ DOCUMENTS ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='documents'">
+      <div class="panel-toolbar">
+        <span class="panel-toolbar-title">Files &amp; Documents</span>
+        <label class="arch-btn arch-btn-primary">
+          <input type="file" hidden (change)="onDocumentSelected($event)">
+          {{ isUploadingDoc ? 'Uploading...' : '+ Upload File' }}
+        </label>
+      </div>
+
+      <div class="arch-table-scroll" *ngIf="documents.length; else noDocs">
+        <table class="arch-table">
+          <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of documents">
+              <td><a [href]="d.fileUrl" target="_blank" rel="noopener">{{ d.fileName }}</a></td>
+              <td>{{ d.fileType | uppercase }}</td>
+              <td>{{ formatSize(d.fileSizeBytes) }}</td>
+              <td>{{ d.uploadedAt | date:'d MMM y' }}</td>
+              <td><button class="row-del-btn" (click)="deleteDocument(d.id)">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noDocs><div class="arch-empty">No files uploaded yet.</div></ng-template>
+    </div>
+
+    <!-- ═══ NOTES ═══ -->
+    <div class="tab-panel" *ngIf="activeTab==='notes'">
+      <div class="panel-toolbar">
+        <span class="panel-toolbar-title">Notes</span>
+        <button class="arch-btn arch-btn-primary" (click)="showNoteForm = !showNoteForm">+ Add Note</button>
+      </div>
+
+      <form [formGroup]="noteForm" class="inline-form" *ngIf="showNoteForm">
+        <div style="padding:14px">
+          <textarea class="arch-textarea" formControlName="text" placeholder="Type a note..."></textarea>
+        </div>
+        <div class="inline-form-actions">
+          <button class="arch-btn" type="button" (click)="showNoteForm=false">Cancel</button>
+          <button class="arch-btn arch-btn-primary" type="button" (click)="saveNote()">Save</button>
+        </div>
+      </form>
+
+      <div class="notes-list" *ngIf="notes.length; else noNotes">
+        <div class="note-item" *ngFor="let n of notes">
+          <span class="note-date">{{ n.createdAt | date:'d MMM y, h:mm a' }}</span>
+          <span class="note-text">{{ n.text }}</span>
+          <button class="row-del-btn" (click)="deleteNote(n.id)">&times;</button>
+        </div>
+      </div>
+      <ng-template #noNotes><div class="arch-empty">No notes yet.</div></ng-template>
+    </div>
+
+  </div>
+</div>
+
+<div class="arch-page" *ngIf="isLoading">
+  <div class="arch-skeleton" style="height:300px"></div>
+</div>

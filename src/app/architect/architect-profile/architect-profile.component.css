@@ -1,0 +1,81 @@
+@import '../architect-shared.css';
+
+.tab-panel { padding: 20px 18px; }
+
+/* ── Overview ────────────────────────────────────────────────────────── */
+.ov-layout { display: grid; grid-template-columns: 96px 1fr 180px; gap: 20px; }
+.ov-photo {
+  width: 96px; height: 96px; border-radius: 14px; overflow: hidden;
+  background: var(--bg-card-soft); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+}
+.ov-photo img { width: 100%; height: 100%; object-fit: cover; }
+.ov-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ov-row { display: flex; flex-direction: column; gap: 2px; }
+.ov-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--text-secondary); text-transform: uppercase; }
+.ov-value { font-size: 13.5px; color: var(--text-primary); }
+.ov-value a { color: var(--accent); text-decoration: none; }
+.ov-sub { color: var(--text-secondary); font-size: 12px; }
+.ov-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.ov-key-info { display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--border); padding-left: 18px; }
+.ov-kv { display: flex; flex-direction: column; gap: 2px; }
+.ov-kv strong { font-size: 15px; color: var(--text-primary); }
+.ov-kv small { font-size: 11px; color: var(--text-secondary); }
+.ov-kv a { color: var(--accent); text-decoration: none; font-size: 13px; }
+
+/* ── Details tab ─────────────────────────────────────────────────────── */
+.kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px 20px; }
+.kv { display: flex; flex-direction: column; gap: 3px; }
+.kv-block { grid-column: 1 / -1; }
+.kv-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--text-secondary); text-transform: uppercase; }
+.kv-value { font-size: 13.5px; color: var(--text-primary); }
+.kv-value a { color: var(--accent); text-decoration: none; }
+
+/* ── Status & Stage ──────────────────────────────────────────────────── */
+.status-block { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.status-pill-lg { font-size: 13px; padding: 6px 16px; }
+
+.stage-track { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: 4px; }
+.stage-node { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; width: 100px; }
+.stage-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--bg-card-soft); border: 2px solid var(--border); transition: all .15s; }
+.stage-node.done .stage-dot { background: var(--success); border-color: var(--success); }
+.stage-node:hover .stage-dot { border-color: var(--accent); }
+.stage-label { font-size: 11px; text-align: center; color: var(--text-secondary); font-weight: 600; }
+.stage-node.done .stage-label { color: var(--text-primary); }
+.stage-line { height: 2px; background: var(--border); flex: 1; margin-top: 7px; min-width: 20px; }
+.stage-line.done { background: var(--success); }
+
+/* ── Panel toolbar (tab-local actions) ──────────────────────────────── */
+.panel-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.panel-toolbar-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; }
+
+/* ── Inline add-forms ────────────────────────────────────────────────── */
+.inline-form { background: var(--bg-card-soft); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; }
+.inline-form-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 14px 14px; }
+
+/* ── Timeline (interactions) ─────────────────────────────────────────── */
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.timeline-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--bg-card-soft); border-radius: 10px; position: relative; }
+.timeline-body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.timeline-date { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.timeline-notes { font-size: 12.5px; color: var(--text-secondary); }
+
+.row-del-btn {
+  width: 22px; height: 22px; border-radius: 6px; border: none; background: transparent;
+  color: var(--text-secondary); cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;
+}
+.row-del-btn:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+/* ── Notes ───────────────────────────────────────────────────────────── */
+.notes-list { display: flex; flex-direction: column; gap: 10px; }
+.note-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--bg-card-soft); border-left: 3px solid var(--accent); border-radius: 8px; }
+.note-date { font-size: 11px; color: var(--text-secondary); flex-shrink: 0; width: 110px; }
+.note-text { flex: 1; font-size: 13px; color: var(--text-primary); }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ov-layout { grid-template-columns: 1fr; }
+  .ov-key-info { border-left: none; padding-left: 0; flex-direction: row; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 14px; }
+  .note-date { width: auto; }
+  .note-item { flex-direction: column; gap: 4px; }
+  .timeline-item { flex-wrap: wrap; }
+}

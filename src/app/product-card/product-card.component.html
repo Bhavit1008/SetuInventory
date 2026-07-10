@@ -1,15 +1,45 @@
-<div class="product-card">
-  <div class="card-header">
-    <h4>{{ product.productCode }}</h4>
+<div class="product-card" (click)="viewProduct(product)">
+
+  <!-- ── Image / Placeholder ── -->
+  <div class="card-img-wrap">
+    <img *ngIf="product.imageUrls.length || product.imageUrl"
+         [src]="product.imageUrls.length ? product.imageUrls[0] : product.imageUrl"
+         [alt]="product.productCode"
+         class="card-img">
+    <div *ngIf="!product.imageUrls.length && !product.imageUrl" class="card-img-placeholder">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+    </div>
+
+    <!-- Gradient overlay with product code -->
+    <div class="card-img-overlay">
+      <span class="card-code">{{ product.productCode }}</span>
+    </div>
+
+    <!-- Category badge on image -->
+    <span class="card-category-badge" [class.badge-block]="product.category === 'Block'">
+      {{ product.category }}
+    </span>
+
+    <!-- Status dot -->
+    <span class="card-status-dot" [class]="'dot-' + product.status.toLowerCase()"></span>
   </div>
-  <button class="edit-button" (click)="editProduct(product); $event.stopPropagation()">Edit</button>
-  <button class="edit-button" (click)="viewProduct(product)">View</button>
-  <button class="edit-button" (click)="addIntransit(product)">InTransit</button>
-  <button *ngIf="product?.category === 'Block'"  class="edit-button" (click)="processBlockToSlab(product)">Process</button>
-  <p><strong>Category:</strong> {{ product.category }}</p>
-  <p><strong>Location:</strong> {{ product.godownLocation }}</p>
-  <p><strong>Product Finish:</strong> {{ product.productFinished }}</p>
-  <p><strong>Quality:</strong> {{ product.productQuality }}</p>
-  <p><strong>Description:</strong> {{ product.description }}</p>
-  <button class="status-update" (click)="onChangeStatusClick()">Update Status</button>
+
+  <!-- ── Info ── -->
+  <div class="card-info">
+    <p class="card-quality">{{ product.productQuality || '—' }}</p>
+
+    <div class="card-chips">
+      <span class="chip chip-loc" *ngIf="product.godownLocation">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        {{ product.godownLocation }}
+      </span>
+      <span class="chip chip-finish" *ngIf="product.productFinished">{{ product.productFinished }}</span>
+      <span class="chip chip-status" [class]="'chip-' + product.status.toLowerCase()">{{ product.status }}</span>
+    </div>
+  </div>
+
 </div>

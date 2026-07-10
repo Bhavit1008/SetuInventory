@@ -1,0 +1,172 @@
+<div class="arch-page">
+
+  <header class="arch-toolbar">
+    <button class="arch-icon-btn" (click)="cancel()" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="arch-titles">
+      <h1>{{ isEdit ? 'Edit Architect' : 'Add Architect' }}</h1>
+      <p>{{ isEdit ? 'Update firm and contact details' : 'Add a new architect / interior designer to the directory' }}</p>
+    </div>
+    <div class="arch-actions">
+      <button class="arch-btn" (click)="cancel()">Cancel</button>
+      <button class="arch-btn arch-btn-primary" (click)="save()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : 'Save' }}
+      </button>
+    </div>
+  </header>
+
+  <form [formGroup]="form" class="arch-card" style="margin-bottom:16px">
+    <div class="arch-card-header"><h2>Logo &amp; Photo</h2></div>
+    <div style="display:flex;align-items:center;gap:16px;padding:18px;flex-wrap:wrap">
+      <div class="arch-tile-photo" style="width:96px;height:96px;border-radius:12px;flex-shrink:0">
+        <img *ngIf="photoPreview" [src]="photoPreview" alt="Photo">
+        <svg *ngIf="!photoPreview" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 21V8l9-5.5L21 8v13" stroke-linejoin="round"/><path d="M9 21v-6h6v6"/></svg>
+      </div>
+      <label class="arch-btn">
+        <input type="file" accept="image/*" (change)="onPhotoSelected($event)" hidden>
+        {{ isUploadingPhoto ? 'Uploading...' : 'Upload Photo' }}
+      </label>
+    </div>
+
+    <div class="arch-card-header"><h2>Company / Firm Details</h2></div>
+    <div class="arch-form-grid">
+      <div class="arch-form-group" [class.err]="submitted && form.get('companyName')?.invalid">
+        <label class="arch-label">Company / Firm Name <span class="req">*</span></label>
+        <input class="arch-input" formControlName="companyName" placeholder="e.g. The Grid Architects">
+      </div>
+      <div class="arch-form-group" [class.err]="submitted && form.get('type')?.invalid">
+        <label class="arch-label">Type <span class="req">*</span></label>
+        <select class="arch-select" formControlName="type">
+          <option value="" disabled selected>Select</option>
+          <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+      <div class="arch-form-group" [class.err]="submitted && form.get('city')?.invalid">
+        <label class="arch-label">City <span class="req">*</span></label>
+        <input class="arch-input" formControlName="city" placeholder="e.g. Ahmedabad">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">State</label>
+        <input class="arch-input" formControlName="state" placeholder="e.g. Gujarat">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Pincode</label>
+        <input class="arch-input" formControlName="pincode">
+      </div>
+      <div class="arch-form-group full">
+        <label class="arch-label">Office Address</label>
+        <input class="arch-input" formControlName="officeAddress" placeholder="e.g. Ganesh Meridian, C-1008...">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Map Link</label>
+        <input class="arch-input" formControlName="mapLink" placeholder="https://maps.google.com/...">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Year Established</label>
+        <input class="arch-input" formControlName="yearEstablished" placeholder="e.g. 2011">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Team Size</label>
+        <input class="arch-input" formControlName="teamSize" placeholder="e.g. 15-25">
+      </div>
+    </div>
+
+    <div class="arch-card-header"><h2>Contact Person</h2></div>
+    <div class="arch-form-grid">
+      <div class="arch-form-group">
+        <label class="arch-label">Contact Person</label>
+        <input class="arch-input" formControlName="contactPerson" placeholder="e.g. Ar. Snehal Suthar">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Designation</label>
+        <input class="arch-input" formControlName="designation" placeholder="e.g. Principal Architect">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Phone</label>
+        <input class="arch-input" formControlName="phone" placeholder="+91 ...">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">WhatsApp</label>
+        <input class="arch-input" formControlName="whatsapp" placeholder="+91 ...">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Email</label>
+        <input class="arch-input" type="email" formControlName="email">
+      </div>
+    </div>
+
+    <div class="arch-card-header"><h2>Online Presence</h2></div>
+    <div class="arch-form-grid">
+      <div class="arch-form-group">
+        <label class="arch-label">Website</label>
+        <input class="arch-input" formControlName="website" placeholder="https://...">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Instagram</label>
+        <input class="arch-input" formControlName="instagram" placeholder="@handle">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">LinkedIn</label>
+        <input class="arch-input" formControlName="linkedin" placeholder="https://linkedin.com/...">
+      </div>
+    </div>
+
+    <div class="arch-card-header"><h2>About &amp; Specializations</h2></div>
+    <div class="arch-form-grid">
+      <div class="arch-form-group full">
+        <label class="arch-label">About</label>
+        <textarea class="arch-textarea" formControlName="about" placeholder="Short description of the firm and design philosophy..."></textarea>
+      </div>
+      <div class="arch-form-group full">
+        <label class="arch-label">Specializations</label>
+        <div class="arch-chip-select">
+          <button type="button" class="arch-chip-toggle" *ngFor="let s of specializationOptions"
+                  [class.active]="isSpecSelected(s)" (click)="toggleSpecialization(s)">{{ s }}</button>
+        </div>
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Service Areas</label>
+        <input class="arch-input" formControlName="serviceAreas" placeholder="Ahmedabad, Surat, Vadodara (comma separated)">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Tags</label>
+        <input class="arch-input" formControlName="tags" placeholder="Luxury, Residential (comma separated)">
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Project Type</label>
+        <input class="arch-input" formControlName="projectType" placeholder="e.g. New Delhi villa project">
+      </div>
+    </div>
+
+    <div class="arch-card-header"><h2>Lead Tracking</h2></div>
+    <div class="arch-form-grid">
+      <div class="arch-form-group">
+        <label class="arch-label">Priority</label>
+        <select class="arch-select" formControlName="priority">
+          <option value="">Select</option>
+          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Source</label>
+        <select class="arch-select" formControlName="source">
+          <option value="">Select</option>
+          <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="arch-form-group">
+        <label class="arch-label">Lead Owner</label>
+        <input class="arch-input" formControlName="leadOwner" placeholder="e.g. Ravi Sharma">
+      </div>
+    </div>
+  </form>
+
+  <div class="arch-actions" style="justify-content:flex-end">
+    <button class="arch-btn" (click)="cancel()">Cancel</button>
+    <button class="arch-btn arch-btn-primary" (click)="save()" [disabled]="isSaving">
+      {{ isSaving ? 'Saving...' : 'Save Architect' }}
+    </button>
+  </div>
+
+</div>

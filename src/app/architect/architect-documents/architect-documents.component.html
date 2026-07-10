@@ -1,0 +1,42 @@
+<div class="arch-page">
+
+  <header class="arch-toolbar">
+    <button class="arch-icon-btn" (click)="goBack()" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="arch-titles">
+      <h1>Documents &amp; Files</h1>
+      <p>{{ documents.length }} files &middot; company brochures, price lists &amp; project documents</p>
+    </div>
+    <div class="arch-actions">
+      <label class="arch-btn arch-btn-primary">
+        <input type="file" hidden (change)="onFileSelected($event)">
+        {{ isUploading ? 'Uploading...' : '+ Upload File' }}
+      </label>
+    </div>
+  </header>
+
+  <div class="arch-card">
+    <div class="arch-table-scroll" *ngIf="!isLoading && documents.length; else emptyOrLoading">
+      <table class="arch-table">
+        <thead><tr><th>File</th><th>Category</th><th>Linked Architect</th><th>Type</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let d of documents" [class.clickable]="d.architectId" (click)="openArchitect(d.architectId)">
+            <td><a [href]="d.fileUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">{{ d.fileName }}</a></td>
+            <td><span class="arch-pill pill-default">{{ d.category }}</span></td>
+            <td>{{ d.architectName || '—' }}</td>
+            <td>{{ d.fileType | uppercase }}</td>
+            <td>{{ formatSize(d.fileSizeBytes) }}</td>
+            <td>{{ d.uploadedAt | date:'d MMM y' }}</td>
+            <td><button class="row-del-btn" (click)="$event.stopPropagation(); remove(d)">&times;</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #emptyOrLoading>
+      <div class="arch-skeleton" style="height:160px;margin:18px" *ngIf="isLoading"></div>
+      <div class="arch-empty" *ngIf="!isLoading">No documents uploaded yet.</div>
+    </ng-template>
+  </div>
+
+</div>

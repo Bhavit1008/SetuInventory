@@ -25,12 +25,6 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
       </button>
-      <button class="icon-btn" (click)="fileInput.click()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-      </button>
     </div>
   </header>
 
@@ -67,54 +61,35 @@
         <div class="summary-divider"></div>
         <div class="summary-row">
           <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-          <span class="row-label">Block Size (cm)</span>
+          <span class="row-label">Block Size</span>
           <span class="row-val">{{ blockData?.productLength || '—' }} × {{ blockData?.productWidth || '—' }}</span>
         </div>
+        <ng-container *ngIf="blockRemark">
+          <div class="summary-divider"></div>
+          <div class="summary-row row-wrap">
+            <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="row-label">Block Remarks</span>
+            <span class="row-val wrap">{{ blockRemark }}</span>
+          </div>
+        </ng-container>
         <div class="summary-divider"></div>
       </div>
 
-      <!-- Block Photo -->
-      <div class="panel-card block-photo-card">
+      <!-- Status Badge -->
+      <div class="panel-card status-card">
         <div class="card-badge">
-          <span class="badge-num">2</span>
-          <span class="badge-label">BLOCK PHOTO</span>
+          <span class="badge-label" style="padding-left:0">CURRENT STATUS</span>
         </div>
-
-        <div class="photo-zone" (click)="fileInput.click()">
-          <div *ngIf="!previewImg" class="photo-empty">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            <span>Tap to add photo</span>
+        <div class="status-select-wrap">
+          <div class="select-wrap full-select">
+            <select class="fg-select" formControlName="status">
+              <option value="" disabled selected>Set Status</option>
+              <option *ngFor="let s of statusOption" [value]="s.label">{{ s.label }}</option>
+            </select>
+            <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <img *ngIf="previewImg" [src]="previewImg" alt="Block Photo" class="block-photo-img">
-          <div *ngIf="previewImg" class="photo-overlay">
-            <span>Change</span>
-          </div>
-        </div>
-
-        <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
-
-        <div class="photo-actions">
-          <button type="button" class="photo-btn" (click)="fileInput.click()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload
-          </button>
-          <button *ngIf="!isMobile" type="button" class="photo-btn" (click)="openCamera()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Camera
-          </button>
-        </div>
-
-        <!-- Camera modal -->
-        <div *ngIf="!isMobile && showCamera" class="camera-modal">
-          <video #video autoplay class="camera-video"></video>
-          <canvas #canvas style="display:none;"></canvas>
-          <div class="camera-controls">
-            <button type="button" class="cam-capture" (click)="capturePhoto()">● Capture</button>
-            <button type="button" class="cam-cancel"  (click)="closeCamera()">✕ Cancel</button>
+          <div class="status-pill" [ngClass]="stockFormGroup.get('status')?.value?.toLowerCase() || 'none'">
+            {{ stockFormGroup.get('status')?.value || 'Not Set' }}
           </div>
         </div>
       </div>
@@ -127,21 +102,21 @@
       <!-- Slab Details -->
       <div class="panel-card">
         <div class="card-badge">
-          <span class="badge-num">4</span>
+          <span class="badge-num">2</span>
           <span class="badge-label">SLAB DETAILS</span>
         </div>
 
         <div class="fields-grid">
-          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productCode')?.invalid">
-            <label class="fg-label">Block Number</label>
-            <input type="text" class="fg-input" formControlName="productCode" placeholder="e.g. SMH0315">
+          <div class="field-group">
+            <label class="fg-label">Block Number <span class="auto-tag">Optional</span></label>
+            <input type="text" class="fg-input" formControlName="productCode" placeholder="e.g. SMH0315 (leave blank if standalone)">
           </div>
           <div class="field-group">
             <label class="fg-label">Slab Number</label>
             <input type="text" class="fg-input" placeholder="e.g. 1, 2, 3...">
           </div>
-          <div class="field-group" [class.err]="submitted && stockFormGroup.get('godownLocation')?.invalid">
-            <label class="fg-label">Godown Location</label>
+          <div class="field-group">
+            <label class="fg-label">Godown Location <span class="auto-tag">Optional</span></label>
             <div class="select-wrap">
               <select class="fg-select" formControlName="godownLocation">
                 <option value="" disabled selected>Select</option>
@@ -150,12 +125,22 @@
               <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
-          <div class="field-group" [class.err]="submitted && stockFormGroup.get('productQuality')?.invalid">
-            <label class="fg-label">Material</label>
+          <div class="field-group">
+            <label class="fg-label">Material <span class="auto-tag">Optional</span></label>
             <div class="select-wrap">
               <select class="fg-select" formControlName="productQuality">
                 <option value="" disabled selected>Select</option>
                 <option *ngFor="let q of productQuality" [value]="q.label">{{ q.label }}</option>
+              </select>
+              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="fg-label">Product</label>
+            <div class="select-wrap">
+              <select class="fg-select" formControlName="product">
+                <option value="" disabled selected>Select</option>
+                <option *ngFor="let p of productOptions" [value]="p.label">{{ p.label }}</option>
               </select>
               <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -180,31 +165,21 @@
               <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
-          <div class="field-group" [class.err]="submitted && stockFormGroup.get('status')?.invalid">
-            <label class="fg-label">Status</label>
-            <div class="select-wrap">
-              <select class="fg-select" formControlName="status">
-                <option value="" disabled selected>Select</option>
-                <option *ngFor="let s of statusOption" [value]="s.label">{{ s.label }}</option>
-              </select>
-              <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div class="field-group size-group" [class.err]="submitted && (stockFormGroup.get('productLength')?.invalid || stockFormGroup.get('productWidth')?.invalid)">
-            <label class="fg-label">Size (cm) L × W</label>
+          <div class="field-group size-group">
+            <label class="fg-label">Size L × W <span class="auto-tag">Optional</span></label>
             <div class="size-row">
               <input type="number" min="0" class="fg-input size-in" formControlName="productLength" placeholder="L">
               <span class="size-x">×</span>
               <input type="number" min="0" class="fg-input size-in" formControlName="productWidth" placeholder="W">
             </div>
           </div>
-          <div class="field-group" [class.err]="submitted && stockFormGroup.get('quantity')?.invalid">
-            <label class="fg-label">Quantity</label>
-            <input type="number" min="1" class="fg-input" formControlName="quantity" placeholder="1">
+          <div class="field-group">
+            <label class="fg-label">Quantity <span class="auto-tag">Auto</span></label>
+            <input type="number" class="fg-input" formControlName="quantity" readonly>
           </div>
-          <div class="field-group full-width" [class.err]="submitted && stockFormGroup.get('remark')?.invalid">
-            <label class="fg-label">Remarks</label>
-            <input type="text" class="fg-input" formControlName="remark" placeholder="Add any notes...">
+          <div class="field-group full-width">
+            <label class="fg-label">Slab Remarks</label>
+            <input type="text" class="fg-input" formControlName="remark" placeholder="Add any notes for this slab entry...">
           </div>
         </div>
       </div>
@@ -213,7 +188,7 @@
       <div class="panel-card">
         <div class="card-badge-row">
           <div class="card-badge">
-            <span class="badge-num">5</span>
+            <span class="badge-num">3</span>
             <span class="badge-label">SLAB ENTRY GRID</span>
           </div>
           <button type="button" class="add-slab-btn" (click)="addNewRow()">
@@ -227,8 +202,8 @@
             <thead>
               <tr>
                 <th>Slab No.</th>
-                <th>Length (cm)</th>
-                <th>Width (cm)</th>
+                <th>Length</th>
+                <th>Width</th>
                 <th colspan="2">Less (L × W)</th>
                 <th>Sqft</th>
                 <th>Remarks</th>
@@ -269,23 +244,30 @@
                   <span *ngIf="!form.value.editable" class="cell-val muted">{{ form.value.remark || '—' }}</span>
                 </td>
 
-                <!-- ── Per-slab photo cell ── -->
+                <!-- ── Per-slab photo cell (shows imageBase64 OR imageUrl) ── -->
                 <td>
-                  <ng-container *ngIf="form.get('imageBase64')?.value; else noSlabPhoto">
-                    <div class="slab-thumb-wrap" (click)="openSlabPhotoModal(i)" title="Change photo">
-                      <img [src]="form.get('imageBase64')?.value" class="slab-thumb-img" [alt]="'Slab ' + form.value.id">
+                  <ng-container *ngIf="(form.get('imageBase64')?.value || form.get('imageUrl')?.value) as imgSrc; else noSlabPhoto">
+                    <div class="slab-thumb-wrap"
+                         (click)="openSlabPhotoModal(i)"
+                         title="Change photo">
+                      <img [src]="form.get('imageBase64')?.value || form.get('imageUrl')?.value"
+                           class="slab-thumb-img"
+                           [alt]="'Slab ' + form.value.id">
                       <button type="button" class="slab-thumb-remove"
                               (click)="$event.stopPropagation(); removeSlabImage(i)"
                               title="Remove photo">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="3">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
                         </svg>
                       </button>
                     </div>
                   </ng-container>
                   <ng-template #noSlabPhoto>
                     <button type="button" class="photo-mini-btn" (click)="openSlabPhotoModal(i)">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
@@ -322,7 +304,7 @@
       <!-- Live Summary -->
       <div class="panel-card live-summary-card">
         <div class="card-badge">
-          <span class="badge-num">6</span>
+          <span class="badge-num">4</span>
           <span class="badge-label">LIVE SUMMARY <span class="auto-tag">Auto calculated</span></span>
         </div>
 
@@ -338,10 +320,6 @@
           <div class="stat-box">
             <span class="stat-num">{{ avgSlabSize | number:'1.2-2' }}</span>
             <span class="stat-label">Avg Slab (sqft)</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-num">{{ stockFormGroup.get('quantity')?.value || 0 }}</span>
-            <span class="stat-label">Quantity</span>
           </div>
         </div>
       </div>
@@ -369,7 +347,7 @@
       <!-- Final Cost Engine -->
       <div class="panel-card cost-engine-card">
         <div class="card-badge">
-          <span class="badge-num">7</span>
+          <span class="badge-num">5</span>
           <span class="badge-label">FINAL COST ENGINE</span>
         </div>
 
@@ -389,49 +367,12 @@
         </div>
       </div>
 
-      <!-- Key Highlights -->
-      <div class="panel-card highlights-card">
-        <div class="card-badge">
-          <span class="badge-label" style="padding-left:0">KEY HIGHLIGHTS</span>
-        </div>
-        <ul class="highlights-list">
-          <li><span class="hl-dot"></span>Per sqft &amp; area tracking</li>
-          <li><span class="hl-dot"></span>Auto sqft calculations</li>
-          <li><span class="hl-dot"></span>Real-time live summary</li>
-          <li><span class="hl-dot"></span>Cost breakdown engine</li>
-          <li><span class="hl-dot"></span>Inventory ready output</li>
-          <li><span class="hl-dot"></span>Fast &amp; error free entry</li>
-        </ul>
-      </div>
-
-      <!-- Status Badge -->
-      <div class="panel-card status-card">
-        <div class="card-badge">
-          <span class="badge-label" style="padding-left:0">CURRENT STATUS</span>
-        </div>
-        <div class="status-select-wrap">
-          <div class="select-wrap full-select">
-            <select class="fg-select" formControlName="status">
-              <option value="" disabled selected>Set Status</option>
-              <option *ngFor="let s of statusOption" [value]="s.label">{{ s.label }}</option>
-            </select>
-            <svg class="sel-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-          <div class="status-pill" [ngClass]="stockFormGroup.get('status')?.value?.toLowerCase() || 'none'">
-            {{ stockFormGroup.get('status')?.value || 'Not Set' }}
-          </div>
-        </div>
-      </div>
-
     </aside>
 
   </form>
 
   <!-- ===================================================================
        SLAB PHOTO MODAL
-       Opens when the user clicks "Photo" in any grid row.
-       The slab number is shown prominently in the orange badge so
-       there is zero ambiguity about which slab is being photographed.
        =================================================================== -->
   <div class="slab-photo-overlay"
        *ngIf="slabPhotoModalIndex !== null"

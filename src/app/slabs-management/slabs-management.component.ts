@@ -29,22 +29,15 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   isUpdate = false;
   isSubmitting = false;
   submitted = false;
-  updatedImage = false;
-  showCamera = false;
   isDark = false;
-  previewImg: string | null = null;
-  stream: MediaStream | null = null;
   productId: any = null;
   blockData: Product | null = null;
+  blockImgPreviews: string[] = [];
 
   // ── Slab-level photo modal state ───────────────────────────────────────────
   slabPhotoModalIndex: number | null = null;
   slabCameraStream: MediaStream | null = null;
   showSlabCamera = false;
-
-  // ── ViewRefs (block-level) ─────────────────────────────────────────────────
-  @ViewChild('video')     videoRef!:     ElementRef<HTMLVideoElement>;
-  @ViewChild('canvas')    canvasRef!:    ElementRef<HTMLCanvasElement>;
 
   // ── ViewRefs (slab-level) ──────────────────────────────────────────────────
   @ViewChild('slabVideo')  slabVideoRef!:  ElementRef<HTMLVideoElement>;
@@ -95,6 +88,15 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     { id: 3, label: 'Sold' }
   ];
 
+  productOptions = [
+    { id: 'WW', label: 'WISPER WHITE'  },
+    { id: 'LH', label: 'LAVENDER HAZE' },
+    { id: 'DB', label: 'DUSKY BLOOM'   },
+    { id: 'WR', label: 'WISPER RED'    },
+    { id: 'SV', label: 'SILVER VIEL'   },
+    { id: 'SE', label: 'SUN VIEL'      },
+  ];
+
   // ── Constructor ────────────────────────────────────────────────────────────
   constructor(
     private fb: FormBuilder,
@@ -122,7 +124,6 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
-    this.stopCamera();
     this.stopSlabCamera();
   }
 
@@ -143,23 +144,31 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   }
 
   // ── Form Build ─────────────────────────────────────────────────────────────
+  // Fields mirrored in the BLOCK INFO card (productCode, productQuality,
+  // godownLocation, productLength/productWidth) are intentionally optional —
+  // they only have a source value when converting from a block, and a slab
+  // must be addable standalone with no block behind it. The cost fields are
+  // optional for the same reason: they're only ever populated by copying
+  // the source block's own costing (see patchFormWithData) — there is no
+  // input UI for them, so requiring them made standalone entry impossible.
   buildForm(): void {
     this.stockFormGroup = new FormGroup({
-      productCode:       new FormControl('', Validators.required),
-      godownLocation:    new FormControl('', Validators.required),
-      productQuality:    new FormControl('', Validators.required),
+      productCode:       new FormControl(''),
+      godownLocation:    new FormControl(''),
+      productQuality:    new FormControl(''),
       productFinished:   new FormControl('', Validators.required),
-      productLength:     new FormControl('', Validators.required),
-      productWidth:      new FormControl('', Validators.required),
+      productLength:     new FormControl(''),
+      productWidth:      new FormControl(''),
       productThickness:  new FormControl('', Validators.required),
-      quantity:          new FormControl('', Validators.required),
-      exFactoryCost:     new FormControl('', Validators.required),
-      miscellaneousCost: new FormControl('', Validators.required),
-      freightCost:       new FormControl('', Validators.required),
-      inHouseCost:       new FormControl('', Validators.required),
-      sellingCost:       new FormControl('', Validators.required),
-      status:            new FormControl('', Validators.required),
-      remark:            new FormControl(''),   // optional
+      quantity:          new FormControl(0, Validators.required),
+      exFactoryCost:     new FormControl(''),
+      miscellaneousCost: new FormControl(''),
+      freightCost:       new FormControl(''),
+      inHouseCost:       new FormControl(''),
+      sellingCost:       new FormControl(''),
+      status:            new FormControl('Available', Validators.required),
+      product:           new FormControl(''),
+      remark:            new FormControl(''),
       size:              new FormControl('')
     });
   }
@@ -182,6 +191,11 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   get avgSlabSize(): number {
     if (!this.slabPieces.length) return 0;
     return this.totalSlabSqft / this.slabPieces.length;
+  }
+
+  /** The source block's own remark, kept read-only and separate from the slab's own remark. */
+  get blockRemark(): string {
+    return this.blockData?.description ?? '';
   }
 
   get totalBlockCost(): number {
@@ -210,7 +224,10 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       inHouseCost:       formData.inHouseCost      ?? '',
       sellingCost:       formData.sellingCost      ?? '',
       status:            formData.status           ?? '',
-      remark:            formData.description      ?? ''
+      product:           formData.product          ?? ''
+      // remark is intentionally left blank — it's the slab's own remark,
+      // kept separate from the block's remark (shown read-only in BLOCK INFO
+      // and re-joined with a separator only at save time; see prepareResponseObject).
     });
 
     this.slabPieces = Array.isArray(formData.pieces) ? [...formData.pieces] : [];
@@ -229,19 +246,11 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       })
     );
 
-    if (formData.imageUrl) {
-      const sub = this.productService.downloadImage(formData.imageUrl).subscribe({
-        next: base64 => {
-          this.previewImg   = base64;
-          this.updatedImage = false;
-          this.cd.detectChanges();
-        },
-        error: () => this.cd.detectChanges()
-      });
-      this.subs.add(sub);
-    } else {
-      this.cd.detectChanges();
-    }
+    this.blockImgPreviews = formData.imageUrls?.length
+      ? [...formData.imageUrls]
+      : formData.imageUrl ? [formData.imageUrl] : [];
+    this.syncQuantity();
+    this.cd.detectChanges();
   }
 
   // ── Slab area calc ─────────────────────────────────────────────────────────
@@ -250,13 +259,19 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.stockFormGroup.get('size')?.setValue(area);
   }
 
+  // ── Quantity auto-sync (mirrors number of slab pieces added) ───────────────
+  private syncQuantity(): void {
+    this.stockFormGroup.get('quantity')?.setValue(this.slabPieces.length);
+  }
+
   calculateSlabArea(index: number): void {
     const group      = this.slabPieceForm[index] as FormGroup;
     const length     = parseFloat(group.value.length)     || 0;
     const width      = parseFloat(group.value.width)      || 0;
     const lessLength = parseFloat(group.value.lessLength) || 0;
     const lessWidth  = parseFloat(group.value.lessWidth)  || 0;
-    const totalSlabSize = (length * width) - (lessLength * lessWidth);
+    const rawArea = (length * width) - (lessLength * lessWidth);
+    const totalSlabSize = Math.round((rawArea / 144) * 100) / 100;
     group.patchValue({ totalArea: totalSlabSize, editable: false });
   }
 
@@ -281,6 +296,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       imageBase64: new FormControl(''),
       imageUrl:    new FormControl('')
     }));
+    this.syncQuantity();
   }
 
   editSlabPiece(index: number): void {
@@ -302,6 +318,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.slabPieces.splice(index, 1);
     this.slabPieceForm.splice(index, 1);
     this.calculateTotalSlabSize();
+    this.syncQuantity();
   }
 
   // ── Slab-level photo modal ─────────────────────────────────────────────────
@@ -385,29 +402,11 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     if (!slabForm) return;
     this.submitted = true;
 
-    if (!this.previewImg) {
-      this.toastService.showError('Please add a block photo');
-      return;
-    }
-
     if (this.stockFormGroup.invalid) return;
 
     this.isSubmitting = true;
-    const state            = history.state as { formData?: Product };
-    const existingImageUrl = state.formData?.imageUrl ?? '';
-
-    if (this.updatedImage && this.previewImg) {
-      const sub = this.productService.uploadImage(this.previewImg).subscribe({
-        next:  imageUrl => this.saveSlab(slabForm, imageUrl),
-        error: () => {
-          this.isSubmitting = false;
-          this.toastService.showError('Image upload failed.');
-        }
-      });
-      this.subs.add(sub);
-    } else {
-      this.saveSlab(slabForm, existingImageUrl);
-    }
+    const imageUrl = this.blockImgPreviews[0] ?? '';
+    this.saveSlab(slabForm, imageUrl);
     history.replaceState({}, document.title);
   }
 
@@ -426,16 +425,28 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
   private afterSave(): void {
     this.buildForm();
-    this.slabPieces    = [];
-    this.slabPieceForm = [];
-    this.previewImg    = null;
-    this.blockData     = null;
+    this.slabPieces       = [];
+    this.slabPieceForm    = [];
+    this.blockData        = null;
+    this.blockImgPreviews = [];
     this.toastService.showSuccess(
       this.isUpdate ? 'Slab updated successfully.' : 'New slab added successfully.'
     );
     this.isUpdate    = false;
     this.isSubmitting = false;
     this.submitted   = false;
+  }
+
+  /**
+   * Block and slab remarks are kept as separate concepts in the UI, but the
+   * Product model only has one `description` field — so they're joined here
+   * with a separator (matching the " | " convention already used elsewhere
+   * in this app's remark history) rather than adding a new model field.
+   */
+  private combinedRemark(slabRemark: string): string {
+    const blockPart = this.blockRemark.trim();
+    const slabPart = (slabRemark || '').trim();
+    return [blockPart, slabPart].filter(Boolean).join(' | ');
   }
 
   prepareResponseObject(slab: any, imgUrl: string): any {
@@ -447,71 +458,21 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       godownLocation:    slab.value.godownLocation,
       productQuality:    slab.value.productQuality,
       productFinished:   slab.value.productFinished,
-      productLength:     parseFloat(slab.value.productLength),
-      productWidth:      parseFloat(slab.value.productWidth),
+      productLength:     parseFloat(slab.value.productLength) || 0,
+      productWidth:      parseFloat(slab.value.productWidth)  || 0,
       productThickness:  parseFloat(slab.value.productThickness),
       quantity:          parseInt(slab.value.quantity),
-      exFactoryCost:     parseFloat(slab.value.exFactoryCost),
-      miscellaneousCost: parseFloat(slab.value.miscellaneousCost),
-      freightCost:       parseFloat(slab.value.freightCost),
-      inHouseCost:       parseFloat(slab.value.inHouseCost),
-      sellingCost:       parseFloat(slab.value.sellingCost),
+      exFactoryCost:     parseFloat(slab.value.exFactoryCost)     || 0,
+      miscellaneousCost: parseFloat(slab.value.miscellaneousCost) || 0,
+      freightCost:       parseFloat(slab.value.freightCost)       || 0,
+      inHouseCost:       parseFloat(slab.value.inHouseCost)       || 0,
+      sellingCost:       parseFloat(slab.value.sellingCost)       || 0,
       status:            slab.value.status,
-      description:       slab.value.remark,
+      product:           slab.value.product,
+      description:       this.combinedRemark(slab.value.remark),
       pieces:            this.slabPieces,
       imageUrl:          imgUrl
     };
   }
 
-  // ── Block-level camera ────────────────────────────────────────────────────
-  openCamera(): void {
-    this.showCamera = true;
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        this.stream = stream;
-        this.videoRef.nativeElement.srcObject = stream;
-      })
-      .catch(() => {
-        this.toastService.showError('Camera access denied or unavailable.');
-        this.showCamera = false;
-      });
-  }
-
-  capturePhoto(): void {
-    const video  = this.videoRef.nativeElement;
-    const canvas = this.canvasRef.nativeElement;
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d')?.drawImage(video, 0, 0);
-    this.previewImg   = canvas.toDataURL('image/png');
-    this.updatedImage = true;
-    this.stopCamera();
-    this.showCamera   = false;
-  }
-
-  closeCamera(): void {
-    this.stopCamera();
-    this.showCamera = false;
-  }
-
-  stopCamera(): void {
-    if (this.stream) {
-      this.stream.getTracks().forEach(t => t.stop());
-      this.stream = null;
-    }
-  }
-
-  // ── Block image upload ────────────────────────────────────────────────────
-  onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewImg   = reader.result as string;
-        this.updatedImage = true;
-        this.cd.detectChanges();
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
 }

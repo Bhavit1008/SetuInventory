@@ -1,0 +1,16 @@
+{
+  "name": "Setu Inventory",
+  "short_name": "Setu",
+  "description": "Setu Stone & Marble Inventory Management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E87825",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

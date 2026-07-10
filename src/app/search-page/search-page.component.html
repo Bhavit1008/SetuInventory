@@ -1,87 +1,197 @@
-<div class="container">
-
-
-  <!-- Sidebar: Filter section -->
-  <div class="sidebar" [class.show-sidebar]="sidebarVisible" [class.mobile-sidebar]="isMobile">
-    <div class="sidebar-header d-flex justify-content-between align-items-center">
-      <h3 class="mb-0">Filters</h3>
-      <button type="button" class="btn-close" (click)="toggleSidebar()" *ngIf="isMobile"></button>
+<div class="main-area">
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="icon-btn nav-toggle" *ngIf="layout.isMobile" (click)="layout.toggleNav()" aria-label="Open navigation">☰</button>
+    <div class="topbar-titles">
+      <h1>Dashboard</h1>
+      <p class="welcome">Welcome back 👋</p>
     </div>
-    <form [formGroup]="searchForm" (ngSubmit)="applyFilter()">
-      <label>Category</label>
-      <select name="category" id="category" class="form-control" formControlName="category">
-        <option value="">-- Select Category --</option>
-        <option *ngFor="let c of categories" [value]="c.label">{{ c.label }}</option>
-      </select>
 
-      <label for="productCategory">Locations: </label>
-      <select name="godonLocations" id="godonLocations" class="form-control" formControlName="godonLocations" required>
-        <option value="">-- Select Category --</option>
-        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
-      </select>
+    <div class="topbar-actions">
+      <button class="theme-toggle" (click)="layout.toggleTheme()" [attr.aria-label]="layout.darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+        <span *ngIf="!layout.darkMode">🌙</span>
+        <span *ngIf="layout.darkMode">☀️</span>
+      </button>
+      <button class="icon-btn bell" aria-label="Approvals / Alerts"
+              [class.bell-admin]="isAdmin"
+              (click)="openApprovals()">
+        🔔<span class="badge" *ngIf="pendingApprovalCount > 0">{{ pendingApprovalCount }}</span>
+      </button>
+      <div class="avatar">SETU</div>
+    </div>
+  </header>
 
-      <label for="productQuality">Product Quality: </label>
-      <select name="productQuality" id="productQuality" class="form-control" formControlName="productQuality" required>
-        <option value="">-- Select Category --</option>
-        <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
-      </select>
+  <!-- Stat cards -->
+  <section class="stat-row">
+    <button
+      type="button"
+      *ngFor="let card of statCards"
+      class="stat-card"
+      [class.active]="card.key && isActiveFilter(card.key)"
+      [class.static]="!card.key"
+      (click)="card.key ? applyDashboardFilter(card.key, $event) : null">
+      <span class="stat-icon" [ngSwitch]="card.icon">
+        <ng-container *ngSwitchCase="'cube'">📦</ng-container>
+        <ng-container *ngSwitchCase="'layers'">🧱</ng-container>
+        <ng-container *ngSwitchCase="'truck'">🚚</ng-container>
+        <ng-container *ngSwitchCase="'bag'">🛍️</ng-container>
+        <ng-container *ngSwitchCase="'trend'">📈</ng-container>
+      </span>
+      <span class="stat-body">
+        <span class="stat-label">{{ card.label }}</span>
+        <span class="stat-value">{{ card.value }}</span>
+        <span class="stat-sub">{{ card.sub }}</span>
+      </span>
+    </button>
+  </section>
 
-      <label>Product Code</label>
-      <input type="text" formControlName="productCode" />
+  <!-- Tables + slab donut -->
+  <section class="grid-row three-col">
+    <div class="panel">
+      <h3>Total Sqft by Marble</h3>
+      <table class="data-table">
+        <thead><tr><th>Marble</th><th>Total Sqft</th><th>No. of Lots</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let row of sqftByMarble">
+            <td>{{ row.marble }}</td>
+            <td>{{ row.totalSqft | number }}</td>
+            <td>{{ row.lots }}</td>
+          </tr>
+          <tr *ngIf="!sqftByMarble.length"><td colspan="3" class="empty-row">No slab sqft recorded yet</td></tr>
+        </tbody>
+        <tfoot *ngIf="sqftByMarble.length">
+          <tr><td>Total</td><td>{{ totalSlabSqftDisplay | number }}</td><td>{{ totalSlabLots }}</td></tr>
+        </tfoot>
+      </table>
+    </div>
 
-      <label>Min Price</label>
-      <input type="number" formControlName="minPrice" />
+    <div class="panel">
+      <h3>Total Blocks by Marble</h3>
+      <table class="data-table">
+        <thead><tr><th>Marble</th><th>Total Blocks</th><th>No. of Lots</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let row of blocksByMarble">
+            <td>{{ row.marble }}</td>
+            <td>{{ row.totalBlocks }}</td>
+            <td>{{ row.lots }}</td>
+          </tr>
+          <tr *ngIf="!blocksByMarble.length"><td colspan="3" class="empty-row">No blocks recorded yet</td></tr>
+        </tbody>
+        <tfoot *ngIf="blocksByMarble.length">
+          <tr><td>Total</td><td>{{ totalBlocksCount }}</td><td>{{ totalBlockLots }}</td></tr>
+        </tfoot>
+      </table>
+    </div>
 
-      <label>Max Price</label>
-      <input type="number" formControlName="maxPrice" />
-
-      <label>Min Quantity</label>
-      <input type="number" formControlName="minQuantity" />
-
-      <label>Max Quantity</label>
-      <input type="number" formControlName="maxQuantity" />
-
-      <button type="submit">Search</button>
-      <button type="button" (click)="resetForm()">Reset</button>
-    </form>
-  </div>
-
-  <!-- Main content: Results -->
-  <div class="content" [class.blur]="sidebarVisible && isMobile">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <div class="product-status-filter-bar">
-        <a [ngStyle]="getLinkStyle('All')" (click)="highlight('All', $event)" class="filter-tab" href="search">
-          ALL PRODUCTS
-        </a>
-        <a [ngStyle]="getLinkStyle('Available')" (click)="highlight('Available', $event)" class="filter-tab">
-          IN STOCK
-        </a>
-        <a [ngStyle]="getLinkStyle('Processing')" (click)="highlight('Processing', $event)" class="filter-tab">
-          PROCESSING
-        </a>
-        <a [ngStyle]="getLinkStyle('Hold')" (click)="highlight('Hold', $event)" class="filter-tab">
-          HOLD
-        </a>
-        <a [ngStyle]="getLinkStyle('Sold')" (click)="highlight('Sold', $event)" class="filter-tab">
-          SOLD
-        </a>
-        <a [ngStyle]="getLinkStyle('InTransit')" (click)="highlight('InTransit', $event)" class="filter-tab">
-          INTRANSIT
-        </a>
-        <a [ngStyle]="getLinkStyle('Delete')" (click)="highlight('Delete', $event)" class="filter-tab">
-          DELETED HISTORY
-        </a>
+    <div class="panel">
+      <h3>Slab Status Overview</h3>
+      <div class="donut-wrap">
+        <div class="donut" [style.background]="getDonutGradient(slabStatusBreakdown)">
+          <div class="donut-hole">
+            <span class="donut-total">{{ totalSlabsCount }}</span>
+            <span class="donut-caption">Total Slabs</span>
+          </div>
+        </div>
+        <ul class="legend">
+          <li *ngFor="let s of slabStatusBreakdown">
+            <span class="dot" [style.background]="s.color"></span>
+            <span class="legend-label">{{ s.label }}</span>
+            <span class="legend-value">{{ s.count }} ({{ s.percent }}%)</span>
+          </li>
+          <li *ngIf="!slabStatusBreakdown.length" class="empty-row">No slabs yet</li>
+        </ul>
       </div>
+      <a class="view-all" (click)="applyDashboardFilter('Slab', $event)" href="javascript:void(0)">View All Slabs →</a>
+    </div>
+  </section>
 
+  <!-- Block donut + lists -->
+  <section class="grid-row four-col">
+    <div class="panel">
+      <h3>Block Status Overview</h3>
+      <div class="donut-wrap">
+        <div class="donut" [style.background]="getDonutGradient(blockStatusBreakdown)">
+          <div class="donut-hole">
+            <span class="donut-total">{{ totalBlocksCount }}</span>
+            <span class="donut-caption">Total Blocks</span>
+          </div>
+        </div>
+        <ul class="legend">
+          <li *ngFor="let s of blockStatusBreakdown">
+            <span class="dot" [style.background]="s.color"></span>
+            <span class="legend-label">{{ s.label }}</span>
+            <span class="legend-value">{{ s.count }} ({{ s.percent }}%)</span>
+          </li>
+          <li *ngIf="!blockStatusBreakdown.length" class="empty-row">No blocks yet</li>
+        </ul>
+      </div>
+      <a class="view-all" (click)="applyDashboardFilter('Block', $event)" href="javascript:void(0)">View All Blocks →</a>
+    </div>
 
-      <div class="d-flex align-items-center gap-2">
-        <button class="filter-toggle" (click)="toggleSidebar()" *ngIf="isMobile">Filters</button>
+    <div class="panel">
+      <h3>In Transit</h3>
+      <ul class="mini-list">
+        <li *ngFor="let item of inTransitItems">
+          <span class="mini-main">
+            <strong>{{ item.productCode }}</strong>
+            <span class="muted">{{ item.productQuality }}</span>
+          </span>
+          <span class="pill pill-info">In Transit</span>
+        </li>
+        <li *ngIf="!inTransitItems.length" class="empty-row">Nothing in transit right now</li>
+      </ul>
+      <a class="view-all" (click)="applyDashboardFilter('InTransit', $event)" href="javascript:void(0)">View All In Transit →</a>
+    </div>
+
+    <div class="panel">
+      <h3>Recent Sold</h3>
+      <ul class="mini-list">
+        <li *ngFor="let item of recentSoldItems">
+          <span class="mini-main">
+            <strong>{{ item.productCode }}</strong>
+            <span class="muted">{{ item.productQuality }}</span>
+          </span>
+          <span class="pill pill-danger">₹{{ item.sellingCost | number }}</span>
+        </li>
+        <li *ngIf="!recentSoldItems.length" class="empty-row">No sales recorded yet</li>
+      </ul>
+      <a class="view-all" (click)="applyDashboardFilter('Sold', $event)" href="javascript:void(0)">View All Sold →</a>
+    </div>
+
+    <div class="panel">
+      <h3>Alerts</h3>
+      <ul class="mini-list alerts-list">
+        <li *ngFor="let a of alerts" (click)="applyDashboardFilter(a.filterKey, $event)">
+          <span class="alert-dot" [class.dot-low]="a.type==='low'" [class.dot-warning]="a.type==='warning'" [class.dot-info]="a.type==='info'"></span>
+          <span>{{ a.message }}</span>
+        </li>
+        <li *ngIf="!alerts.length" class="empty-row">All clear — no alerts</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Inventory listing -->
+  <section class="inventory-section">
+    <div class="inventory-header">
+      <div class="chip-row">
+        <button class="chip" [class.active]="isActiveFilter('All')" (click)="applyDashboardFilter('All', $event)">All</button>
+        <button class="chip" [class.active]="isActiveFilter('Processing')" (click)="applyDashboardFilter('Processing', $event)">Processing</button>
+        <button class="chip" [class.active]="isActiveFilter('Hold')" (click)="applyDashboardFilter('Hold', $event)">Hold</button>
+        <button class="chip" [class.active]="isActiveFilter('Delete')" (click)="applyDashboardFilter('Delete', $event)">Deleted History</button>
+      </div>
+      <div class="inventory-actions">
+        <span class="custom-filter-note" *ngIf="customFilterActive">
+          Custom filter applied
+          <button type="button" (click)="resetForm()">Clear</button>
+        </span>
+        <button class="filter-btn" (click)="toggleFilterPanel()">⚙ Filters</button>
       </div>
     </div>
-    <div *ngIf="isLoading">
+
+    <div *ngIf="isLoading" class="skeleton-row">
       <div *ngFor="let _ of [1,2,3]" class="skeleton-wrapper">
         <ngx-skeleton-loader count="3" [theme]="{
-            'border': '1px solid #dee2e6',
+            'border': '1px solid var(--border)',
             'border-radius': '10px',
             'box-shadow': '0 4px 12px rgba(0, 0, 0, 0.05)',
             'height':'206px',
@@ -90,35 +200,88 @@
           }"></ngx-skeleton-loader>
       </div>
     </div>
-    <div class="card-grid">
-      <app-product-card *ngFor="let product of finalProducts" [product]="product" (changeStatus)="openPopup($event)" />
+
+    <div class="card-grid" *ngIf="!isLoading">
+      <app-product-card
+        *ngFor="let product of finalProducts"
+        [product]="product" />
     </div>
+
     <div *ngIf="!isLoading && finalProducts.length === 0" class="no-results">
-      <p>No products found. Please try adjusting your filters or check back later.</p>
+      <p>No products found. Try a different filter.</p>
     </div>
+  </section>
+</div>
+
+<!-- Advanced filter slide-over -->
+<div class="filter-backdrop" *ngIf="filterPanelVisible" (click)="closeFilterPanel()"></div>
+<div class="filter-panel" [class.open]="filterPanelVisible">
+  <div class="filter-panel-header">
+    <h3>Filters</h3>
+    <button type="button" class="icon-btn" (click)="closeFilterPanel()">&times;</button>
   </div>
-  <div *ngIf="isPopupOpen" class="popup-overlay">
-    <div class="popup-content">
-      <div class="popup-header">
-        <h5 class="product-code">{{ product.productCode }}</h5>
-        <button (click)="closePopup()" class="close-btn">&times;</button>
+
+  <form [formGroup]="searchForm" (ngSubmit)="applyFilter()">
+    <label>Category</label>
+    <select class="form-control" formControlName="category">
+      <option value="">-- Select Category --</option>
+      <option *ngFor="let c of categories" [value]="c.label">{{ c.label }}</option>
+    </select>
+
+    <label>Locations</label>
+    <select class="form-control" formControlName="godonLocations">
+      <option value="">-- Select Location --</option>
+      <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+    </select>
+
+    <label>Product Quality</label>
+    <select class="form-control" formControlName="productQuality">
+      <option value="">-- Select Quality --</option>
+      <option *ngFor="let quality of productQuality" [value]="quality.label">{{ quality.label }}</option>
+    </select>
+
+    <label>Product Code</label>
+    <input type="text" formControlName="productCode" />
+
+    <label>Min Price</label>
+    <input type="number" formControlName="minPrice" />
+
+    <label>Max Price</label>
+    <input type="number" formControlName="maxPrice" />
+
+    <label>Min Quantity</label>
+    <input type="number" formControlName="minQuantity" />
+
+    <label>Max Quantity</label>
+    <input type="number" formControlName="maxQuantity" />
+
+    <button type="submit">Search</button>
+    <button type="button" (click)="resetForm()">Reset</button>
+  </form>
+</div>
+
+<!-- Status update popup -->
+<div *ngIf="isPopupOpen" class="popup-overlay">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h5 class="product-code">{{ product.productCode }}</h5>
+      <button (click)="closePopup()" class="close-btn">&times;</button>
+    </div>
+
+    <form [formGroup]="popupForm" (ngSubmit)="handleOk()">
+      <div class="form-group">
+        <label for="statusDropdown">Update Status:</label>
+        <select id="statusDropdown" class="form-control" formControlName="status">
+          <option *ngFor="let s of statusList" [value]="s.label">{{ s.label }}</option>
+        </select>
       </div>
 
-      <form [formGroup]="popupForm" (ngSubmit)="handleOk()">
-        <div class="form-group">
-          <label for="statusDropdown">Update Status:</label>
-          <select id="statusDropdown" class="form-control" formControlName="status">
-            <option *ngFor="let s of statusList" [value]="s.label">{{ s.label }}</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label for="popupTextarea">Remark:</label>
+        <textarea id="popupTextarea" placeholder="Enter description..." rows="4" formControlName="remark"></textarea>
+      </div>
 
-        <div class="form-group">
-          <label for="popupTextarea">Remark:</label>
-          <textarea id="popupTextarea" placeholder="Enter description..." rows="4" formControlName="remark"></textarea>
-        </div>
-
-        <button type="submit" class="submit-btn">OK</button>
-      </form>
-    </div>
+      <button type="submit" class="submit-btn">OK</button>
+    </form>
   </div>
 </div>

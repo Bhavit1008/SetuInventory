@@ -433,16 +433,50 @@
   color: #1a8a3a;
 }
 
-.photo-preview {
-  padding: 0 18px 16px;
+.photo-count {
+  color: #e87825;
+  font-weight: 700;
 }
 
-.photo-preview img {
-  width: 100%;
-  max-height: 260px;
+.photo-strip {
+  display: flex;
+  gap: 10px;
+  padding: 10px 18px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.photo-strip::-webkit-scrollbar { display: none; }
+
+.photo-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.photo-thumb-img {
+  width: 90px;
+  height: 90px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 0.5px solid #e5e5ea;
+  display: block;
+}
+
+.remove-thumb-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.55);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -573,5 +607,68 @@
   text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
-  text-align: left; 
+  text-align: left;
+}
+
+/* ── Stone dropdown options ─────────────────────── */
+.stone-opt-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stone-opt-code {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent, #e87825);
+  font-family: 'Courier New', monospace;
+}
+
+.stone-opt-meta {
+  font-size: 11px;
+  color: #8e8e93;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stone-loading-txt {
+  color: #8e8e93;
+  font-size: 13px;
+}
+
+.dd-empty {
+  color: #8e8e93;
+  font-size: 13px;
+  cursor: default;
+}
+
+.dd-empty:hover { background: transparent; }
+
+/* ── Stone detail bar (auto-fill preview) ────────── */
+.stone-detail-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 18px 14px;
+}
+
+.stone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f2f2f7;
+  color: #3a3a3c;
+  white-space: nowrap;
+}
+
+.stone-chip-quality {
+  background: rgba(232,120,37,.12);
+  color: var(--accent, #e87825);
 }

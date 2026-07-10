@@ -3,56 +3,87 @@
   <!-- ── Hero Card ── -->
   <div class="hero-card">
 
-    <!-- Image -->
-    <div class="hero-img-wrap">
-      <img [src]="product.imageUrl" alt="Block Photo" class="hero-img" />
-    </div>
-
-    <!-- Identity + specs -->
-    <div class="hero-body">
-      <div class="hero-title-row">
-        <h2 class="hero-title">{{ product.productCode }}</h2>
-        <span class="status-badge" [ngClass]="'status-' + product.status.toLowerCase()">
-          {{ product.status }}
+    <!-- Full-width image gallery -->
+    <ng-container *ngIf="productImages.length > 0; else noImgCard">
+      <div class="gallery-wrap">
+        <img [src]="productImages[activeImgIdx]" alt="Photo" class="gallery-main-img"
+             (click)="openZoomImg(productImages[activeImgIdx])"/>
+        <span class="gallery-count-badge" *ngIf="productImages.length > 1">
+          {{ activeImgIdx + 1 }} / {{ productImages.length }}
         </span>
       </div>
-      <p class="hero-category">{{ product.category }} · {{ product.productQuality }}</p>
+      <!-- Thumbnail strip (only when >1 image) -->
+      <div class="gallery-thumb-strip" *ngIf="productImages.length > 1">
+        <button *ngFor="let img of productImages; let i = index"
+                type="button"
+                class="gallery-thumb-btn"
+                [class.thumb-active]="i === activeImgIdx"
+                (click)="activeImgIdx = i">
+          <img [src]="img" class="gallery-thumb-img" [alt]="'Photo ' + (i + 1)">
+        </button>
+      </div>
+    </ng-container>
+    <ng-template #noImgCard>
+      <div class="gallery-placeholder">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+    </ng-template>
 
-      <div class="hero-specs">
-        <div class="hero-spec">
-          <span class="spec-label">Size</span>
-          <span class="spec-value">
-            {{ product.productLength }} × {{ product.productWidth }} × {{ product.productHeight }} cm
+    <!-- Info row -->
+    <div class="hero-info-row">
+      <div class="hero-body">
+        <div class="hero-title-row">
+          <h2 class="hero-title">{{ product.productCode }}</h2>
+          <span class="status-badge" [ngClass]="'status-' + product.status.toLowerCase()">
+            {{ product.status }}
           </span>
         </div>
-        <div class="hero-spec">
-          <span class="spec-label">Weight</span>
-          <span class="spec-value">{{ product.productWeight }} KG</span>
-        </div>
-        <div class="hero-spec" *ngIf="product.godownLocation">
-          <span class="spec-label">Location</span>
-          <span class="spec-value">{{ product.godownLocation }}</span>
+        <p class="hero-category">{{ product.category }} · {{ product.productQuality }}</p>
+
+        <div class="hero-specs">
+          <div class="hero-spec">
+            <span class="spec-label">Size</span>
+            <span class="spec-value">
+              <ng-container *ngIf="product.category.toLowerCase() === 'slab'; else fullSize">
+                {{ product.productLength }} × {{ product.productWidth }}
+              </ng-container>
+              <ng-template #fullSize>
+                {{ product.productLength }} × {{ product.productWidth }} × {{ product.productHeight }}
+              </ng-template>
+            </span>
+          </div>
+          <div class="hero-spec" *ngIf="product.category.toLowerCase() !== 'slab'">
+            <span class="spec-label">Weight</span>
+            <span class="spec-value">{{ product.productWeight }} TONS</span>
+          </div>
+          <div class="hero-spec" *ngIf="product.godownLocation">
+            <span class="spec-label">Location</span>
+            <span class="spec-value">{{ product.godownLocation }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Summary stats -->
-    <div class="hero-summary">
-      <p class="summary-heading">Block Summary</p>
-      <div class="summary-stats">
-        <div class="stat-item">
-          <span class="stat-val">{{ product.quantity || '—' }}</span>
-          <span class="stat-lbl">Total Slabs</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-val">{{ product.size || '—' }}</span>
-          <span class="stat-lbl">Total Sqft</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-val">{{ product.productFinished || '—' }}</span>
-          <span class="stat-lbl">Uilization</span>
+      <div class="hero-summary">
+        <p class="summary-heading">Block Summary</p>
+        <div class="summary-stats">
+          <div class="stat-item">
+            <span class="stat-val">{{ product.quantity || '—' }}</span>
+            <span class="stat-lbl">Total Slabs</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-val">{{ totalSqft || '—' }}</span>
+            <span class="stat-lbl">Total Sqft</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-val">{{ product.productFinished || '—' }}</span>
+            <span class="stat-lbl">Product Finish</span>
+          </div>
         </div>
       </div>
     </div>
@@ -79,13 +110,8 @@
       <table class="piece-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>L (ft)</th>
-            <th>W (ft)</th>
-            <th>−L (ft)</th>
-            <th>−W (ft)</th>
-            <th>Area (sq ft)</th>
-            <th>Remark</th>
+            <th>ID</th><th>L (ft)</th><th>W (ft)</th><th>−L (ft)</th>
+            <th>−W (ft)</th><th>Area (sq ft)</th><th>Photo</th><th>Remark</th>
           </tr>
         </thead>
         <tbody>
@@ -96,6 +122,14 @@
             <td>{{ piece.lessLength }}</td>
             <td>{{ piece.lessWidth }}</td>
             <td class="td-area">{{ piece.totalArea }}</td>
+            <td class="td-photo">
+              <ng-container *ngIf="piece.imageUrl || piece.imageBase64; else noPhoto">
+                <div class="piece-thumb" (click)="openZoom(piece.imageUrl || piece.imageBase64, piece.id)">
+                  <img [src]="piece.imageUrl || piece.imageBase64" [alt]="'Slab ' + piece.id" class="piece-thumb-img">
+                </div>
+              </ng-container>
+              <ng-template #noPhoto><span class="no-photo-label">—</span></ng-template>
+            </td>
             <td class="td-remark">{{ piece.remark }}</td>
           </tr>
         </tbody>
@@ -104,22 +138,306 @@
   </div>
 
   <!-- ── Action Bar ── -->
-<div class="action-bar">
-  <button class="btn-sold" (click)="onSold()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
-      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-    </svg>
-    Sold
-  </button>
+  <div class="action-bar">
+    <!-- Left actions (same for both roles) -->
+    <div class="action-bar-left">
+      <button class="btn-action btn-edit" (click)="editProduct()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Edit
+      </button>
+      <button class="btn-action btn-intransit" (click)="addIntransit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+          <rect x="1" y="3" width="15" height="13"/>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        InTransit
+      </button>
+      <button class="btn-action btn-marble" *ngIf="isBlock" (click)="openMarbleDetails()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Marble Details
+      </button>
+      <button class="btn-action btn-export-pdf" [disabled]="isExportingPdf" (click)="exportAsPdf()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <path d="M9 15h1.5a1.5 1.5 0 0 0 0-3H9v5m5-5v5m2-5h-2m0 2h1.7"/>
+        </svg>
+        {{ isExportingPdf ? 'Exporting...' : 'Export as PDF' }}
+      </button>
+      <button class="btn-action btn-process"
+              *ngIf="product?.category?.toLowerCase() === 'block'"
+              (click)="onProcess()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+          <polyline points="16 3 21 3 21 8"/>
+          <line x1="4" y1="20" x2="21" y2="3"/>
+          <polyline points="21 16 21 21 16 21"/>
+          <line x1="15" y1="15" x2="21" y2="21"/>
+          <line x1="4" y1="4" x2="9" y2="9"/>
+        </svg>
+        Process
+      </button>
+      <button class="btn-action btn-slab-convert"
+              *ngIf="product?.category?.toLowerCase() === 'block' && product?.status?.toLowerCase() === 'process'"
+              (click)="convertToSlab()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+          <rect x="2" y="2" width="9" height="9" rx="1"/>
+          <rect x="13" y="2" width="9" height="9" rx="1"/>
+          <rect x="2" y="13" width="9" height="9" rx="1"/>
+          <rect x="13" y="13" width="9" height="9" rx="1"/>
+        </svg>
+        Slab Conversion
+      </button>
+    </div>
 
-  <button class="btn-reset" (click)="onReset()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
-      <polyline points="1 4 1 10 7 10"/>
-      <path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
-    </svg>
-    Reset
-  </button>
+    <!-- Right actions — differ by role -->
+    <div class="action-bar-right">
+
+      <!-- ── ADMIN: direct actions ── -->
+      <ng-container *ngIf="isAdmin">
+        <button class="btn-action btn-sold" (click)="onSold()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Sold
+        </button>
+        <button class="btn-action btn-delete" (click)="confirmDelete()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          Delete
+        </button>
+      </ng-container>
+
+      <!-- ── STORE MANAGER: request actions or pending badge ── -->
+      <ng-container *ngIf="!isAdmin">
+
+        <!-- Pending request banner -->
+        <div class="pending-banner" *ngIf="existingPendingRequest">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          {{ existingPendingRequest.type === 'delete' ? 'Deletion' : 'Sale' }} request pending admin approval
+        </div>
+
+        <!-- Request buttons when no pending request -->
+        <ng-container *ngIf="!existingPendingRequest">
+          <button class="btn-action btn-request-sell" (click)="openRequestPopup('sell')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            Request Sell
+          </button>
+          <button class="btn-action btn-request-delete" (click)="openRequestPopup('delete')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Request Delete
+          </button>
+        </ng-container>
+
+      </ng-container>
+    </div>
+  </div>
+
 </div>
 
+<!-- ═══════════════════════════════════════════
+     IMAGE POPUP
+     ═══════════════════════════════════════════ -->
+<div class="img-popup-overlay" *ngIf="zoomImgSrc" (click)="closeZoom()">
+  <div class="img-popup" (click)="$event.stopPropagation()">
+    <button class="img-popup-close" (click)="closeZoom()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <span class="img-popup-label" *ngIf="zoomSlabId !== null">Slab #{{ zoomSlabId }}</span>
+    <img [src]="zoomImgSrc" [alt]="'Slab ' + zoomSlabId" class="img-popup-img"/>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ADMIN: DELETE CONFIRMATION POPUP
+     ═══════════════════════════════════════════ -->
+<div class="delete-popup-overlay" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+  <div class="delete-confirm-box" (click)="$event.stopPropagation()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="delete-msg">
+      Delete <strong>{{ product.productCode }}</strong>?
+      <br><span class="delete-hint">This will also remove all images from storage.</span>
+    </p>
+    <div class="delete-actions">
+      <button class="btn-cancel-del" (click)="cancelDelete()" [disabled]="isDeleting">Cancel</button>
+      <button class="btn-confirm-del" (click)="deleteProduct()" [disabled]="isDeleting">
+        <ng-container *ngIf="!isDeleting">Yes, Delete</ng-container>
+        <ng-container *ngIf="isDeleting">Deleting...</ng-container>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MANAGER: REQUEST CONFIRMATION POPUP
+     ═══════════════════════════════════════════ -->
+<div class="delete-popup-overlay" *ngIf="showRequestPopup" (click)="cancelRequest()">
+  <div class="delete-confirm-box request-confirm-box" (click)="$event.stopPropagation()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="orangered" stroke-width="1.8">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.48 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.9z"/>
+    </svg>
+    <p class="delete-msg">
+      Submit <strong>{{ pendingRequestAction === 'delete' ? 'deletion' : 'sale' }}</strong> request for
+      <strong>{{ product.productCode }}</strong>?
+      <br><span class="delete-hint">Admin will be notified and must approve before the action is taken.</span>
+    </p>
+    <div class="delete-actions">
+      <button class="btn-cancel-del" (click)="cancelRequest()" [disabled]="isSubmittingRequest">Cancel</button>
+      <button class="btn-confirm-del btn-confirm-request" (click)="submitRequest()" [disabled]="isSubmittingRequest">
+        <ng-container *ngIf="!isSubmittingRequest">Submit Request</ng-container>
+        <ng-container *ngIf="isSubmittingRequest">Submitting...</ng-container>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MARBLE (CATALOGUE) DETAILS POPUP — Blocks only
+     ═══════════════════════════════════════════ -->
+<div class="marble-popup-overlay" *ngIf="showMarblePopup" (click)="closeMarblePopup()">
+  <div class="marble-popup" (click)="$event.stopPropagation()">
+
+    <button class="marble-popup-close" (click)="closeMarblePopup()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Loading -->
+    <div class="marble-popup-state" *ngIf="isLoadingMarble">
+      <span class="marble-spinner"></span>
+      <span>Loading marble details…</span>
+    </div>
+
+    <!-- Not found -->
+    <div class="marble-popup-state" *ngIf="!isLoadingMarble && marbleNotFound">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p>No linked marble record found for this block.</p>
+    </div>
+
+    <!-- Details -->
+    <ng-container *ngIf="!isLoadingMarble && !marbleNotFound && marble as m">
+      <div class="marble-popup-header">
+        <img *ngIf="m['mainSlabPhotoUrl']" [src]="m['mainSlabPhotoUrl']" [alt]="m['marbleName']" class="marble-popup-photo"/>
+        <div class="marble-popup-placeholder" *ngIf="!m['mainSlabPhotoUrl']">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="marble-popup-title">{{ marbleVal('marbleName') }}</h3>
+          <p class="marble-popup-code">{{ marbleVal('itemCode') }}</p>
+        </div>
+      </div>
+
+      <div class="marble-popup-grid">
+        <div class="marble-kv"><span class="marble-kv-label">Material Type</span><span class="marble-kv-value">{{ marbleVal('materialType') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Stone Family</span><span class="marble-kv-value">{{ marbleVal('stoneFamily') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Country</span><span class="marble-kv-value">{{ marbleVal('country') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Quarry / Mine</span><span class="marble-kv-value">{{ marbleVal('quarryMineName') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Primary Color</span><span class="marble-kv-value">{{ marbleVal('primaryColor') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Vein Pattern</span><span class="marble-kv-value">{{ marbleVal('veinPattern') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Surface Texture</span><span class="marble-kv-value">{{ marbleVal('surfaceTexture') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Mohs Hardness</span><span class="marble-kv-value">{{ marbleVal('mohsHardness') }}</span></div>
+        <div class="marble-kv marble-kv-block"><span class="marble-kv-label">Finish Compatibility</span><span class="marble-kv-value">{{ marbleList('finishCompatibility') }}</span></div>
+        <div class="marble-kv marble-kv-block"><span class="marble-kv-label">Applications</span><span class="marble-kv-value">{{ marbleList('applications') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Availability</span><span class="marble-kv-value">{{ marbleVal('availability') }}</span></div>
+        <div class="marble-kv"><span class="marble-kv-label">Lead Time</span><span class="marble-kv-value">{{ marbleVal('leadTime') }}</span></div>
+      </div>
+
+      <a class="marble-popup-fulllink" [routerLink]="['/view-marble', m['id']]" *ngIf="m['id']">
+        View Full Marble Details &rarr;
+      </a>
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HIDDEN: PDF EXPORT TEMPLATE (captured by html2canvas)
+     ═══════════════════════════════════════════ -->
+<div class="pdf-export-offscreen" aria-hidden="true">
+  <div id="pdf-export-template" class="pdf-sheet" *ngIf="product">
+
+    <div class="pdf-header">
+      <div class="pdf-brand">
+        <span class="pdf-brand-since">Since 1983</span>
+        <div class="pdf-brand-mark">
+          <svg width="58" height="58" viewBox="0 0 100 100" fill="none">
+            <path d="M50 4 L92 18 V52 C92 74 74 90 50 98 C26 90 8 74 8 52 V18 Z" fill="none" stroke="#e87825" stroke-width="3.5"/>
+            <text x="50" y="64" text-anchor="middle" font-size="46" font-weight="700" fill="#e87825" font-family="Georgia, serif">S</text>
+          </svg>
+        </div>
+        <span class="pdf-brand-name">SETU</span>
+        <span class="pdf-brand-locations">BANSWARA &nbsp;|&nbsp; MORADABAD &nbsp;|&nbsp; KISHANGARH</span>
+      </div>
+      <div class="pdf-title-block">
+        <span class="pdf-tagline">{{ product.category }} &nbsp;&middot;&nbsp; MARBLE AND SURFACES</span>
+        <h1 class="pdf-product-name">{{ product.productQuality }}</h1>
+        <div class="pdf-lot-box">LOT NO. <strong>{{ product.productCode }}</strong></div>
+      </div>
+    </div>
+
+    <div class="pdf-body">
+      <div class="pdf-stats">
+        <div class="pdf-stat">
+          <span class="pdf-stat-label">Dimensions</span>
+          <span class="pdf-stat-value">{{ exportDimensions }}</span>
+        </div>
+        <div class="pdf-stat-divider"></div>
+        <div class="pdf-stat">
+          <span class="pdf-stat-label">Total {{ isBlock ? 'Pieces' : 'Slabs' }}</span>
+          <span class="pdf-stat-value">{{ product.quantity || '—' }}</span>
+        </div>
+        <div class="pdf-stat-divider"></div>
+        <div class="pdf-stat">
+          <span class="pdf-stat-label">{{ exportStat3Label }}</span>
+          <span class="pdf-stat-value">{{ exportStat3Value }}</span>
+        </div>
+      </div>
+
+      <div class="pdf-image-grid" *ngIf="exportGridItems.length; else pdfNoPhotos">
+        <div class="pdf-image-cell" *ngFor="let item of exportGridItems">
+          <span class="pdf-image-badge">{{ item.label }}</span>
+          <img [src]="item.src" crossorigin="anonymous" class="pdf-image" alt="Photo"/>
+        </div>
+      </div>
+      <ng-template #pdfNoPhotos>
+        <div class="pdf-image-empty">No photos available</div>
+      </ng-template>
+
+      <div class="pdf-footer">
+        <span>&ldquo;A Legacy of Trust, Carved in Stone&rdquo;</span>
+      </div>
+    </div>
+  </div>
 </div>

@@ -1,0 +1,42 @@
+<div class="arch-page">
+
+  <header class="arch-toolbar">
+    <button class="arch-icon-btn" (click)="goBack()" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="arch-titles">
+      <h1>Follow-ups &amp; Tasks</h1>
+      <p>{{ upcoming.length }} upcoming &middot; {{ overdue.length }} overdue &middot; {{ completed.length }} completed</p>
+    </div>
+  </header>
+
+  <div class="arch-card">
+    <div class="arch-tabs">
+      <button class="arch-tab" [class.active]="activeBucket==='upcoming'" (click)="setBucket('upcoming')">Upcoming ({{ upcoming.length }})</button>
+      <button class="arch-tab" [class.active]="activeBucket==='overdue'" (click)="setBucket('overdue')">Overdue ({{ overdue.length }})</button>
+      <button class="arch-tab" [class.active]="activeBucket==='completed'" (click)="setBucket('completed')">Completed ({{ completed.length }})</button>
+    </div>
+
+    <div style="padding:14px 18px">
+      <div class="task-list" *ngIf="!isLoading && visibleList.length; else emptyOrLoading">
+        <div class="task-item" *ngFor="let f of visibleList">
+          <span class="arch-pill" [ngClass]="priorityClass(f.priority)">{{ f.priority || 'Medium' }}</span>
+          <div class="task-body" (click)="openArchitect(f.architectId)">
+            <span class="task-title">{{ f.title }}</span>
+            <span class="task-sub">{{ f.architectName }} <span *ngIf="f.type">&middot; {{ f.type }}</span></span>
+          </div>
+          <span class="task-date">{{ f.dueDate }}</span>
+          <div class="task-actions">
+            <button class="arch-btn" style="padding:5px 10px;font-size:11px" *ngIf="f.status !== 'Completed'" (click)="complete(f)">Complete</button>
+            <button class="row-del-btn" (click)="remove(f)">&times;</button>
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyOrLoading>
+        <div class="arch-skeleton" style="height:120px" *ngIf="isLoading"></div>
+        <div class="arch-empty" *ngIf="!isLoading">No {{ activeBucket }} follow-ups.</div>
+      </ng-template>
+    </div>
+  </div>
+
+</div>

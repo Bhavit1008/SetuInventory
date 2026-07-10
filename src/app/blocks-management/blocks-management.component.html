@@ -38,137 +38,70 @@
         </div>
       </div>
 
-      <!-- Origin -->
-      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('origin')?.invalid">
-        <span class="field-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-        </span>
-        <label class="field-label">Origin</label>
-        <div class="custom-dd" (click)="toggleDropdown('origin', $event)">
-          <span class="dd-trigger">
-            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('origin')?.value">
-              {{ blockFormGroup.get('origin')?.value || 'Select' }}
-            </span>
-            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'origin'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
-            </span>
-          </span>
-          <div class="dd-panel" *ngIf="openDropdown === 'origin'" (click)="$event.stopPropagation()">
-            <div class="dd-option"
-                 *ngFor="let g of origin"
-                 [class.dd-option-selected]="blockFormGroup.get('origin')?.value === g.label"
-                 (click)="selectOption('origin', g.label); $event.stopPropagation()">
-              <span>{{ g.label }}</span>
-              <svg *ngIf="blockFormGroup.get('origin')?.value === g.label"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Material -->
-      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('material')?.invalid">
-        <span class="field-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            <path d="M3.27 6.96L12 12.01l8.73-5.05" />
-            <line x1="12" y1="22.08" x2="12" y2="12" />
-          </svg>
-        </span>
-        <label class="field-label">Material</label>
-        <div class="custom-dd" (click)="toggleDropdown('material', $event)">
-          <span class="dd-trigger">
-            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('material')?.value">
-              {{ blockFormGroup.get('material')?.value || 'Select' }}
-            </span>
-            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'material'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
-            </span>
-          </span>
-          <div class="dd-panel" *ngIf="openDropdown === 'material'" (click)="$event.stopPropagation()">
-            <div class="dd-option"
-                 *ngFor="let g of material"
-                 [class.dd-option-selected]="blockFormGroup.get('material')?.value === g.label"
-                 (click)="selectOption('material', g.label); $event.stopPropagation()">
-              <span>{{ g.label }}</span>
-              <svg *ngIf="blockFormGroup.get('material')?.value === g.label"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Product -->
-      <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('product')?.invalid">
-        <span class="field-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-        </span>
-        <label class="field-label">Product</label>
-        <div class="custom-dd" (click)="toggleDropdown('product', $event)">
-          <span class="dd-trigger">
-            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('product')?.value">
-              {{ blockFormGroup.get('product')?.value || 'Select' }}
-            </span>
-            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'product'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
-            </span>
-          </span>
-          <div class="dd-panel" *ngIf="openDropdown === 'product'" (click)="$event.stopPropagation()">
-            <div class="dd-option"
-                 *ngFor="let g of product"
-                 [class.dd-option-selected]="blockFormGroup.get('product')?.value === g.label"
-                 (click)="selectOption('product', g.label); $event.stopPropagation()">
-              <span>{{ g.label }}</span>
-              <svg *ngIf="blockFormGroup.get('product')?.value === g.label"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quality / Color -->
+      <!-- Select Stone (from catalogue) -->
       <div class="field-row" [class.row-invalid]="submitted && blockFormGroup.get('productQuality')?.invalid">
         <span class="field-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
         </span>
-        <label class="field-label">Quality / Color</label>
-        <div class="custom-dd" (click)="toggleDropdown('productQuality', $event)">
+        <label class="field-label">Select Stone</label>
+        <div class="custom-dd" (click)="!isLoadingStones && toggleDropdown('stone', $event)">
           <span class="dd-trigger">
-            <span class="dd-selected" [class.dd-placeholder]="!blockFormGroup.get('productQuality')?.value">
-              {{ blockFormGroup.get('productQuality')?.value || 'Select' }}
+            <span class="dd-selected" [class.dd-placeholder]="!selectedStone">
+              <ng-container *ngIf="isLoadingStones">
+                <span class="stone-loading-txt">Loading...</span>
+              </ng-container>
+              <ng-container *ngIf="!isLoadingStones">
+                {{ selectedStone?.itemCode || 'Select stone' }}
+              </ng-container>
             </span>
-            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'productQuality'">
+            <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'stone'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
             </span>
           </span>
-          <div class="dd-panel" *ngIf="openDropdown === 'productQuality'" (click)="$event.stopPropagation()">
+          <div class="dd-panel" *ngIf="openDropdown === 'stone'" (click)="$event.stopPropagation()">
             <div class="dd-option"
-                 *ngFor="let q of productQuality"
-                 [class.dd-option-selected]="blockFormGroup.get('productQuality')?.value === q.label"
-                 (click)="selectOption('productQuality', q.label); $event.stopPropagation()">
-              <span>{{ q.label }}</span>
-              <svg *ngIf="blockFormGroup.get('productQuality')?.value === q.label"
+                 *ngFor="let item of catalogueItems"
+                 [class.dd-option-selected]="selectedStone?.itemCode === item.itemCode"
+                 (click)="onStoneSelected(item.itemCode); $event.stopPropagation()">
+              <div class="stone-opt-wrap">
+                <span class="stone-opt-code">{{ item.itemCode }}</span>
+                <span class="stone-opt-meta">{{ item.marbleName }} · {{ item.country }} · {{ item.materialType }}</span>
+              </div>
+              <svg *ngIf="selectedStone?.itemCode === item.itemCode"
                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
+            <div class="dd-option dd-empty" *ngIf="catalogueItems.length === 0">
+              No stones in catalogue
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Auto-filled stone details (read-only) -->
+      <div class="stone-detail-bar" *ngIf="selectedStone">
+        <span class="stone-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          {{ selectedStone.country }}
+        </span>
+        <span class="stone-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          {{ selectedStone.materialType }}
+        </span>
+        <span class="stone-chip stone-chip-quality">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+          {{ selectedStone.marbleName }}
+        </span>
       </div>
 
       <!-- Status -->
@@ -352,9 +285,11 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════ BLOCK PHOTO ═══════════════════════ -->
+    <!-- ═══════════════════════ BLOCK PHOTOS ═══════════════════════ -->
     <div class="section-card">
-      <div class="section-header">BLOCK PHOTO</div>
+      <div class="section-header">
+        BLOCK PHOTOS<span class="photo-count" *ngIf="previewImgs.length > 0">&nbsp;({{ previewImgs.length }})</span>
+      </div>
       <div class="photo-row">
         <span class="field-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -363,14 +298,14 @@
             <polyline points="21 15 16 10 5 21"/>
           </svg>
         </span>
-        <span class="photo-label">Block Photo</span>
-        <input type="file" #fileInput accept="image/*" (change)="onImageSelected($event)" hidden>
+        <span class="photo-label">Block Photos</span>
+        <input type="file" #fileInput accept="image/*" multiple (change)="onImageSelected($event)" hidden>
         <div class="photo-actions">
           <button type="button" class="add-photo-btn" (click)="fileInput.click()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-            Add Photo
+            Add
           </button>
           <button type="button" *ngIf="!isMobile" class="add-photo-btn camera-btn-secondary" (click)="openCamera()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -381,8 +316,18 @@
           </button>
         </div>
       </div>
-      <div *ngIf="previewImg" class="photo-preview">
-        <img [src]="previewImg" alt="Block Photo">
+
+      <!-- Photo strip -->
+      <div class="photo-strip" *ngIf="previewImgs.length > 0">
+        <div class="photo-thumb-wrap" *ngFor="let img of previewImgs; let i = index">
+          <img [src]="img" class="photo-thumb-img" [alt]="'Photo ' + (i + 1)">
+          <button type="button" class="remove-thumb-btn" (click)="removeImage(i)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" width="10" height="10">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
