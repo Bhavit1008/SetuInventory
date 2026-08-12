@@ -112,11 +112,11 @@
             <input type="text" class="fg-input" formControlName="productCode" placeholder="e.g. SMH0315 (leave blank if standalone)">
           </div>
           <div class="field-group">
-            <label class="fg-label">Slab Number</label>
-            <input type="text" class="fg-input" placeholder="e.g. 1, 2, 3...">
+            <label class="fg-label">Slab Code</label>
+            <input type="text" class="fg-input" formControlName="slabNumber" placeholder="e.g. MB-SMH-WW-123">
           </div>
-          <div class="field-group">
-            <label class="fg-label">Godown Location <span class="auto-tag">Optional</span></label>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('godownLocation')?.invalid">
+            <label class="fg-label">Godown Location</label>
             <div class="select-wrap">
               <select class="fg-select" formControlName="godownLocation">
                 <option value="" disabled selected>Select</option>
@@ -168,14 +168,16 @@
           <div class="field-group size-group">
             <label class="fg-label">Size L × W <span class="auto-tag">Optional</span></label>
             <div class="size-row">
-              <input type="number" min="0" class="fg-input size-in" formControlName="productLength" placeholder="L">
+              <input type="number" min="0" step="any" class="fg-input size-in" formControlName="productLength" placeholder="L">
               <span class="size-x">×</span>
-              <input type="number" min="0" class="fg-input size-in" formControlName="productWidth" placeholder="W">
+              <input type="number" min="0" step="any" class="fg-input size-in" formControlName="productWidth" placeholder="W">
             </div>
+            <span class="size-sqft-hint" *ngIf="sizeSqft > 0">{{ sizeSqft | number:'1.2-2' }} sqft / slab</span>
           </div>
-          <div class="field-group">
-            <label class="fg-label">Quantity <span class="auto-tag">Auto</span></label>
-            <input type="number" class="fg-input" formControlName="quantity" readonly>
+          <div class="field-group" [class.err]="submitted && stockFormGroup.get('quantity')?.invalid">
+            <label class="fg-label">Quantity</label>
+            <input type="number" min="1" class="fg-input" formControlName="quantity">
+            <span class="size-sqft-hint" *ngIf="sizeTotalSqft > 0">= {{ sizeTotalSqft | number:'1.2-2' }} sqft total</span>
           </div>
           <div class="field-group full-width">
             <label class="fg-label">Slab Remarks</label>
@@ -184,11 +186,65 @@
         </div>
       </div>
 
-      <!-- Slab Entry Grid -->
+      <!-- Slab Photos (multiple, gallery-style — mirrors add-block) -->
       <div class="panel-card">
         <div class="card-badge-row">
           <div class="card-badge">
             <span class="badge-num">3</span>
+            <span class="badge-label">SLAB PHOTOS<span class="auto-tag" *ngIf="slabImgPreviews.length">&nbsp;({{ slabImgPreviews.length }})</span></span>
+          </div>
+          <div class="gallery-actions">
+            <input type="file" #galleryFileInput accept="image/*" multiple (change)="onGalleryImagesSelected($event)" hidden>
+            <button type="button" class="add-slab-btn" (click)="galleryFileInput.click()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add
+            </button>
+            <button *ngIf="!isMobile" type="button" class="add-slab-btn gallery-cam-btn" (click)="openGalleryCamera()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Camera
+            </button>
+            <label *ngIf="isMobile" class="add-slab-btn gallery-cam-btn">
+              <input type="file" accept="image/*" capture="environment" (change)="onGalleryImagesSelected($event)" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Camera
+            </label>
+          </div>
+        </div>
+
+        <div class="gallery-strip" *ngIf="slabImgPreviews.length > 0">
+          <div class="gallery-thumb-wrap" *ngFor="let img of slabImgPreviews; let i = index">
+            <img [src]="img" class="gallery-thumb-img" [alt]="'Slab photo ' + (i + 1)">
+            <button type="button" class="gallery-thumb-remove" (click)="removeGalleryImage(i)">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="gallery-empty" *ngIf="slabImgPreviews.length === 0">No photos added yet.</div>
+
+        <!-- Desktop webcam capture modal -->
+        <div *ngIf="!isMobile && showGalleryCamera" class="camera-modal">
+          <video #galleryVideo autoplay playsinline class="camera-video"></video>
+          <canvas #galleryCanvas style="display:none;"></canvas>
+          <div class="camera-controls">
+            <button type="button" class="cam-capture" (click)="captureGalleryPhoto()">Capture</button>
+            <button type="button" class="cam-cancel" (click)="closeGalleryCamera()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slab Entry Grid -->
+      <div class="panel-card">
+        <div class="card-badge-row">
+          <div class="card-badge">
+            <span class="badge-num">4</span>
             <span class="badge-label">SLAB ENTRY GRID</span>
           </div>
           <button type="button" class="add-slab-btn" (click)="addNewRow()">
@@ -304,17 +360,17 @@
       <!-- Live Summary -->
       <div class="panel-card live-summary-card">
         <div class="card-badge">
-          <span class="badge-num">4</span>
+          <span class="badge-num">5</span>
           <span class="badge-label">LIVE SUMMARY <span class="auto-tag">Auto calculated</span></span>
         </div>
 
         <div class="summary-stats">
           <div class="stat-box">
-            <span class="stat-num">{{ slabPieces.length }}</span>
+            <span class="stat-num">{{ totalSlabCount }}</span>
             <span class="stat-label">Total Slabs</span>
           </div>
           <div class="stat-box">
-            <span class="stat-num">{{ totalSlabSqft | number:'1.2-2' }}</span>
+            <span class="stat-num">{{ combinedTotalSqft | number:'1.2-2' }}</span>
             <span class="stat-label">Total Sqft</span>
           </div>
           <div class="stat-box">
@@ -347,7 +403,7 @@
       <!-- Final Cost Engine -->
       <div class="panel-card cost-engine-card">
         <div class="card-badge">
-          <span class="badge-num">5</span>
+          <span class="badge-num">6</span>
           <span class="badge-label">FINAL COST ENGINE</span>
         </div>
 
@@ -358,12 +414,12 @@
         <div class="engine-divider"></div>
         <div class="engine-row">
           <span class="eng-label">Total Saleable Sqft</span>
-          <span class="eng-val">{{ totalSlabSqft | number:'1.2-2' }}</span>
+          <span class="eng-val">{{ combinedTotalSqft | number:'1.2-2' }}</span>
         </div>
         <div class="engine-divider"></div>
         <div class="engine-row">
           <span class="eng-label">Quantity</span>
-          <span class="eng-val">{{ stockFormGroup.get('quantity')?.value || 0 }}</span>
+          <span class="eng-val">{{ totalSlabCount }}</span>
         </div>
       </div>
 

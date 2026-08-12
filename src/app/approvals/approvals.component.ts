@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ApprovalRequest, ApprovalService } from '../services/approval.service';
 import { ProductService } from '../services/product.service';
 import { ToastService } from '../services/toast.service';
@@ -22,10 +23,15 @@ export class ApprovalsComponent implements OnInit {
 
   constructor(
     public layout: LayoutService,
+    private router: Router,
     private approvalService: ApprovalService,
     private productService: ProductService,
     private toastService: ToastService
   ) {}
+
+  goToDashboard(): void {
+    this.router.navigate(['/search']);
+  }
 
   async ngOnInit(): Promise<void> {
     this.isLoading = true;

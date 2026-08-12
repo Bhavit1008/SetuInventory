@@ -2,11 +2,11 @@
 
   <!-- ── Image / Placeholder ── -->
   <div class="card-img-wrap">
-    <img *ngIf="product.imageUrls.length || product.imageUrl"
-         [src]="product.imageUrls.length ? product.imageUrls[0] : product.imageUrl"
+    <img *ngIf="thumb as t"
+         [src]="t"
          [alt]="product.productCode"
          class="card-img">
-    <div *ngIf="!product.imageUrls.length && !product.imageUrl" class="card-img-placeholder">
+    <div *ngIf="!thumb" class="card-img-placeholder">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
         <circle cx="8.5" cy="8.5" r="1.5"/>

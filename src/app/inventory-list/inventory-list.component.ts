@@ -18,18 +18,19 @@ interface StatCard {
 }
 
 /**
- * Shared listing page for "Block Inventory", "Slab Inventory" and
- * "Process Inventory" nav items. The page title, plus either a category
- * ("Block" / "Slab") or a status filter ("Process"), come from route data,
- * so one component backs all three routes instead of duplicating
- * near-identical code.
+ * Shared listing page for "Block Inventory", "Slab Inventory", "Process
+ * Inventory" and "Sold Inventory" nav items. The page title, plus either a
+ * category ("Block" / "Slab") or a status filter ("Process" / "Sold"), come
+ * from route data, so one component backs all four routes instead of
+ * duplicating near-identical code.
  *
  * The full scoped set (category or status) is fetched once and then
  * filtered/paginated client-side, since the backend doesn't support status
  * or the advanced filter fields as query params. Category-scoped views
- * (Block/Slab Inventory) exclude products whose status is "Process" — those
- * only show up in Process Inventory — so an item disappears from its
- * category list the moment it's marked as being processed.
+ * (Block/Slab Inventory) exclude products whose status is "Process" or
+ * "Sold" — those only show up in their own dedicated inventory pages — so
+ * an item disappears from its category list the moment it's marked as
+ * being processed or sold.
  */
 @Component({
   selector: 'app-inventory-list',
@@ -77,12 +78,17 @@ export class InventoryListComponent implements OnInit {
     { id: 8, label: 'Kesariya Green' },
   ];
 
-  statusList = [
+  private allStatusOptions = [
     { label: 'Available' },
     { label: 'Hold' },
     { label: 'Sold' },
     { label: 'InTransit' },
   ];
+
+  /** "Sold" is excluded from category-scoped views (Block/Slab Inventory) since those items are filtered out of baseProducts entirely — see loadAll(). */
+  get statusList() {
+    return this.category ? this.allStatusOptions.filter(s => s.label !== 'Sold') : this.allStatusOptions;
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -175,6 +181,26 @@ export class InventoryListComponent implements OnInit {
     return Number(p.sqft) || Number(p.size) || 0;
   }
 
+  /** Slabs are identified by their own slab number when set; blocks (and legacy slabs without one) fall back to productCode. */
+  rowCode(p: Product): string {
+    if (p.category?.toLowerCase() === 'slab' && p.slabNumber) return p.slabNumber;
+    return p.productCode;
+  }
+
+  /**
+   * Blocks use their own block-level photo. Slabs use the first piece's own
+   * photo instead — falling back to a block-level image only if no piece has
+   * one, since a standalone slab never had a block image to inherit.
+   */
+  rowThumb(p: Product): string {
+    if (p.category?.toLowerCase() === 'slab') {
+      const withImg = p.pieces?.find(pc => pc.imageUrl || pc.imageBase64);
+      if (withImg) return withImg.imageUrl || withImg.imageBase64;
+    }
+    if (p.imageUrls?.length) return p.imageUrls[0];
+    return p.imageUrl || '';
+  }
+
   productSize(p: Product): string {
     if (p.category?.toLowerCase() === 'slab') {
       return `${p.productLength || '—'} × ${p.productWidth || '—'}`;
@@ -207,7 +233,7 @@ export class InventoryListComponent implements OnInit {
       const res = await firstValueFrom(this.productService.getProductsPage(this.category, 0, 5000));
       this.baseProducts = this.statusFilter
         ? res.content.filter(p => p.status?.toLowerCase() === this.statusFilter!.toLowerCase())
-        : res.content.filter(p => p.status?.toLowerCase() !== 'process');
+        : res.content.filter(p => p.status?.toLowerCase() !== 'process' && p.status?.toLowerCase() !== 'sold');
 
       this.filterForm.reset();
       this.filterActive = false;
@@ -252,7 +278,7 @@ export class InventoryListComponent implements OnInit {
       (!godonLocations || p.godownLocation?.toLowerCase().includes(godonLocations.toLowerCase())) &&
       (!productQuality || p.productQuality?.toLowerCase().includes(productQuality.toLowerCase())) &&
       (!status || p.status?.toLowerCase().includes(status.toLowerCase())) &&
-      (!productCode || p.productCode?.toLowerCase().includes(productCode.toLowerCase())) &&
+      (!productCode || this.rowCode(p)?.toLowerCase().includes(productCode.toLowerCase())) &&
       (!minPrice || p.sellingCost >= +minPrice) &&
       (!maxPrice || p.sellingCost <= +maxPrice) &&
       (!minQuantity || p.quantity >= +minQuantity) &&

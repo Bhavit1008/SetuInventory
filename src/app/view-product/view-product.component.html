@@ -1,5 +1,12 @@
 <div class="view-page">
 
+  <div class="page-top-bar">
+    <button type="button" class="back-btn" (click)="goToDashboard()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </button>
+  </div>
+
   <!-- ── Hero Card ── -->
   <div class="hero-card">
 
@@ -37,7 +44,7 @@
     <div class="hero-info-row">
       <div class="hero-body">
         <div class="hero-title-row">
-          <h2 class="hero-title">{{ product.productCode }}</h2>
+          <h2 class="hero-title">{{ displayCode }}</h2>
           <span class="status-badge" [ngClass]="'status-' + product.status.toLowerCase()">
             {{ product.status }}
           </span>
@@ -60,19 +67,27 @@
             <span class="spec-label">Weight</span>
             <span class="spec-value">{{ product.productWeight }} TONS</span>
           </div>
+          <div class="hero-spec" *ngIf="product.slabNumber">
+            <span class="spec-label">Slab Code</span>
+            <span class="spec-value">{{ product.slabNumber }}</span>
+          </div>
           <div class="hero-spec" *ngIf="product.godownLocation">
             <span class="spec-label">Location</span>
             <span class="spec-value">{{ product.godownLocation }}</span>
+          </div>
+          <div class="hero-spec" *ngIf="product.createdAt">
+            <span class="spec-label">Date Added</span>
+            <span class="spec-value">{{ product.createdAt | date:'dd MMM yyyy' }}</span>
           </div>
         </div>
       </div>
 
       <div class="hero-summary">
-        <p class="summary-heading">Block Summary</p>
+        <p class="summary-heading">{{ isSlab ? 'Slab Summary' : 'Block Summary' }}</p>
         <div class="summary-stats">
           <div class="stat-item">
             <span class="stat-val">{{ product.quantity || '—' }}</span>
-            <span class="stat-lbl">Total Slabs</span>
+            <span class="stat-lbl">Quantity</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
@@ -88,6 +103,64 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ── Sold Details ── -->
+  <div class="section-card" *ngIf="product.status?.toLowerCase() === 'sold' && product.partyName">
+    <div class="section-header">SOLD DETAILS</div>
+    <div class="field-row">
+      <span class="field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </span>
+      <span class="field-label">Party Name</span>
+      <span class="field-value">{{ product.partyName }}</span>
+    </div>
+    <div class="field-row" *ngIf="product.soldDate">
+      <span class="field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      <span class="field-label">Date Sold</span>
+      <span class="field-value">{{ product.soldDate | date:'dd MMM yyyy' }}</span>
+    </div>
+    <ng-container *ngIf="isBlock; else slabSoldDetails">
+      <div class="field-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 2a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3z"/>
+            <path d="M6.5 7h11l1.5 13H5L6.5 7z"/>
+          </svg>
+        </span>
+        <span class="field-label">Weight Sold</span>
+        <span class="field-value">{{ product.weightSold }} Tons</span>
+      </div>
+    </ng-container>
+    <ng-template #slabSoldDetails>
+      <div class="field-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/>
+          </svg>
+        </span>
+        <span class="field-label">Slabs Sold</span>
+        <span class="field-value">{{ product.soldQuantity }}</span>
+      </div>
+      <div class="field-row">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </span>
+        <span class="field-label">Running Sqft</span>
+        <span class="field-value">{{ product.soldSqft }}</span>
+      </div>
+    </ng-template>
   </div>
 
   <!-- ── Remarks ── -->
@@ -163,6 +236,15 @@
         </svg>
         Marble Details
       </button>
+      <button class="btn-action btn-block-details" *ngIf="hasSourceBlock" (click)="openBlockDetailsPopup()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Block Details
+      </button>
       <button class="btn-action btn-export-pdf" [disabled]="isExportingPdf" (click)="exportAsPdf()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -172,7 +254,7 @@
         {{ isExportingPdf ? 'Exporting...' : 'Export as PDF' }}
       </button>
       <button class="btn-action btn-process"
-              *ngIf="product?.category?.toLowerCase() === 'block'"
+              *ngIf="product?.category?.toLowerCase() === 'block' && product?.status?.toLowerCase() !== 'process'"
               (click)="onProcess()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
           <polyline points="16 3 21 3 21 8"/>
@@ -182,6 +264,15 @@
           <line x1="4" y1="4" x2="9" y2="9"/>
         </svg>
         Process
+      </button>
+      <button class="btn-action btn-reverse-process"
+              *ngIf="product?.category?.toLowerCase() === 'block' && product?.status?.toLowerCase() === 'process'"
+              (click)="onReverseProcess()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        Move to Available
       </button>
       <button class="btn-action btn-slab-convert"
               *ngIf="product?.category?.toLowerCase() === 'block' && product?.status?.toLowerCase() === 'process'"
@@ -201,7 +292,7 @@
 
       <!-- ── ADMIN: direct actions ── -->
       <ng-container *ngIf="isAdmin">
-        <button class="btn-action btn-sold" (click)="onSold()">
+        <button class="btn-action btn-sold" (click)="openSoldPopup()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
@@ -233,7 +324,7 @@
 
         <!-- Request buttons when no pending request -->
         <ng-container *ngIf="!existingPendingRequest">
-          <button class="btn-action btn-request-sell" (click)="openRequestPopup('sell')">
+          <button class="btn-action btn-request-sell" (click)="openSoldPopup()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
@@ -282,7 +373,7 @@
       <line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
     <p class="delete-msg">
-      Delete <strong>{{ product.productCode }}</strong>?
+      Delete <strong>{{ displayCode }}</strong>?
       <br><span class="delete-hint">This will also remove all images from storage.</span>
     </p>
     <div class="delete-actions">
@@ -305,7 +396,7 @@
     </svg>
     <p class="delete-msg">
       Submit <strong>{{ pendingRequestAction === 'delete' ? 'deletion' : 'sale' }}</strong> request for
-      <strong>{{ product.productCode }}</strong>?
+      <strong>{{ displayCode }}</strong>?
       <br><span class="delete-hint">Admin will be notified and must approve before the action is taken.</span>
     </p>
     <div class="delete-actions">
@@ -313,6 +404,60 @@
       <button class="btn-confirm-del btn-confirm-request" (click)="submitRequest()" [disabled]="isSubmittingRequest">
         <ng-container *ngIf="!isSubmittingRequest">Submit Request</ng-container>
         <ng-container *ngIf="isSubmittingRequest">Submitting...</ng-container>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SOLD DETAILS POPUP
+     (admin: applies immediately · store manager: submits for approval)
+     ═══════════════════════════════════════════ -->
+<div class="delete-popup-overlay" *ngIf="showSoldPopup" (click)="cancelSoldPopup()">
+  <div class="delete-confirm-box sold-popup-box" (click)="$event.stopPropagation()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2e9e5b" stroke-width="1.8">
+      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </svg>
+    <p class="delete-msg">
+      Mark <strong>{{ displayCode }}</strong> as Sold
+      <br><span class="delete-hint">
+        {{ isAdmin ? 'Enter the sale details below.' : 'Enter the sale details — an admin must approve before it takes effect.' }}
+      </span>
+    </p>
+
+    <div class="sold-form">
+      <div class="sold-field">
+        <label>Party Name</label>
+        <input type="text" [(ngModel)]="soldForm.partyName" placeholder="e.g. Shree Marbles" [disabled]="isSubmittingSold">
+      </div>
+      <div class="sold-field">
+        <label>Date Sold</label>
+        <input type="date" [(ngModel)]="soldForm.soldDate" [disabled]="isSubmittingSold">
+      </div>
+      <ng-container *ngIf="isBlock; else slabSoldFields">
+        <div class="sold-field">
+          <label>Weight Sold (Tons)</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="soldForm.weightSold" placeholder="0.00" [disabled]="isSubmittingSold">
+        </div>
+      </ng-container>
+      <ng-template #slabSoldFields>
+        <div class="sold-field">
+          <label>Number of Slabs Sold</label>
+          <input type="number" min="1" [(ngModel)]="soldForm.soldQuantity" placeholder="0" [disabled]="isSubmittingSold">
+        </div>
+        <div class="sold-field">
+          <label>Running Sqft</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="soldForm.soldSqft" placeholder="0.00" [disabled]="isSubmittingSold">
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="delete-actions">
+      <button class="btn-cancel-del" (click)="cancelSoldPopup()" [disabled]="isSubmittingSold">Cancel</button>
+      <button class="btn-confirm-del btn-confirm-sold" (click)="isAdmin ? confirmSold() : submitSellRequest()" [disabled]="isSubmittingSold">
+        <ng-container *ngIf="!isSubmittingSold">{{ isAdmin ? 'Confirm Sold' : 'Submit Request' }}</ng-container>
+        <ng-container *ngIf="isSubmittingSold">{{ isAdmin ? 'Saving...' : 'Submitting...' }}</ng-container>
       </button>
     </div>
   </div>
@@ -383,6 +528,53 @@
 </div>
 
 <!-- ═══════════════════════════════════════════
+     SOURCE BLOCK DETAILS POPUP — Slabs converted from a Block only
+     ═══════════════════════════════════════════ -->
+<div class="marble-popup-overlay" *ngIf="showBlockDetailsPopup && product.sourceBlock as b" (click)="closeBlockDetailsPopup()">
+  <div class="marble-popup block-details-popup" (click)="$event.stopPropagation()">
+
+    <button class="marble-popup-close" (click)="closeBlockDetailsPopup()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <h3 class="marble-popup-title" style="margin-bottom: 14px;">Source Block Details</h3>
+
+    <!-- Image gallery -->
+    <div class="block-popup-gallery" *ngIf="sourceBlockImages.length; else noBlockImg">
+      <img [src]="sourceBlockImages[blockPopupImgIdx]" alt="Block photo" class="block-popup-img"/>
+      <ng-container *ngIf="sourceBlockImages.length > 1">
+        <button type="button" class="block-popup-nav block-popup-prev"
+                (click)="blockPopupImgIdx = (blockPopupImgIdx + sourceBlockImages.length - 1) % sourceBlockImages.length">&lsaquo;</button>
+        <button type="button" class="block-popup-nav block-popup-next"
+                (click)="blockPopupImgIdx = (blockPopupImgIdx + 1) % sourceBlockImages.length">&rsaquo;</button>
+        <span class="block-popup-count">{{ blockPopupImgIdx + 1 }} / {{ sourceBlockImages.length }}</span>
+      </ng-container>
+    </div>
+    <ng-template #noBlockImg>
+      <div class="marble-popup-placeholder" style="width:100%; height:140px; border-radius:12px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+    </ng-template>
+
+    <div class="marble-popup-grid" style="margin-top: 16px;">
+      <div class="marble-kv"><span class="marble-kv-label">Block Number</span><span class="marble-kv-value">{{ b.blockCode || '—' }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Location</span><span class="marble-kv-value">{{ b.godownLocation || '—' }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Material</span><span class="marble-kv-value">{{ b.productQuality || '—' }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Status at Conversion</span><span class="marble-kv-value">{{ b.status || '—' }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Block Size</span><span class="marble-kv-value">{{ b.productLength }} × {{ b.productWidth }} × {{ b.productHeight }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Weight</span><span class="marble-kv-value">{{ b.productWeight }} Tons</span></div>
+      <div class="marble-kv marble-kv-block" *ngIf="b.description"><span class="marble-kv-label">Block Remarks</span><span class="marble-kv-value">{{ b.description }}</span></div>
+      <div class="marble-kv"><span class="marble-kv-label">Converted On</span><span class="marble-kv-value">{{ b.convertedAt | date:'d MMM y, h:mm a' }}</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      HIDDEN: PDF EXPORT TEMPLATE (captured by html2canvas)
      ═══════════════════════════════════════════ -->
 <div class="pdf-export-offscreen" aria-hidden="true">
@@ -403,7 +595,7 @@
       <div class="pdf-title-block">
         <span class="pdf-tagline">{{ product.category }} &nbsp;&middot;&nbsp; MARBLE AND SURFACES</span>
         <h1 class="pdf-product-name">{{ product.productQuality }}</h1>
-        <div class="pdf-lot-box">LOT NO. <strong>{{ product.productCode }}</strong></div>
+        <div class="pdf-lot-box">LOT NO. <strong>{{ displayCode }}</strong></div>
       </div>
     </div>
 

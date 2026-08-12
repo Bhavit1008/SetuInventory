@@ -11,6 +11,29 @@
 /* ═══════════════════════════════════════════════════
    Hero card  —  gallery + specs + summary
 ═══════════════════════════════════════════════════ */
+.page-top-bar {
+  display: flex;
+  align-items: center;
+  padding: 2px 16px 12px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.07);
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c3c43;
+  cursor: pointer;
+  font-family: inherit;
+}
+.back-btn:active { opacity: 0.85; transform: scale(0.98); }
+
 .hero-card {
   display: flex;
   flex-direction: column;
@@ -537,6 +560,17 @@
   border-color: #5856d6;
 }
 
+/* ── Reverse Process (back to Available) ── */
+.btn-reverse-process {
+  color: #065f46;
+  border-color: rgba(6, 95, 70, 0.3);
+}
+
+.btn-reverse-process:active {
+  background: rgba(6, 95, 70, 0.08);
+  border-color: #065f46;
+}
+
 /* ── Slab Conversion ── */
 .btn-slab-convert {
   background: #34c759;
@@ -700,6 +734,58 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   Sold details popup
+═══════════════════════════════════════════════════ */
+.sold-popup-box {
+  max-width: 320px;
+}
+
+.sold-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.sold-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c6c70;
+  margin-bottom: 5px;
+}
+
+.sold-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1px solid #d8d8dc;
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1c1c1e;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.sold-field input:focus { border-color: #2e9e5b; }
+
+.btn-confirm-sold { background: #2e9e5b; }
+.btn-confirm-sold:active { opacity: 0.88; }
+
+/* ═══════════════════════════════════════════════════
+   Sold details section (field-row label)
+═══════════════════════════════════════════════════ */
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c6c70;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+/* ═══════════════════════════════════════════════════
    Responsive
 ═══════════════════════════════════════════════════ */
 @media (max-width: 430px) {
@@ -778,6 +864,70 @@
 .btn-marble:active {
   background: rgba(232, 120, 37, 0.1);
   border-color: #e87825;
+}
+
+/* ── Block Details (source block, on converted slabs) ── */
+.btn-block-details {
+  color: #5856d6;
+  border-color: rgba(88, 86, 214, 0.35);
+}
+
+.btn-block-details:active {
+  background: rgba(88, 86, 214, 0.1);
+  border-color: #5856d6;
+}
+
+/* ── Source block details popup ── */
+.block-details-popup {
+  max-width: 460px;
+}
+
+.block-popup-gallery {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f2f2f7;
+}
+
+.block-popup-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.block-popup-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.block-popup-prev { left: 8px; }
+.block-popup-next { right: 8px; }
+
+.block-popup-count {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 /* ── Export as PDF ── */

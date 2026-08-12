@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { EmployeeService } from './employee.service';
 
 export type UserRole = 'admin' | 'store_manager';
 
@@ -7,24 +9,23 @@ export interface AppUser {
   role: UserRole;
 }
 
-const STATIC_USERS: Array<{ loginId: string; password: string; role: UserRole }> = [
-  { loginId: 'setu',          password: 'password',  role: 'admin' },
-  { loginId: 'bhavit',        password: 'password',  role: 'admin' },
-  { loginId: 'meet',          password: 'password',  role: 'admin' },
-  { loginId: 'store_manager', password: 'password1', role: 'store_manager' },
-];
-
 const ROLE_KEY = 'setu-user-role';
 const USER_KEY = 'setu-user-id';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  validateUser(loginId: string, password: string): AppUser | null {
-    const match = STATIC_USERS.find(
-      u => u.loginId.toLowerCase() === loginId.toLowerCase() && u.password === password
-    );
-    return match ? { loginId: match.loginId, role: match.role } : null;
+  constructor(private employeeService: EmployeeService) {}
+
+  /** Validates credentials against the Employee collection — no credentials are hardcoded in the app. */
+  async validateUser(loginId: string, password: string): Promise<AppUser | null> {
+    try {
+      const employee = await firstValueFrom(this.employeeService.login(loginId.trim(), password));
+      if (!employee?.role) return null;
+      return { loginId: employee.employeeName, role: employee.role as UserRole };
+    } catch {
+      return null;
+    }
   }
 
   setCurrentUser(user: AppUser): void {

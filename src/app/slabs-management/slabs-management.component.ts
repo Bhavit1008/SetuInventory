@@ -4,11 +4,12 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, 
 import { ProductService } from '../services/product.service';
 import { Product } from '../model/product';
 import { SlabPieces } from '../model/slab-pieces';
+import { SourceBlockDetails } from '../model/source-block-details';
 import { ViewChild, ElementRef } from '@angular/core';
 import { Platform } from '@angular/cdk/platform';
 import { ToastService } from '../services/toast.service';
-import { Location } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-slabs-management',
@@ -32,7 +33,29 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   isDark = false;
   productId: any = null;
   blockData: Product | null = null;
-  blockImgPreviews: string[] = [];
+
+  /**
+   * This slab entry's own photo gallery — prefilled from the source block's
+   * images when converting a block, but freely addable/removable here too
+   * (unlike the per-piece photos in the SLAB ENTRY GRID, which are tied to
+   * one specific slab piece).
+   */
+  slabImgPreviews: string[] = [];
+
+  // ── Slab-gallery photo camera state (separate from the per-piece camera) ──
+  showGalleryCamera = false;
+  galleryCameraStream: MediaStream | null = null;
+  @ViewChild('galleryVideo')  galleryVideoRef!:  ElementRef<HTMLVideoElement>;
+  @ViewChild('galleryCanvas') galleryCanvasRef!: ElementRef<HTMLCanvasElement>;
+
+  /**
+   * Frozen snapshot of the source block, sent through to the saved slab as
+   * `sourceBlock`. Built once from the pristine block data when converting;
+   * carried forward unchanged when just editing an existing slab (whose
+   * `formData` is the slab itself, not a block); left null for standalone
+   * slabs. See ngOnInit / prepareResponseObject.
+   */
+  private sourceBlockSnapshot: SourceBlockDetails | null = null;
 
   // ── Slab-level photo modal state ───────────────────────────────────────────
   slabPhotoModalIndex: number | null = null;
@@ -104,7 +127,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     private platform: Platform,
     private toastService: ToastService,
     private cd: ChangeDetectorRef,
-    private location: Location
+    private router: Router
   ) {}
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -119,12 +142,35 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       this.patchFormWithData(state.formData);
       this.productId = state.formData.id;
       this.isUpdate = true;
+
+      if (state.formData.category?.toLowerCase() === 'block') {
+        // Converting a block: freeze its details now, before this same
+        // record gets overwritten with the slab's own on save.
+        this.sourceBlockSnapshot = {
+          blockCode:       state.formData.productCode      ?? '',
+          godownLocation:  state.formData.godownLocation   ?? '',
+          productQuality:  state.formData.productQuality   ?? '',
+          productLength:   state.formData.productLength    ?? 0,
+          productWidth:    state.formData.productWidth     ?? 0,
+          productHeight:   state.formData.productHeight    ?? 0,
+          productWeight:   state.formData.productWeight    ?? 0,
+          status:          state.formData.status           ?? '',
+          description:     state.formData.description      ?? '',
+          imageUrl:        state.formData.imageUrl         ?? '',
+          imageUrls:       state.formData.imageUrls        ?? [],
+          convertedAt:     Date.now(),
+        };
+      } else {
+        // Editing an already-converted slab: keep whatever snapshot it already has.
+        this.sourceBlockSnapshot = state.formData.sourceBlock ?? null;
+      }
     }
   }
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
     this.stopSlabCamera();
+    this.stopGalleryCamera();
   }
 
   // ── Theme ──────────────────────────────────────────────────────────────────
@@ -140,27 +186,30 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   goBack(): void {
-    this.location.back();
+    this.router.navigate(['/search']);
   }
 
   // ── Form Build ─────────────────────────────────────────────────────────────
   // Fields mirrored in the BLOCK INFO card (productCode, productQuality,
-  // godownLocation, productLength/productWidth) are intentionally optional —
-  // they only have a source value when converting from a block, and a slab
-  // must be addable standalone with no block behind it. The cost fields are
-  // optional for the same reason: they're only ever populated by copying
-  // the source block's own costing (see patchFormWithData) — there is no
-  // input UI for them, so requiring them made standalone entry impossible.
+  // productLength/productWidth) are intentionally optional — they only have
+  // a source value when converting from a block, and a slab must be
+  // addable standalone with no block behind it. godownLocation and quantity
+  // are required regardless of standalone/converted origin. The cost fields
+  // are optional for the same reason as above: they're only ever populated
+  // by copying the source block's own costing (see patchFormWithData) —
+  // there is no input UI for them, so requiring them made standalone entry
+  // impossible.
   buildForm(): void {
     this.stockFormGroup = new FormGroup({
       productCode:       new FormControl(''),
-      godownLocation:    new FormControl(''),
+      slabNumber:        new FormControl(''),
+      godownLocation:    new FormControl('', Validators.required),
       productQuality:    new FormControl(''),
       productFinished:   new FormControl('', Validators.required),
       productLength:     new FormControl(''),
       productWidth:      new FormControl(''),
       productThickness:  new FormControl('', Validators.required),
-      quantity:          new FormControl(0, Validators.required),
+      quantity:          new FormControl(0, [Validators.required, Validators.min(1)]),
       exFactoryCost:     new FormControl(''),
       miscellaneousCost: new FormControl(''),
       freightCost:       new FormControl(''),
@@ -184,13 +233,47 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
          + (parseFloat(f.sellingCost)        || 0);
   }
 
+  /** Sqft from the SLAB ENTRY GRID pieces only (each row's own L × W). */
   get totalSlabSqft(): number {
     return this.slabPieces.reduce((sum, p) => sum + (p.totalArea || 0), 0);
   }
 
+  /**
+   * Real-time per-slab sqft from the SLAB DETAILS "Size L × W" fields —
+   * same (L × W) / 144 formula used per-row in the SLAB ENTRY GRID
+   * (see calculateSlabArea). Recomputed on every change-detection pass, so
+   * it stays live as the user types.
+   */
+  get sizeSqft(): number {
+    const length = parseFloat(this.stockFormGroup?.get('productLength')?.value) || 0;
+    const width  = parseFloat(this.stockFormGroup?.get('productWidth')?.value)  || 0;
+    return Math.round((length * width / 144) * 100) / 100;
+  }
+
+  /** sizeSqft scaled by Quantity — the grid has no single quantity to multiply by, this does. */
+  get sizeTotalSqft(): number {
+    return Math.round((this.sizeSqft * this.totalSlabCount) * 100) / 100;
+  }
+
+  /**
+   * Combined sqft across both entry methods: individually-measured grid
+   * pieces plus the uniform Size L × W × Quantity shortcut. A slab entry
+   * only ever uses one of the two in practice, so whichever is untouched
+   * contributes 0 and this just reflects the one actually filled in.
+   */
+  get combinedTotalSqft(): number {
+    return Math.round((this.totalSlabSqft + this.sizeTotalSqft) * 100) / 100;
+  }
+
+  /** Quantity is the authoritative slab count now that it's directly editable, falling back to the grid's row count only if left blank. */
+  get totalSlabCount(): number {
+    const quantity = parseInt(this.stockFormGroup?.get('quantity')?.value, 10) || 0;
+    return quantity > 0 ? quantity : this.slabPieces.length;
+  }
+
   get avgSlabSize(): number {
-    if (!this.slabPieces.length) return 0;
-    return this.totalSlabSqft / this.slabPieces.length;
+    if (!this.totalSlabCount) return 0;
+    return this.combinedTotalSqft / this.totalSlabCount;
   }
 
   /** The source block's own remark, kept read-only and separate from the slab's own remark. */
@@ -211,6 +294,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
     this.stockFormGroup.patchValue({
       productCode:       formData.productCode      ?? '',
+      slabNumber:        formData.slabNumber       ?? '',
       godownLocation:    formData.godownLocation   ?? '',
       productQuality:    formData.productQuality   ?? '',
       productFinished:   formData.productFinished  ?? '',
@@ -223,7 +307,10 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       freightCost:       formData.freightCost      ?? '',
       inHouseCost:       formData.inHouseCost      ?? '',
       sellingCost:       formData.sellingCost      ?? '',
-      status:            formData.status           ?? '',
+      // A block converted out of "Process" becomes a fresh, sellable slab —
+      // default it to "Available" rather than silently carrying the block's
+      // Process status forward (which isn't even a selectable status here).
+      status:            formData.status?.toLowerCase() === 'process' ? 'Available' : (formData.status || 'Available'),
       product:           formData.product          ?? ''
       // remark is intentionally left blank — it's the slab's own remark,
       // kept separate from the block's remark (shown read-only in BLOCK INFO
@@ -246,10 +333,13 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       })
     );
 
-    this.blockImgPreviews = formData.imageUrls?.length
+    this.slabImgPreviews = formData.imageUrls?.length
       ? [...formData.imageUrls]
       : formData.imageUrl ? [formData.imageUrl] : [];
-    this.syncQuantity();
+    // Quantity was already patched above from the saved product — don't
+    // call syncQuantity() here, it would overwrite that with the grid's
+    // current row count (0 for a standalone slab with no grid pieces),
+    // wiping out the saved value the moment you open it for edit.
     this.cd.detectChanges();
   }
 
@@ -321,6 +411,21 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.syncQuantity();
   }
 
+  /**
+   * Commit whatever is currently typed into every grid row into `slabPieces`,
+   * regardless of whether that row's own checkmark (saveSlabPiece) was ever
+   * clicked. Without this, an in-progress row's values are silently dropped
+   * on submit — the user shouldn't have to individually lock every row
+   * before saving the overall slab entry.
+   */
+  private syncAllSlabPieces(): void {
+    this.slabPieceForm.forEach((_, i) => {
+      this.calculateSlabArea(i);
+      this.slabPieces[i] = { ...this.slabPieceForm[i].value };
+    });
+    this.calculateTotalSlabSize();
+  }
+
   // ── Slab-level photo modal ─────────────────────────────────────────────────
   openSlabPhotoModal(index: number): void {
     this.slabPhotoModalIndex = index;
@@ -388,6 +493,65 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.slabPieces[index].imageUrl    = '';
   }
 
+  // ── Slab-entry photo gallery (multiple images, mirrors add-block) ──────────
+  onGalleryImagesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.slabImgPreviews.push(reader.result as string);
+          this.cd.detectChanges();
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
+    }
+  }
+
+  removeGalleryImage(index: number): void {
+    this.slabImgPreviews.splice(index, 1);
+  }
+
+  openGalleryCamera(): void {
+    this.showGalleryCamera = true;
+    // Small delay to let *ngIf render the <video> element first
+    setTimeout(() => {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+          this.galleryCameraStream = stream;
+          this.galleryVideoRef.nativeElement.srcObject = stream;
+        })
+        .catch(() => {
+          this.toastService.showError('Camera access denied or unavailable.');
+          this.showGalleryCamera = false;
+        });
+    }, 100);
+  }
+
+  captureGalleryPhoto(): void {
+    const video  = this.galleryVideoRef.nativeElement;
+    const canvas = this.galleryCanvasRef.nativeElement;
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    this.slabImgPreviews.push(canvas.toDataURL('image/jpeg', 0.85));
+    this.closeGalleryCamera();
+  }
+
+  closeGalleryCamera(): void {
+    this.stopGalleryCamera();
+    this.showGalleryCamera = false;
+  }
+
+  stopGalleryCamera(): void {
+    if (this.galleryCameraStream) {
+      this.galleryCameraStream.getTracks().forEach(t => t.stop());
+      this.galleryCameraStream = null;
+    }
+  }
+
   private setSlabImage(base64: string): void {
     const i = this.slabPhotoModalIndex;
     if (i === null) return;
@@ -404,20 +568,41 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
     if (this.stockFormGroup.invalid) return;
 
+    this.syncAllSlabPieces();
+
     this.isSubmitting = true;
-    const imageUrl = this.blockImgPreviews[0] ?? '';
-    this.saveSlab(slabForm, imageUrl);
     history.replaceState({}, document.title);
+
+    this.uploadGalleryImages().then(urls => {
+      this.saveSlab(slabForm, urls);
+    }).catch(() => {
+      this.isSubmitting = false;
+      this.toastService.showError('Image upload failed.');
+    });
   }
 
-  private saveSlab(slabForm: any, imageUrl: string): void {
+  private async uploadGalleryImages(): Promise<string[]> {
+    const urls: string[] = [];
+    for (const img of this.slabImgPreviews) {
+      if (img.startsWith('data:')) {
+        const url = await firstValueFrom(this.productService.uploadImage(img));
+        urls.push(url);
+      } else {
+        urls.push(img);
+      }
+    }
+    return urls;
+  }
+
+  private saveSlab(slabForm: any, imageUrls: string[]): void {
     const sub = this.productService
-      .postApiCall(this.prepareResponseObject(slabForm, imageUrl))
+      .postApiCall(this.prepareResponseObject(slabForm, imageUrls))
       .subscribe({
         next:  () => this.afterSave(),
-        error: () => {
+        error: (err) => {
           this.isSubmitting = false;
-          this.toastService.showError('Failed to save slab details.');
+          const duplicateMsg = err?.status === 409 && typeof err.error === 'string' ? err.error : null;
+          this.toastService.showError(duplicateMsg || 'Failed to save slab details.');
         }
       });
     this.subs.add(sub);
@@ -428,7 +613,8 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.slabPieces       = [];
     this.slabPieceForm    = [];
     this.blockData        = null;
-    this.blockImgPreviews = [];
+    this.slabImgPreviews  = [];
+    this.sourceBlockSnapshot = null;
     this.toastService.showSuccess(
       this.isUpdate ? 'Slab updated successfully.' : 'New slab added successfully.'
     );
@@ -449,12 +635,13 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     return [blockPart, slabPart].filter(Boolean).join(' | ');
   }
 
-  prepareResponseObject(slab: any, imgUrl: string): any {
+  prepareResponseObject(slab: any, imageUrls: string[]): any {
     if (this.productId != null) slab.value.id = this.productId;
     return {
       id:                slab.value.id,
       category:          'Slab',
       productCode:       slab.value.productCode,
+      slabNumber:        slab.value.slabNumber,
       godownLocation:    slab.value.godownLocation,
       productQuality:    slab.value.productQuality,
       productFinished:   slab.value.productFinished,
@@ -462,6 +649,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       productWidth:      parseFloat(slab.value.productWidth)  || 0,
       productThickness:  parseFloat(slab.value.productThickness),
       quantity:          parseInt(slab.value.quantity),
+      size:              this.combinedTotalSqft,
       exFactoryCost:     parseFloat(slab.value.exFactoryCost)     || 0,
       miscellaneousCost: parseFloat(slab.value.miscellaneousCost) || 0,
       freightCost:       parseFloat(slab.value.freightCost)       || 0,
@@ -471,7 +659,9 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       product:           slab.value.product,
       description:       this.combinedRemark(slab.value.remark),
       pieces:            this.slabPieces,
-      imageUrl:          imgUrl
+      imageUrl:          imageUrls[0] || '',
+      imageUrls:         imageUrls,
+      sourceBlock:       this.sourceBlockSnapshot
     };
   }
 

@@ -150,6 +150,7 @@
           <span class="mini-main">
             <strong>{{ item.productCode }}</strong>
             <span class="muted">{{ item.productQuality }}</span>
+            <span class="muted" *ngIf="item.partyName">· {{ item.partyName }}</span>
           </span>
           <span class="pill pill-danger">₹{{ item.sellingCost | number }}</span>
         </li>

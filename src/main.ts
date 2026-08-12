@@ -1,18 +1,23 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { ApplicationConfig, mergeApplicationConfig } from '@angular/core';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
-import { provideRouter } from '@angular/router';
-import { routes } from './app/app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http';
 import { provideEchartsCore } from 'ngx-echarts';
 
 import * as echarts from 'echarts';
-bootstrapApplication(AppComponent, {
+
+// Client-only extras layered on top of the shared appConfig (router, HTTP
+// client + interceptors, hydration, etc.) — mirrors how app.config.server.ts
+// merges the same appConfig with its own server-only providers, so the
+// router/HttpClient/interceptor setup can't silently diverge between the
+// two bootstrap entry points again.
+const clientConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),          // ✅ This is critical
     provideAnimations(),
-    provideHttpClient(),
     provideEchartsCore({ echarts })
   ]
-}).catch(err => console.error(err));
+};
+
+bootstrapApplication(AppComponent, mergeApplicationConfig(appConfig, clientConfig))
+  .catch(err => console.error(err));

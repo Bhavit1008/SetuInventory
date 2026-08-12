@@ -1,0 +1,307 @@
+.emp-page {
+  background: #f2f2f7;
+  min-height: 100vh;
+  padding: 14px 0 40px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.page-top-bar {
+  display: flex;
+  align-items: center;
+  padding: 2px 16px 12px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.07);
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c3c43;
+  cursor: pointer;
+  font-family: inherit;
+}
+.back-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+.emp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 16px 16px;
+}
+
+.emp-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: #1c1c1e;
+}
+
+.emp-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #8e8e93;
+}
+
+.tab-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tab-btn {
+  padding: 9px 16px;
+  border: 1px solid #e2e3ec;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c6c70;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.tab-btn.active {
+  background: #1c1c1e;
+  border-color: #1c1c1e;
+  color: #fff;
+}
+
+.section-card {
+  background: #fff;
+  border-radius: 14px;
+  margin: 0 16px 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.07);
+}
+
+/* ── Table ── */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.emp-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+  font-size: 13px;
+}
+
+.emp-table thead tr { background: #f8f8fa; }
+
+.emp-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #8e8e93;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e8e8ed;
+  white-space: nowrap;
+}
+
+.emp-table tbody tr { border-bottom: 1px solid #f0f0f3; }
+.emp-table tbody tr:last-child { border-bottom: none; }
+.emp-table td { padding: 12px 14px; vertical-align: middle; color: #3c3c43; }
+.td-name { font-weight: 600; color: #1c1c1e; }
+
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #eef2ff;
+  color: #4c51bf;
+}
+.role-badge.role-admin { background: #fff0e6; color: #c2560d; }
+
+.you-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #e8f5ee;
+  color: #1a8a3a;
+  vertical-align: middle;
+}
+
+.td-actions { white-space: nowrap; }
+
+.act-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.act-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: opacity 0.15s;
+}
+.edit-act { background: #eef2ff; color: #4c51bf; }
+.del-act { background: #fdeceb; color: #e74c3c; }
+.act-btn:active { opacity: 0.7; }
+
+.empty-msg {
+  padding: 40px 20px;
+  text-align: center;
+  color: #8e8e93;
+  font-size: 13.5px;
+}
+
+.list-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: #8e8e93;
+  font-size: 13.5px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e2e3ec;
+  border-top-color: #1c1c1e;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Form ── */
+.emp-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+
+.field-group label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3c3c43;
+}
+
+.req { color: #e74c3c; }
+
+.field-group input,
+.field-group select {
+  padding: 10px 12px;
+  border: 1px solid #e2e3ec;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1c1c1e;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field-group input:focus,
+.field-group select:focus { border-color: #1c1c1e; }
+
+.field-group.err input,
+.field-group.err select { border-color: #e74c3c; }
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  background: #f2f2f7;
+  border: none;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #3c3c43;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-save {
+  padding: 10px 20px;
+  background: #1c1c1e;
+  border: none;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Delete confirmation popup ── */
+.delete-popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-confirm-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 26px;
+  text-align: center;
+  max-width: 280px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+}
+
+.delete-msg {
+  margin: 14px 0 18px;
+  font-size: 15px;
+  color: #1c1c1e;
+  line-height: 1.45;
+}
+
+.delete-hint { font-size: 12px; color: #8e8e93; }
+
+.delete-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-cancel-del,
+.btn-confirm-del {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-cancel-del { background: #f2f2f7; color: #3c3c43; }
+.btn-confirm-del { background: #e74c3c; color: #fff; }
+.btn-cancel-del:disabled,
+.btn-confirm-del:disabled { opacity: 0.55; cursor: not-allowed; }

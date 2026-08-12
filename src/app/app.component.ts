@@ -19,7 +19,7 @@ import { filter } from 'rxjs/operators';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'setuInventory';
+  title = 'Inventory';
   toastColor: string = '#000000';
   loginError: string | null = null;
   showAlert = false;

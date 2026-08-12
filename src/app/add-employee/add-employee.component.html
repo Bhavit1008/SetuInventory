@@ -1,0 +1,136 @@
+<div class="emp-page">
+
+  <div class="page-top-bar">
+    <button type="button" class="back-btn" (click)="goToDashboard()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </button>
+  </div>
+
+  <header class="emp-header">
+    <div>
+      <h1>Employee Management</h1>
+      <p class="emp-sub">Add, edit and remove the accounts that can log in.</p>
+    </div>
+    <div class="tab-row">
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'manage'" (click)="switchTab('manage')">Manage Employees</button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'add'" (click)="startAdd()">+ Add Employee</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ MANAGE TAB ═══════════════ -->
+  <div class="section-card" *ngIf="activeTab === 'manage'">
+    <div class="list-loading" *ngIf="isLoading">
+      <span class="spinner"></span> Loading employees…
+    </div>
+
+    <div class="table-scroll" *ngIf="!isLoading">
+      <table class="emp-table" *ngIf="employees.length > 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Number</th>
+            <th>Email</th>
+            <th>Store</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of employees">
+            <td class="td-name">{{ emp.employeeName }} <span class="you-badge" *ngIf="emp.employeeName === currentUserName">You</span></td>
+            <td>{{ emp.employeeNumber || '—' }}</td>
+            <td>{{ emp.employeeEmail || '—' }}</td>
+            <td>{{ emp.storeLocation || '—' }}</td>
+            <td><span class="role-badge" [class.role-admin]="emp.role === 'admin'">{{ emp.role === 'admin' ? 'Admin' : 'Store Manager' }}</span></td>
+            <td class="td-actions">
+              <button type="button" class="act-btn edit-act" (click)="startEdit(emp)" title="Edit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button type="button" class="act-btn del-act" (click)="confirmDelete(emp)"
+                      [disabled]="emp.employeeName === currentUserName"
+                      [title]="emp.employeeName === currentUserName ? 'You can\'t delete your own account' : 'Delete'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-msg" *ngIf="employees.length === 0">
+        No employees yet — click "Add Employee" to create the first one.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ADD / EDIT TAB ═══════════════ -->
+  <div class="section-card" *ngIf="activeTab === 'add'">
+    <form [formGroup]="form" (ngSubmit)="save()" class="emp-form" autocomplete="off">
+
+      <div class="field-group" [class.err]="submitted && form.get('employeeName')?.invalid">
+        <label>Employee Name <span class="req">*</span></label>
+        <input type="text" formControlName="employeeName" placeholder="e.g. setu">
+      </div>
+
+      <div class="field-group">
+        <label>Employee Number</label>
+        <input type="text" formControlName="employeeNumber" placeholder="Optional">
+      </div>
+
+      <div class="field-group" [class.err]="submitted && form.get('employeeEmail')?.invalid">
+        <label>Employee Email</label>
+        <input type="email" formControlName="employeeEmail" placeholder="Optional">
+      </div>
+
+      <div class="field-group" [class.err]="submitted && form.get('storeLocation')?.invalid">
+        <label>Store Location <span class="req">*</span></label>
+        <select formControlName="storeLocation">
+          <option value="" disabled selected>Select</option>
+          <option *ngFor="let loc of storeLocations" [value]="loc">{{ loc }}</option>
+        </select>
+      </div>
+
+      <div class="field-group" [class.err]="submitted && form.get('role')?.invalid">
+        <label>Role <span class="req">*</span></label>
+        <select formControlName="role">
+          <option value="" disabled selected>Select</option>
+          <option *ngFor="let r of roleOptions" [value]="r.value">{{ r.label }}</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label>Password <span class="req" *ngIf="!editId">*</span></label>
+        <input type="password" formControlName="password" [placeholder]="editId ? 'Leave blank to keep current password' : ''" autocomplete="new-password">
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+        <button type="submit" class="btn-save" [disabled]="isSaving">
+          {{ isSaving ? 'Saving…' : (editId ? 'Update Employee' : 'Add Employee') }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<!-- ═══════════════ DELETE CONFIRMATION ═══════════════ -->
+<div class="delete-popup-overlay" *ngIf="deleteTarget" (click)="cancelDelete()">
+  <div class="delete-confirm-box" (click)="$event.stopPropagation()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="delete-msg">
+      Delete <strong>{{ deleteTarget.employeeName }}</strong>?
+      <br><span class="delete-hint">They will no longer be able to log in.</span>
+    </p>
+    <div class="delete-actions">
+      <button class="btn-cancel-del" (click)="cancelDelete()" [disabled]="isDeleting">Cancel</button>
+      <button class="btn-confirm-del" (click)="deleteEmployee()" [disabled]="isDeleting">
+        {{ isDeleting ? 'Deleting…' : 'Yes, Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

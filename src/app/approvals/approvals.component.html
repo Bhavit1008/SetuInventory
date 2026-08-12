@@ -3,6 +3,9 @@
   <!-- Page header -->
   <header class="page-header">
     <button class="icon-btn nav-toggle" *ngIf="layout.isMobile" (click)="layout.toggleNav()" aria-label="Open navigation">☰</button>
+    <button class="icon-btn" (click)="goToDashboard()" aria-label="Back to Dashboard" title="Back to Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
     <div class="header-titles">
       <h1>Approval Requests</h1>
       <p class="header-sub">Review and action requests from the store manager</p>
@@ -55,6 +58,18 @@
         <div class="product-info">
           <span class="product-code">{{ req.productCode }}</span>
           <span class="product-meta">{{ req.productCategory }}</span>
+
+          <!-- Sale details captured by the store manager, for the admin to review before approving -->
+          <div class="sell-details" *ngIf="req.type === 'sell' && req.productSnapshot?.partyName">
+            <span>Party: <strong>{{ req.productSnapshot.partyName }}</strong></span>
+            <ng-container *ngIf="req.productCategory.toLowerCase() === 'block'; else slabApprovalDetails">
+              <span>Weight: <strong>{{ req.productSnapshot.weightSold }} Tons</strong></span>
+            </ng-container>
+            <ng-template #slabApprovalDetails>
+              <span>Slabs: <strong>{{ req.productSnapshot.soldQuantity }}</strong></span>
+              <span>Sqft: <strong>{{ req.productSnapshot.soldSqft }}</strong></span>
+            </ng-template>
+          </div>
         </div>
       </div>
 

@@ -200,6 +200,17 @@
   color: var(--text-secondary);
 }
 
+.sell-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.sell-details strong { color: var(--text-primary); }
+
 /* Card center */
 .card-center {
   flex: 1;

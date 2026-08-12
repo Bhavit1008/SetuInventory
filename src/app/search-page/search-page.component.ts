@@ -175,7 +175,10 @@ export class SearchPageComponent implements OnInit {
     if (key === 'All') {
       this.finalProducts = [...this.allProducts];
     } else if (key === 'Block' || key === 'Slab') {
-      this.finalProducts = this.allProducts.filter(p => p.category === key);
+      // Mirrors Block/Slab Inventory: Sold and Process items live in their own dedicated views.
+      this.finalProducts = this.allProducts.filter(p =>
+        p.category === key && p.status?.toLowerCase() !== 'sold' && p.status?.toLowerCase() !== 'process'
+      );
     } else {
       this.finalProducts = this.allProducts.filter(p => p.status === key);
     }
@@ -236,7 +239,7 @@ export class SearchPageComponent implements OnInit {
     this.inTransitCount = this.allProducts.filter(p => p.status === 'InTransit').length;
 
     const soldAll = this.allProducts.filter(p => p.status === 'Sold');
-    this.soldThisMonthCount = soldAll.filter(p => this.isThisMonth(p.statusUpdatedAt)).length;
+    this.soldThisMonthCount = soldAll.filter(p => this.isThisMonth(p.soldDate)).length;
 
     const totalSlabSqft = slabs.reduce((sum, p) => sum + (p.sqft || 0), 0);
     const totalBlockTons = blocks.reduce((sum, p) => sum + (p.weightTons || 0), 0);

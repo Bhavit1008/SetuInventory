@@ -18,6 +18,20 @@ export class ProductCardComponent {
 
   constructor(private router: Router) {}
 
+  /**
+   * Blocks use their own block-level photo. Slabs use the first piece's own
+   * photo instead — falling back to a block-level image only if no piece has
+   * one, since a standalone slab never had a block image to inherit.
+   */
+  get thumb(): string {
+    if (this.product.category?.toLowerCase() === 'slab') {
+      const withImg = this.product.pieces?.find(pc => pc.imageUrl || pc.imageBase64);
+      if (withImg) return withImg.imageUrl || withImg.imageBase64;
+    }
+    if (this.product.imageUrls?.length) return this.product.imageUrls[0];
+    return this.product.imageUrl || '';
+  }
+
   viewProduct(product: Product): void {
     this.router.navigate(['/view-product'], { state: { product } });
   }

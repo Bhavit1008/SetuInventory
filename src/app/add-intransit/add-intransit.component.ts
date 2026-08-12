@@ -36,6 +36,10 @@ export class AddIntransitComponent {
     { id: 3, label: "Banswara"}
   ]
 
+    goToDashboard(): void {
+      this.router.navigate(['/search']);
+    }
+
 
     ngOnInit(){
       this.buildForm();

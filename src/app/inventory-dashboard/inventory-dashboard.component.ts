@@ -1,5 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ChartData, ChartType } from 'chart.js';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { Product } from '../model/product';
@@ -31,8 +32,12 @@ export class InventoryDashboardComponent {
  
 
 
-  constructor(private productService: ProductService) {
+  constructor(private productService: ProductService, private router: Router) {
     this.isMobile = window.innerWidth <= 768;
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/search']);
   }
 
   ngOnInit() {

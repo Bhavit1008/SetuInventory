@@ -1,4 +1,10 @@
 <div class="block-page" (click)="closeDropdowns()">
+  <div class="page-top-bar">
+    <button type="button" class="back-btn" (click)="goToDashboard()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </button>
+  </div>
   <form [formGroup]="blockFormGroup" #blockForm="ngForm">
 
     <!-- ═══════════════════════ BLOCK DETAILS ═══════════════════════ -->
@@ -172,7 +178,7 @@
           <div class="dim-field-wrap">
             <input type="number" min="0" class="dim-in" placeholder="0"
                    formControlName="productLength"
-                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   (keydown)="blockNegativeKey($event)"
                    [class.dim-invalid]="submitted && blockFormGroup.get('productLength')?.invalid">
             <span class="dim-sub">L</span>
           </div>
@@ -180,7 +186,7 @@
           <div class="dim-field-wrap">
             <input type="number" min="0" class="dim-in" placeholder="0"
                    formControlName="productWidth"
-                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   (keydown)="blockNegativeKey($event)"
                    [class.dim-invalid]="submitted && blockFormGroup.get('productWidth')?.invalid">
             <span class="dim-sub">W</span>
           </div>
@@ -188,7 +194,7 @@
           <div class="dim-field-wrap">
             <input type="number" min="0" class="dim-in" placeholder="0"
                    formControlName="productHeight"
-                   oninput="this.value = this.value < 0 ? '' : this.value"
+                   (keydown)="blockNegativeKey($event)"
                    [class.dim-invalid]="submitted && blockFormGroup.get('productHeight')?.invalid">
             <span class="dim-sub">H</span>
           </div>
@@ -204,11 +210,11 @@
           </svg>
         </span>
         <label class="field-label">Weight (Tons)</label>
-        <input type="number" min="0"
+        <input type="number" min="0" step="any"
                class="field-input"
                placeholder="0"
                formControlName="productWeight"
-               oninput="this.value = this.value < 0 ? '' : this.value">
+               (keydown)="blockNegativeKey($event)">
       </div>
     </div>
 
@@ -314,6 +320,14 @@
             </svg>
             Camera
           </button>
+          <label *ngIf="isMobile" class="add-photo-btn camera-btn-secondary">
+            <input type="file" accept="image/*" capture="environment" (change)="onImageSelected($event)" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            Camera
+          </label>
         </div>
       </div>
 
@@ -334,7 +348,7 @@
     <!-- Camera modal -->
     <div *ngIf="!isMobile && showCamera" class="camera-modal" (click)="closeCamera()">
       <div class="camera-inner" (click)="$event.stopPropagation()">
-        <video #video autoplay class="video-frame"></video>
+        <video #video autoplay playsinline class="video-frame"></video>
         <canvas #canvas style="display:none;"></canvas>
         <div class="camera-actions">
           <button type="button" class="btn-capture" (click)="capturePhoto()">Capture</button>

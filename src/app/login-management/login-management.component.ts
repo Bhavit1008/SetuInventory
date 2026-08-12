@@ -42,7 +42,7 @@ export class LoginManagementComponent implements OnInit {
       return;
     }
 
-    const user = this.authService.validateUser(loginId.trim(), password.trim());
+    const user = await this.authService.validateUser(loginId.trim(), password.trim());
 
     if (!user) {
       this.toastService.showError('Invalid login ID or password.');

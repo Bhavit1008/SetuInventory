@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, HostListener, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { Platform } from '@angular/cdk/platform';
@@ -28,10 +29,15 @@ export class BlocksManagementComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
+    private router: Router,
     private productService: ProductService,
     private platform: Platform,
     private toastService: ToastService
   ) {}
+
+  goToDashboard(): void {
+    this.router.navigate(['/search']);
+  }
 
   @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -92,6 +98,19 @@ export class BlocksManagementComponent implements OnInit {
 
   @HostListener('document:click')
   closeDropdowns(): void { this.openDropdown = null; }
+
+  /**
+   * Blocks the "-" key on number inputs that shouldn't go negative.
+   * Rewriting `input.value` on every keystroke (the old approach) resets the
+   * cursor to the start on type="number" inputs — since they don't support
+   * setSelectionRange, the caret can't be restored, so decimal entry breaks
+   * (new digits get inserted at the front instead of where you're typing).
+   * Blocking the keystroke itself never touches `.value`, so the cursor is
+   * never disturbed.
+   */
+  blockNegativeKey(event: KeyboardEvent): void {
+    if (event.key === '-') event.preventDefault();
+  }
 
   // ── Form ───────────────────────────────────────
   public blockFormGroup!: FormGroup;
@@ -251,9 +270,10 @@ export class BlocksManagementComponent implements OnInit {
   private saveBlock(blockForm: any, imageUrls: string[]): void {
     this.productService.postApiCall(this.prepareResponseObject(blockForm, imageUrls)).subscribe({
       next:  () => this.afterSave(),
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
-        this.toastService.showError('Failed to save block details.');
+        const duplicateMsg = err?.status === 409 && typeof err.error === 'string' ? err.error : null;
+        this.toastService.showError(duplicateMsg || 'Failed to save block details.');
       }
     });
   }
@@ -274,7 +294,7 @@ export class BlocksManagementComponent implements OnInit {
   prepareResponseObject(block: FormGroup, imageUrls: string[]) {
     const value = block.value;
     return {
-      id:             value.productCode + '-' + Date.now(),
+      id:             value.id || (value.productCode + '-' + Date.now()),
       category:       'Block',
       productCode:    value.productCode,
       godownLocation: value.godownLocation,
@@ -310,13 +330,18 @@ export class BlocksManagementComponent implements OnInit {
 
   openCamera(): void {
     this.showCamera = true;
-    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-      this.stream = stream;
-      this.videoRef.nativeElement.srcObject = stream;
-    }).catch(() => {
-      this.toastService.showError('Camera access denied or unavailable.');
-      this.showCamera = false;
-    });
+    // Small delay to let *ngIf render the <video> element first — without
+    // it, a fast-resolving getUserMedia (e.g. permission already granted)
+    // can beat Angular's change detection and find videoRef still unset.
+    setTimeout(() => {
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        this.stream = stream;
+        this.videoRef.nativeElement.srcObject = stream;
+      }).catch(() => {
+        this.toastService.showError('Camera access denied or unavailable.');
+        this.showCamera = false;
+      });
+    }, 100);
   }
 
   capturePhoto(): void {
@@ -325,7 +350,7 @@ export class BlocksManagementComponent implements OnInit {
     canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d')?.drawImage(video, 0, 0);
-    this.previewImgs.push(canvas.toDataURL('image/png'));
+    this.previewImgs.push(canvas.toDataURL('image/jpeg', 0.85));
     this.stopCamera();
     this.showCamera = false;
   }

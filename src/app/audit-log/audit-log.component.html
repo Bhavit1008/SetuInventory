@@ -1,0 +1,103 @@
+<div class="audit-page">
+
+  <div class="page-top-bar">
+    <button type="button" class="back-btn" (click)="goToDashboard()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </button>
+  </div>
+
+  <header class="audit-header">
+    <div>
+      <h1>Audit Log</h1>
+      <p class="audit-sub">Every Block / Slab add, edit and delete — who did it, and when.</p>
+    </div>
+    <div class="filter-row">
+      <button type="button" class="filter-btn" [class.active]="actionFilter === 'ALL'" (click)="setFilter('ALL')">All</button>
+      <button type="button" class="filter-btn" [class.active]="actionFilter === 'CREATE'" (click)="setFilter('CREATE')">Added</button>
+      <button type="button" class="filter-btn" [class.active]="actionFilter === 'UPDATE'" (click)="setFilter('UPDATE')">Edited</button>
+      <button type="button" class="filter-btn" [class.active]="actionFilter === 'DELETE'" (click)="setFilter('DELETE')">Deleted</button>
+    </div>
+  </header>
+
+  <div class="section-card">
+    <div class="list-loading" *ngIf="isLoading">
+      <span class="spinner"></span> Loading audit log…
+    </div>
+
+    <div class="log-list" *ngIf="!isLoading">
+      <div class="log-row" *ngFor="let log of filteredLogs">
+        <div class="log-main" (click)="toggleExpand(log)">
+          <span class="action-badge" [ngClass]="actionClass(log.action)">
+            {{ log.action === 'CREATE' ? 'Added' : (log.action === 'UPDATE' ? 'Edited' : 'Deleted') }}
+          </span>
+
+          <div class="log-body">
+            <span class="log-summary">{{ log.summary }}</span>
+            <span class="log-meta">
+              <strong>{{ log.performedBy || 'Unknown' }}</strong>
+              <span class="role-chip" *ngIf="log.performedByRole">{{ log.performedByRole === 'admin' ? 'Admin' : 'Store Manager' }}</span>
+              <span class="store-chip" *ngIf="log.performedByStoreLocation">{{ log.performedByStoreLocation }}</span>
+              &middot; {{ log.timestamp | date:'dd MMM yyyy, h:mm a' }}
+            </span>
+          </div>
+
+          <button type="button" class="expand-btn" *ngIf="log.changes?.length" [class.expanded]="expandedId === log.id">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <button type="button" class="del-btn" (click)="confirmDelete(log, $event)" title="Delete entry">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+
+        <div class="log-changes" *ngIf="expandedId === log.id && log.changes?.length">
+          <table class="changes-table">
+            <thead>
+              <tr><th>Field</th><th>Old Value</th><th>New Value</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of log.changes">
+                <td class="td-field">{{ c.field }}</td>
+                <td class="td-old">{{ c.oldValue ?? '—' }}</td>
+                <td class="td-new">{{ c.newValue ?? '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="empty-msg" *ngIf="filteredLogs.length === 0">
+        No activity recorded yet.
+      </div>
+    </div>
+
+    <div class="pagination-row" *ngIf="!isLoading && totalPages > 1">
+      <button type="button" (click)="prevPage()" [disabled]="pageNumber === 0">&larr; Prev</button>
+      <span>Page {{ pageNumber + 1 }} of {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="pageNumber >= totalPages - 1">Next &rarr;</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ DELETE CONFIRMATION ═══════════════ -->
+<div class="delete-popup-overlay" *ngIf="deleteTarget" (click)="cancelDelete()">
+  <div class="delete-confirm-box" (click)="$event.stopPropagation()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="delete-msg">
+      Delete this audit log entry?
+      <br><span class="delete-hint">{{ deleteTarget.summary }}</span>
+    </p>
+    <div class="delete-actions">
+      <button class="btn-cancel-del" (click)="cancelDelete()" [disabled]="isDeleting">Cancel</button>
+      <button class="btn-confirm-del" (click)="deleteLog()" [disabled]="isDeleting">
+        {{ isDeleting ? 'Deleting…' : 'Yes, Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

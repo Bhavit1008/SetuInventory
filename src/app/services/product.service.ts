@@ -71,12 +71,13 @@ export class ProductService {
   }
 
   /**
-   * Update only the status of a product.
-   * Sends the full product with the new status to the addProduct endpoint
+   * Update only the status of a product (optionally merging extra fields,
+   * e.g. the party name / sold quantity / sold sqft captured when marking
+   * a product Sold). Sends the full product to the addProduct endpoint
    * (which handles both create and update via upsert).
    */
-  updateProductStatus(product: Product, newStatus: string): Observable<any> {
-    const updated = { ...product, status: newStatus };
+  updateProductStatus(product: Product, newStatus: string, extra: Partial<Product> = {}): Observable<any> {
+    const updated = { ...product, status: newStatus, ...extra };
     const headers = { 'content-type': 'application/json' };
     const body = JSON.stringify(updated);
     return this.httpClient.post(ProductService.backendHost + 'addProduct', body, { 'headers': headers });
