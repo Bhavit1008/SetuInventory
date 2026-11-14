@@ -1,0 +1,138 @@
+<div class="approvals-page">
+
+  <!-- Page header -->
+  <header class="page-header">
+    <button class="icon-btn nav-toggle" *ngIf="layout.isMobile" (click)="layout.toggleNav()" aria-label="Open navigation">☰</button>
+    <button class="icon-btn" (click)="goToDashboard()" aria-label="Back to Dashboard" title="Back to Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="header-titles">
+      <h1>Sold Staging</h1>
+      <p class="header-sub">{{ isAdmin ? 'Items staged for sale, awaiting your approval' : 'Your staged sales, awaiting admin approval' }}</p>
+    </div>
+  </header>
+
+  <!-- Filter tabs + location filter -->
+  <div class="tab-row">
+    <button class="tab-btn" [class.active]="activeTab === 'pending'" (click)="setTab('pending')">
+      Pending
+      <span class="tab-count" *ngIf="pendingCount > 0">{{ pendingCount }}</span>
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">
+      All Requests
+      <span class="tab-count tab-count-muted">{{ allCount }}</span>
+    </button>
+
+    <select class="location-select" [(ngModel)]="selectedLocation" (ngModelChange)="onLocationChange()">
+      <option value="">{{ isAdmin ? 'All Locations' : 'My Location' }}</option>
+      <option *ngFor="let godown of locationOptions" [value]="godown.label">{{ godown.label }}</option>
+    </select>
+  </div>
+
+  <!-- Bulk approve bar — admin only, Pending tab only -->
+  <div class="bulk-bar" *ngIf="isAdmin && activeTab === 'pending' && pendingVisible.length > 0">
+    <label class="bulk-select-all">
+      <input type="checkbox" [checked]="allPendingSelected" (change)="toggleSelectAll()">
+      <span>Select all ({{ pendingVisible.length }})</span>
+    </label>
+    <button type="button" class="btn-approve" [disabled]="selectedCount === 0 || isBulkProcessing" (click)="approveSelected()">
+      <ng-container *ngIf="!isBulkProcessing">✓ Approve Selected ({{ selectedCount }})</ng-container>
+      <ng-container *ngIf="isBulkProcessing">Approving...</ng-container>
+    </button>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!isLoading && requests.length === 0">
+    <div class="empty-icon">
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2"/>
+        <path d="M16 24l6 6 10-10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="empty-title">{{ activeTab === 'pending' ? 'Nothing staged right now' : 'No sale requests yet' }}</p>
+    <p class="empty-sub">{{ activeTab === 'pending' ? 'All clear — nothing awaiting approval.' : 'Staged sales from the store manager will appear here.' }}</p>
+  </div>
+
+  <!-- Request cards -->
+  <div class="requests-list" *ngIf="requests.length > 0">
+    <div class="request-card" *ngFor="let req of requests" [class.card-pending]="req.status === 'pending'" [class.card-approved]="req.status === 'approved'" [class.card-rejected]="req.status === 'rejected'">
+
+      <!-- Card left: select checkbox + type badge + product info -->
+      <div class="card-left">
+        <input type="checkbox" class="row-select" *ngIf="isAdmin && req.status === 'pending'"
+               [checked]="isSelected(req)" (change)="toggleSelect(req)" [disabled]="isBulkProcessing">
+
+        <div class="type-badge badge-sell">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+            <circle cx="6.5" cy="16.5" r="1.2" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="14" cy="16.5" r="1.2" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M1 2h2.5l1.6 8.2a1 1 0 0 0 1 .8h6.9a1 1 0 0 0 1-.8L15 6H4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Sell
+        </div>
+
+        <div class="product-info">
+          <span class="product-code">{{ displayProductCode(req) }}</span>
+          <span class="product-meta">{{ req.productCategory }}</span>
+
+          <!-- Sale details captured by the store manager, for the admin to review before approving -->
+          <div class="sell-details" *ngIf="sellSource(req) as s">
+            <span>Party: <strong>{{ s.partyName }}</strong></span>
+            <ng-container *ngIf="req.productCategory?.toLowerCase() === 'block'; else slabDetails">
+              <span>Weight: <strong>{{ s.weightSold }} Tons</strong></span>
+            </ng-container>
+            <ng-template #slabDetails>
+              <span>Slabs: <strong>{{ s.soldQuantity }}</strong></span>
+              <span>Sqft: <strong>{{ s.soldSqft | number:'1.2-2' }}</strong></span>
+            </ng-template>
+          </div>
+
+          <button type="button" class="btn-view-details" *ngIf="hasPieceDetails(req)" (click)="viewPieceDetails(req)">View Piece Details</button>
+        </div>
+      </div>
+
+      <!-- Card center: requester + date -->
+      <div class="card-center">
+        <div class="meta-row">
+          <svg viewBox="0 0 20 20" fill="none" width="13" height="13">
+            <circle cx="10" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>{{ req.requestedBy }}</span>
+        </div>
+        <div class="meta-row">
+          <svg viewBox="0 0 20 20" fill="none" width="13" height="13">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>{{ formatDate(req.requestedAt) }}</span>
+        </div>
+        <div class="meta-row" *ngIf="req.resolvedAt">
+          <svg viewBox="0 0 20 20" fill="none" width="13" height="13">
+            <path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Resolved {{ formatDate(req.resolvedAt) }}</span>
+        </div>
+      </div>
+
+      <!-- Card right: status + actions -->
+      <div class="card-right">
+        <span class="status-pill pill-approved" *ngIf="req.status === 'approved'">✓ Sold</span>
+        <span class="status-pill pill-rejected" *ngIf="req.status === 'rejected'">✕ Rejected — restored to inventory</span>
+        <span class="status-pill" *ngIf="req.status === 'pending' && !isAdmin">Awaiting approval</span>
+
+        <div class="action-btns" *ngIf="req.status === 'pending' && isAdmin">
+          <button class="btn-reject" (click)="reject(req)" [disabled]="isProcessing(req.id) || isBulkProcessing">
+            Reject
+          </button>
+          <button class="btn-approve" (click)="approve(req)" [disabled]="isProcessing(req.id) || isBulkProcessing">
+            <ng-container *ngIf="!isProcessing(req.id)">✓ Approve &amp; Sell</ng-container>
+            <ng-container *ngIf="isProcessing(req.id)">Processing...</ng-container>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

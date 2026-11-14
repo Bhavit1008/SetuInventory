@@ -12,6 +12,7 @@
         <button type="button" (click)="resetFilter()">Clear</button>
       </span>
       <button class="filter-btn" (click)="toggleFilterPanel()">&#9881; Filters</button>
+      <button class="filter-btn export-btn" (click)="openExportPanel()">&#11015; Export</button>
     </div>
   </header>
 
@@ -51,17 +52,29 @@
     <div class="list-card">
       <div class="list-card-header">
         <h2>{{ itemLabel | uppercase }} LIST <span>({{ totalElements }} {{ itemLabel.toLowerCase() }})</span></h2>
+        <div class="sort-controls">
+          <label>Sort by</label>
+          <select [(ngModel)]="sortField" (ngModelChange)="onSortChange()">
+            <option value="none">Default order</option>
+            <option value="number">{{ numberColumnLabel }} Number</option>
+            <option value="date">{{ dateColumnLabel }}</option>
+          </select>
+          <button type="button" class="sort-dir-btn" [disabled]="sortField === 'none'" (click)="toggleSortDirection()">
+            {{ sortDirection === 'asc' ? '↑ Asc' : '↓ Desc' }}
+          </button>
+        </div>
       </div>
 
       <div class="table-scroll" *ngIf="pageItems.length">
         <table class="inv-table">
           <thead>
             <tr>
-              <th>{{ category === 'Slab' ? 'Slab' : (category === 'Block' ? 'Block' : 'Product') }} Number</th>
+              <th>{{ numberColumnLabel }} Number</th>
               <th>Stone Type</th>
               <th>Location</th>
               <th>Size</th>
               <th>{{ category === 'Slab' ? 'Sqft' : (category === 'Block' ? 'Weight' : 'Weight / Sqft') }}</th>
+              <th>{{ dateColumnLabel }}</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -91,6 +104,7 @@
               </td>
               <td class="td-mono">{{ productSize(product) }}</td>
               <td class="td-mono">{{ productMetric(product) }}</td>
+              <td class="td-mono">{{ rowDate(product) }}</td>
               <td><span class="status-pill" [ngClass]="getStatusClass(product.status)">{{ product.status || '—' }}</span></td>
               <td class="td-actions">
                 <button type="button" class="row-view-btn" (click)="$event.stopPropagation(); viewProduct(product)" title="View details">
@@ -131,7 +145,7 @@
     <label>Location</label>
     <select class="form-control" formControlName="godonLocations">
       <option value="">-- Select Location --</option>
-      <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+      <option *ngFor="let godown of locationOptions" [value]="godown.label">{{ godown.label }}</option>
     </select>
 
     <label>Product Quality</label>
@@ -145,6 +159,15 @@
       <select class="form-control" formControlName="status">
         <option value="">-- Select Status --</option>
         <option *ngFor="let s of statusList" [value]="s.label">{{ s.label }}</option>
+      </select>
+    </ng-container>
+
+    <ng-container *ngIf="showCategoryFilter">
+      <label>Category</label>
+      <select class="form-control" formControlName="category">
+        <option value="">-- Block or Slab --</option>
+        <option value="Block">Block</option>
+        <option value="Slab">Slab</option>
       </select>
     </ng-container>
 
@@ -165,5 +188,53 @@
 
     <button type="submit">Search</button>
     <button type="button" (click)="resetFilter()">Reset</button>
+  </form>
+</div>
+
+<!-- Export slide-over -->
+<div class="filter-backdrop" *ngIf="exportPanelVisible" (click)="closeExportPanel()"></div>
+<div class="filter-panel" [class.open]="exportPanelVisible">
+  <div class="filter-panel-header">
+    <h3>Export Inventory</h3>
+    <button type="button" class="icon-btn" (click)="closeExportPanel()">&times;</button>
+  </div>
+
+  <form [formGroup]="exportForm">
+    <label>Start Date</label>
+    <input type="date" class="form-control" formControlName="startDate" />
+
+    <label>End Date</label>
+    <input type="date" class="form-control" formControlName="endDate" />
+
+    <ng-container *ngIf="showCategoryFilter">
+      <label>Category</label>
+      <select class="form-control" formControlName="category">
+        <option value="">-- All (Block &amp; Slab) --</option>
+        <option value="Block">Block</option>
+        <option value="Slab">Slab</option>
+      </select>
+    </ng-container>
+
+    <ng-container *ngIf="isAdmin">
+      <label>Location</label>
+      <select class="form-control" formControlName="location">
+        <option value="">-- All Locations --</option>
+        <option *ngFor="let godown of goDownLocations" [value]="godown.label">{{ godown.label }}</option>
+      </select>
+    </ng-container>
+
+    <label class="checkbox-label">
+      <input type="checkbox" formControlName="includeImages" />
+      Include product image (PDF only)
+    </label>
+
+    <div class="export-actions">
+      <button type="button" [disabled]="isExportingExcel" (click)="exportExcel()">
+        {{ isExportingExcel ? 'Exporting…' : 'Export Excel' }}
+      </button>
+      <button type="button" [disabled]="isExportingPdf" (click)="exportPdf()">
+        {{ isExportingPdf ? 'Exporting…' : 'Export PDF' }}
+      </button>
+    </div>
   </form>
 </div>

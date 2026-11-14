@@ -1,0 +1,173 @@
+<div class="ssd-page" *ngIf="product">
+
+  <header class="ssd-toolbar">
+    <button class="icon-btn" (click)="goBack()" aria-label="Back">&larr;</button>
+    <div class="ssd-titles">
+      <div class="ssd-breadcrumb">Sold <span class="crumb-sep">&rsaquo;</span> Sold Slab Details</div>
+      <h1>Sold Slab Details</h1>
+      <ng-container *ngIf="!reviewMode">
+        <p class="ssd-sub" *ngIf="hasPieces">Recheck measurements and choose which pieces of <strong>{{ displayCode }}</strong> are being sold</p>
+        <p class="ssd-sub" *ngIf="!hasPieces">Record the sale details for <strong>{{ displayCode }}</strong></p>
+      </ng-container>
+      <p class="ssd-sub" *ngIf="reviewMode">Reviewing the sell request for <strong>{{ displayCode }}</strong> submitted by the store manager</p>
+    </div>
+    <span class="review-badge" *ngIf="reviewMode">Pending Approval</span>
+  </header>
+
+  <!-- Sale details -->
+  <div class="panel-card">
+    <div class="card-badge"><span class="badge-label">SALE DETAILS</span></div>
+    <div class="sale-fields">
+      <div class="field-group">
+        <label>Party Name</label>
+        <input type="text" [(ngModel)]="partyName" placeholder="e.g. Shree Marbles" [disabled]="isSubmitting || reviewMode">
+      </div>
+      <div class="field-group">
+        <label>Date Sold</label>
+        <input type="date" [(ngModel)]="soldDate" [disabled]="isSubmitting || reviewMode">
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple quantity/sqft form — slabs entered without grid pieces (no per-piece data to recheck or split) -->
+  <div class="panel-card" *ngIf="!hasPieces">
+    <div class="card-badge"><span class="badge-label">SALE QUANTITY</span></div>
+    <div class="sale-fields">
+      <div class="field-group">
+        <label>Number of Slabs Sold</label>
+        <input type="number" min="1" [(ngModel)]="simpleQuantity" placeholder="0" [disabled]="isSubmitting || reviewMode">
+      </div>
+      <div class="field-group">
+        <label>Running Sqft</label>
+        <input type="number" min="0" step="0.01" [(ngModel)]="simpleSqft" placeholder="0.00" [disabled]="isSubmitting || reviewMode">
+      </div>
+    </div>
+
+    <!-- Auto-calculated leftover — stays in Slab Inventory as open stock if any quantity remains unsold -->
+    <div class="stat-cards" *ngIf="!reviewMode">
+      <div class="stat-card">
+        <span class="stat-label">Remaining Quantity</span>
+        <span class="stat-value">{{ simpleRemainingQuantity }} <small>slabs</small></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Remaining Sqft</span>
+        <span class="stat-value accent">{{ simpleRemainingSqft | number:'1.2-2' }} <small>sqft</small></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Measurement Verification summary -->
+  <div class="panel-card" *ngIf="hasPieces">
+    <div class="card-badge"><span class="badge-label">MEASUREMENT VERIFICATION (RECHECK SUMMARY)</span></div>
+    <div class="stat-cards">
+      <div class="stat-card">
+        <span class="stat-label">Expected Total Sqft</span>
+        <span class="stat-value">{{ expectedTotalSqft | number:'1.2-2' }} <small>sqft</small></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Rechecked Total Sqft</span>
+        <span class="stat-value accent">{{ recheckedTotalSqft | number:'1.2-2' }} <small>sqft</small></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Difference</span>
+        <span class="stat-value" [class.pos]="totalDifference > 0" [class.neg]="totalDifference < 0">
+          {{ totalDifference > 0 ? '+' : '' }}{{ totalDifference | number:'1.2-2' }} <small>sqft</small>
+        </span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Recovery % (Sqft Basis)</span>
+        <span class="stat-value">{{ recoveryPct !== null ? (recoveryPct | number:'1.2-2') + '%' : '—' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Per-slab recheck table -->
+  <div class="panel-card" *ngIf="hasPieces">
+    <div class="card-badge-row">
+      <div class="card-badge"><span class="badge-label">SLAB MEASUREMENT COMPARISON<span class="auto-tag">&nbsp;({{ rows.length }})</span></span></div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="ssd-table">
+        <thead>
+          <tr>
+            <th>Sold</th>
+            <th>Slab No.</th>
+            <th>Grid Size</th>
+            <th>Expected Sqft</th>
+            <th>Rechecked Size (L × W)</th>
+            <th>Rechecked Sqft</th>
+            <th>Difference</th>
+            <th>Recovery %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows" [class.row-unsold]="!row.sold">
+            <td>
+              <label class="sold-checkbox">
+                <input type="checkbox" [(ngModel)]="row.sold" [disabled]="isSubmitting || reviewMode">
+                <span>{{ row.sold ? 'Sold' : 'Unsold' }}</span>
+              </label>
+            </td>
+            <td class="td-code">{{ row.piece.id }}</td>
+            <td class="td-mono">{{ row.piece.length || '—' }} × {{ row.piece.width || '—' }}</td>
+            <td class="td-mono">{{ row.piece.totalArea | number:'1.2-2' }}</td>
+            <td>
+              <div class="recheck-size-inputs">
+                <input type="number" min="0" step="any" class="grid-input" placeholder="L"
+                       [(ngModel)]="row.recheckedLength" [disabled]="isSubmitting || reviewMode || !row.sold">
+                <span class="size-x">×</span>
+                <input type="number" min="0" step="any" class="grid-input" placeholder="W"
+                       [(ngModel)]="row.recheckedWidth" [disabled]="isSubmitting || reviewMode || !row.sold">
+              </div>
+            </td>
+            <td class="td-mono">{{ rowRecheckedSqft(row) | number:'1.2-2' }}</td>
+            <td class="td-mono" [class.pos]="rowDifference(row) > 0" [class.neg]="rowDifference(row) < 0">
+              {{ rowDifference(row) > 0 ? '+' : '' }}{{ rowDifference(row) | number:'1.2-2' }}
+            </td>
+            <td class="td-mono">{{ rowRecoveryPct(row) !== null ? (rowRecoveryPct(row) | number:'1.2-2') + '%' : '—' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total</td>
+            <td class="td-mono">{{ expectedTotalSqft | number:'1.2-2' }}</td>
+            <td></td>
+            <td class="td-mono">{{ recheckedTotalSqft | number:'1.2-2' }}</td>
+            <td class="td-mono">{{ totalDifference > 0 ? '+' : '' }}{{ totalDifference | number:'1.2-2' }}</td>
+            <td class="td-mono">{{ recoveryPct !== null ? (recoveryPct | number:'1.2-2') + '%' : '—' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Split preview -->
+  <div class="split-preview" *ngIf="hasPieces">
+    <div class="split-card split-sold">
+      <span class="split-label">Marking as Sold</span>
+      <span class="split-value">{{ soldCount }} slab{{ soldCount === 1 ? '' : 's' }} &bull; {{ soldSqftPreview | number:'1.2-2' }} sqft</span>
+    </div>
+    <div class="split-card split-remaining" *ngIf="unsoldCount">
+      <span class="split-label">Staying in Slab Inventory</span>
+      <span class="split-value">{{ unsoldCount }} slab{{ unsoldCount === 1 ? '' : 's' }} &bull; {{ unsoldSqftPreview | number:'1.2-2' }} sqft</span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="ssd-actions" *ngIf="!reviewMode">
+    <button type="button" class="btn-cancel" (click)="goBack()" [disabled]="isSubmitting">Cancel</button>
+    <button *ngIf="isAdmin" type="button" class="btn-save" (click)="confirmSold()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Saving...' : 'Confirm Sold' }}
+    </button>
+    <button *ngIf="!isAdmin" type="button" class="btn-save" (click)="submitSellRequest()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+    </button>
+  </div>
+
+  <!-- Review mode: approve/reject happen from the Sold Staging list itself, not here -->
+  <div class="ssd-actions" *ngIf="reviewMode">
+    <button type="button" class="btn-cancel" (click)="goBack()">Back to Sold Staging</button>
+  </div>
+
+</div>

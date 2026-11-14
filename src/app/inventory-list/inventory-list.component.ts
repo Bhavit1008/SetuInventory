@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,7 @@ import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { ToastService } from '../services/toast.service';
 import { LayoutService } from '../services/layout.service';
+import { AuthService } from '../services/auth.service';
 
 interface StatCard {
   icon: 'cube' | 'scale' | 'layers' | 'check' | 'box';
@@ -35,7 +36,7 @@ interface StatCard {
 @Component({
   selector: 'app-inventory-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgxSkeletonLoaderModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgxSkeletonLoaderModule],
   templateUrl: './inventory-list.component.html',
   styleUrl: './inventory-list.component.css',
 })
@@ -55,6 +56,15 @@ export class InventoryListComponent implements OnInit {
   filterPanelVisible = false;
   filterActive = false;
   filterForm: FormGroup;
+
+  /** Optional on-screen sort — 'none' keeps the backend's default (newest-created first). */
+  sortField: 'none' | 'number' | 'date' = 'none';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  exportPanelVisible = false;
+  isExportingExcel = false;
+  isExportingPdf = false;
+  exportForm: FormGroup;
 
   /** Full scoped set: category or status filtered, with in-process items excluded from category views. */
   private baseProducts: Product[] = [];
@@ -90,6 +100,37 @@ export class InventoryListComponent implements OnInit {
     return this.category ? this.allStatusOptions.filter(s => s.label !== 'Sold') : this.allStatusOptions;
   }
 
+  /** Admin can filter by every godown; a store manager only by their own assigned ones (their rows are already restricted to these — see loadAll()). */
+  get locationOptions() {
+    if (this.isAdmin) return this.goDownLocations;
+    const mine = this.auth.getCurrentLocations().map(l => l.toLowerCase());
+    return this.goDownLocations.filter(g => mine.includes(g.label.toLowerCase()));
+  }
+
+  /** Sold Inventory mixes Block and Slab together — the only view that needs its own category filter (Block/Slab Inventory are already fixed to one category by their route). */
+  get showCategoryFilter(): boolean {
+    return this.statusFilter === 'Sold';
+  }
+
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
+
+  /** Which date a row "belongs to": when it was sold for Sold Inventory, when it was added everywhere else — also drives the export date-range filter. */
+  get dateField(): 'soldDate' | 'createdAt' {
+    return this.statusFilter === 'Sold' ? 'soldDate' : 'createdAt';
+  }
+
+  get dateColumnLabel(): string {
+    return this.statusFilter === 'Sold' ? 'Sold Date' : 'Date Added';
+  }
+
+  get numberColumnLabel(): string {
+    if (this.category === 'Slab') return 'Slab';
+    if (this.category === 'Block') return 'Block';
+    return 'Product';
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -97,16 +138,26 @@ export class InventoryListComponent implements OnInit {
     private productService: ProductService,
     private toast: ToastService,
     public layout: LayoutService,
+    private auth: AuthService,
   ) {
     this.filterForm = this.fb.group({
       godonLocations: [''],
       productQuality: [''],
       status: [''],
+      category: [''],
       productCode: [''],
       minPrice: [''],
       maxPrice: [''],
       minQuantity: [''],
       maxQuantity: [''],
+    });
+
+    this.exportForm = this.fb.group({
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required],
+      category: [''],
+      location: [''],
+      includeImages: [false],
     });
   }
 
@@ -177,7 +228,7 @@ export class InventoryListComponent implements OnInit {
   }
 
   private productSqft(p: Product): number {
-    if (p.pieces?.length) return p.pieces.reduce((s, pc) => s + (Number(pc.totalArea) || 0), 0);
+    if (p.pieces?.length) return p.pieces.reduce((s, pc) => s + (Number(pc.recheckedTotalArea) || Number(pc.totalArea) || 0), 0);
     return Number(p.sqft) || Number(p.size) || 0;
   }
 
@@ -216,6 +267,48 @@ export class InventoryListComponent implements OnInit {
     return p.productWeight ? `${p.productWeight} Tons` : '—';
   }
 
+  rowDate(p: Product): string {
+    const value = Number(p[this.dateField]);
+    return value ? new Date(value).toLocaleDateString() : '—';
+  }
+
+  /**
+   * Block/slab codes carry their real identifying number as a 4-digit run
+   * embedded in the code (e.g. "BW-1234") — sorting the code as plain text
+   * would order "10" before "2", so "Number" sort pulls that run out and
+   * compares it numerically instead. Falls back to any digits found, or 0,
+   * for codes that don't follow the 4-digit convention.
+   */
+  private sortNumberKey(p: Product): number {
+    const code = this.rowCode(p) || '';
+    const fourDigits = code.match(/\d{4}/);
+    if (fourDigits) return parseInt(fourDigits[0], 10);
+    const anyDigits = code.match(/\d+/);
+    return anyDigits ? parseInt(anyDigits[0], 10) : 0;
+  }
+
+  private applySort(list: Product[]): Product[] {
+    if (this.sortField === 'none') return list;
+    const dir = this.sortDirection === 'asc' ? 1 : -1;
+    const sorted = [...list];
+    if (this.sortField === 'number') {
+      sorted.sort((a, b) => (this.sortNumberKey(a) - this.sortNumberKey(b)) * dir);
+    } else {
+      sorted.sort((a, b) => ((Number(a[this.dateField]) || 0) - (Number(b[this.dateField]) || 0)) * dir);
+    }
+    return sorted;
+  }
+
+  onSortChange(): void {
+    this.pageNumber = 0;
+    this.recomputePagination();
+  }
+
+  toggleSortDirection(): void {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    this.onSortChange();
+  }
+
   getStatusClass(status: string): string {
     switch (status?.toLowerCase()) {
       case 'available':  return 'status-available';
@@ -231,9 +324,16 @@ export class InventoryListComponent implements OnInit {
     this.isLoading = true;
     try {
       const res = await firstValueFrom(this.productService.getProductsPage(this.category, 0, 5000));
-      this.baseProducts = this.statusFilter
+      this.baseProducts = (this.statusFilter
         ? res.content.filter(p => p.status?.toLowerCase() === this.statusFilter!.toLowerCase())
-        : res.content.filter(p => p.status?.toLowerCase() !== 'process' && p.status?.toLowerCase() !== 'sold');
+        : res.content.filter(p => {
+            const status = p.status?.toLowerCase();
+            // 'pendingsold' = staged for sale, awaiting admin approval on the
+            // Sold Staging page — hidden from every inventory view until
+            // resolved (approved → 'sold', rejected → back to its prior status).
+            return status !== 'process' && status !== 'sold' && status !== 'pendingsold';
+          })
+      ).filter(p => this.auth.canAccessLocation(p.godownLocation));
 
       this.filterForm.reset();
       this.filterActive = false;
@@ -248,10 +348,11 @@ export class InventoryListComponent implements OnInit {
   }
 
   private recomputePagination(): void {
-    this.totalElements = this.displayProducts.length;
-    this.totalPages = Math.max(1, Math.ceil(this.displayProducts.length / this.pageSize));
+    const sorted = this.applySort(this.displayProducts);
+    this.totalElements = sorted.length;
+    this.totalPages = Math.max(1, Math.ceil(sorted.length / this.pageSize));
     const start = this.pageNumber * this.pageSize;
-    this.pageItems = this.displayProducts.slice(start, start + this.pageSize);
+    this.pageItems = sorted.slice(start, start + this.pageSize);
   }
 
   goToPage(page: number): void {
@@ -272,12 +373,13 @@ export class InventoryListComponent implements OnInit {
   }
 
   applyFilter(): void {
-    const { godonLocations, productQuality, status, productCode, minPrice, maxPrice, minQuantity, maxQuantity } = this.filterForm.value;
+    const { godonLocations, productQuality, status, category, productCode, minPrice, maxPrice, minQuantity, maxQuantity } = this.filterForm.value;
 
     this.displayProducts = this.baseProducts.filter(p =>
       (!godonLocations || p.godownLocation?.toLowerCase().includes(godonLocations.toLowerCase())) &&
       (!productQuality || p.productQuality?.toLowerCase().includes(productQuality.toLowerCase())) &&
       (!status || p.status?.toLowerCase().includes(status.toLowerCase())) &&
+      (!category || p.category === category) &&
       (!productCode || this.rowCode(p)?.toLowerCase().includes(productCode.toLowerCase())) &&
       (!minPrice || p.sellingCost >= +minPrice) &&
       (!maxPrice || p.sellingCost <= +maxPrice) &&
@@ -300,10 +402,205 @@ export class InventoryListComponent implements OnInit {
   }
 
   viewProduct(product: Product): void {
-    this.router.navigate(['/view-product'], { state: { product } });
+    this.router.navigate(['/view-product'], { state: { product }, queryParams: { id: product.id } });
   }
 
   goBack(): void {
     this.router.navigate(['/search']);
+  }
+
+  // ── Export (Excel / PDF) ──────────────────────────────────────────────
+
+  /** Opens the export panel, defaulting its category to whatever the on-screen filter currently has selected (Sold Inventory only). */
+  openExportPanel(): void {
+    this.exportForm.patchValue({ category: this.filterForm.value.category || '', location: '' });
+    this.exportPanelVisible = true;
+  }
+
+  closeExportPanel(): void {
+    this.exportPanelVisible = false;
+  }
+
+  /**
+   * Builds the row set to export: baseProducts (already location-scoped for
+   * a store manager via loadAll()) narrowed by the export panel's own date
+   * range, category (Sold Inventory only) and location (admin only — a
+   * store manager never sees this control, since their baseProducts is
+   * already restricted to their assigned godowns).
+   */
+  private buildExportDataset(): Product[] | null {
+    const { startDate, endDate, category, location } = this.exportForm.value;
+
+    if (!startDate || !endDate) {
+      this.toast.showError('Select both a start and end date.');
+      return null;
+    }
+    if (startDate > endDate) {
+      this.toast.showError('Start date must be on or before the end date.');
+      return null;
+    }
+
+    const startMs = new Date(`${startDate}T00:00:00`).getTime();
+    const endMs = new Date(`${endDate}T23:59:59.999`).getTime();
+
+    return this.baseProducts.filter(p => {
+      const value = Number(p[this.dateField]);
+      if (!value || value < startMs || value > endMs) return false;
+      if (this.showCategoryFilter && category && p.category !== category) return false;
+      if (this.isAdmin && location && p.godownLocation !== location) return false;
+      return true;
+    });
+  }
+
+  /**
+   * Shared row shape for both export formats. Every row — Block or Slab —
+   * carries the exact same set of keys (blank '—'/0 where not applicable to
+   * that category), so PDF column headers (derived from the first row's
+   * keys) stay correct even when Sold Inventory mixes both categories in
+   * one export; a row missing a key that another row has would otherwise
+   * render as the literal string "undefined" in that cell.
+   */
+  private toExportRow(p: Product): Record<string, string | number> {
+    const isSlab = p.category?.toLowerCase() === 'slab';
+    const row: Record<string, string | number> = {
+      'Code': this.rowCode(p),
+      'Quality': p.productQuality || '—',
+      'Status': p.status || '—',
+      'Size': this.productSize(p),
+      'Weight (Tons)': isSlab ? '—' : (p.productWeight || 0),
+      'Date Added': p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—',
+    };
+
+    if (this.statusFilter === 'Sold') {
+      row['Sold Date'] = p.soldDate ? new Date(p.soldDate).toLocaleDateString() : '—';
+      row['Party Name'] = p.partyName || '—';
+      row['Sold Quantity'] = isSlab ? (p.soldQuantity || 0) : '—';
+      row['Sold Sqft'] = isSlab ? (p.soldSqft || 0) : '—';
+      row['Weight Sold (Tons)'] = isSlab ? '—' : (p.weightSold || 0);
+    }
+
+    return row;
+  }
+
+  private exportFilename(extension: string): string {
+    const { startDate, endDate } = this.exportForm.value;
+    const safeTitle = this.pageTitle.replace(/\s+/g, '_');
+    return `${safeTitle}_${startDate}_to_${endDate}.${extension}`;
+  }
+
+  async exportExcel(): Promise<void> {
+    if (this.isExportingExcel) return;
+    const dataset = this.buildExportDataset();
+    if (!dataset) return;
+    if (!dataset.length) {
+      this.toast.showError('No records found in that date range.');
+      return;
+    }
+
+    this.isExportingExcel = true;
+    try {
+      const XLSX = await import('xlsx');
+      const rows = dataset.map(p => this.toExportRow(p));
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, this.pageTitle.slice(0, 31) || 'Inventory');
+      XLSX.writeFile(workbook, this.exportFilename('xlsx'));
+      this.closeExportPanel();
+    } catch {
+      this.toast.showError('Failed to export Excel file.');
+    } finally {
+      this.isExportingExcel = false;
+    }
+  }
+
+  /**
+   * Fetches each product's row thumbnail (see rowThumb()) as a base64 data
+   * URL, keyed by product id, so it can be drawn synchronously inside
+   * autoTable's didDrawCell hook (which can't itself await a network
+   * fetch). Products with no thumbnail, or whose fetch fails, are simply
+   * left out of the map — the image cell is drawn blank rather than
+   * failing the whole export.
+   */
+  private async loadImageMap(dataset: Product[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    await Promise.all(dataset.map(async p => {
+      const url = this.rowThumb(p);
+      if (!url) return;
+      try {
+        const dataUrl = url.startsWith('data:')
+          ? url
+          : await firstValueFrom(this.productService.downloadImage(url));
+        map.set(p.id, dataUrl);
+      } catch {
+        // Skip this row's image — the export still proceeds without it.
+      }
+    }));
+    return map;
+  }
+
+  /** jsPDF needs the image format ('JPEG'/'PNG'/...) to match what's actually encoded in the data URL. */
+  private dataUrlFormat(dataUrl: string): string {
+    return (dataUrl.match(/^data:image\/(\w+);/)?.[1] || 'JPEG').toUpperCase();
+  }
+
+  async exportPdf(): Promise<void> {
+    if (this.isExportingPdf) return;
+    const dataset = this.buildExportDataset();
+    if (!dataset) return;
+    if (!dataset.length) {
+      this.toast.showError('No records found in that date range.');
+      return;
+    }
+
+    const includeImages = !!this.exportForm.value.includeImages;
+
+    this.isExportingPdf = true;
+    try {
+      const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const imageMap = includeImages ? await this.loadImageMap(dataset) : null;
+
+      const rows = dataset.map(p => this.toExportRow(p));
+      const dataColumns = Object.keys(rows[0] ?? {});
+      const columns = includeImages ? ['Image', ...dataColumns] : dataColumns;
+      const { startDate, endDate } = this.exportForm.value;
+
+      const doc = new jsPDF({ orientation: 'landscape' });
+      doc.setFontSize(14);
+      doc.text(this.pageTitle, 14, 15);
+      doc.setFontSize(10);
+      doc.text(`${startDate} to ${endDate}`, 14, 21);
+
+      const IMAGE_SIZE = 16; // mm
+
+      autoTable(doc, {
+        head: [columns],
+        body: rows.map(r => includeImages
+          ? ['', ...dataColumns.map(c => String(r[c]))]
+          : dataColumns.map(c => String(r[c]))),
+        startY: 26,
+        styles: { fontSize: 8, minCellHeight: includeImages ? IMAGE_SIZE + 4 : undefined },
+        headStyles: { fillColor: [28, 28, 30] },
+        columnStyles: includeImages ? { 0: { cellWidth: IMAGE_SIZE + 4 } } : undefined,
+        didDrawCell: includeImages ? (data) => {
+          if (data.section !== 'body' || data.column.index !== 0) return;
+          const dataUrl = imageMap?.get(dataset[data.row.index]?.id);
+          if (!dataUrl) return;
+          doc.addImage(
+            dataUrl, this.dataUrlFormat(dataUrl),
+            data.cell.x + 2, data.cell.y + 2, IMAGE_SIZE, IMAGE_SIZE
+          );
+        } : undefined,
+      });
+
+      doc.save(this.exportFilename('pdf'));
+      this.closeExportPanel();
+    } catch {
+      this.toast.showError('Failed to export PDF file.');
+    } finally {
+      this.isExportingPdf = false;
+    }
   }
 }

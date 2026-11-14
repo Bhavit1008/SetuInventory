@@ -16,6 +16,8 @@ export interface ApprovalRequest {
   requestedAt: number;
   status: RequestStatus;
   resolvedAt?: number;
+  /** "sell" requests only: the product's status before staging, used to restore it on reject. */
+  previousStatus?: string;
 }
 
 const BASE = 'https://setu-crm.onrender.com/notification';
@@ -48,6 +50,10 @@ export class ApprovalService {
 
   getPending(): ApprovalRequest[] {
     return this._requests.filter(r => r.status === 'pending');
+  }
+
+  getPendingByType(type: RequestType): ApprovalRequest[] {
+    return this.getPending().filter(r => r.type === type);
   }
 
   getPendingCount(): number {

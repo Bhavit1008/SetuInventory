@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Product } from '../model/product';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -9,6 +9,8 @@ import { ProductService } from '../services/product.service';
 import { ToastService } from '../services/toast.service';
 import { AuthService } from '../services/auth.service';
 import { ApprovalService, ApprovalRequest } from '../services/approval.service';
+import { AuditLogService } from '../services/audit-log.service';
+import { AuditLog } from '../model/audit-log';
 
 const CATALOGUE_BASE = 'https://setu-crm.onrender.com/catalogue';
 
@@ -20,7 +22,17 @@ const CATALOGUE_BASE = 'https://setu-crm.onrender.com/catalogue';
   styleUrl: './view-product.component.css'
 })
 export class ViewProductComponent implements OnInit {
-  product: Product;
+  /**
+   * Defaults to an empty Product (never undefined/null) so every existing
+   * template binding that reads `product.xxx` directly — with no `?.` —
+   * stays safe. Normally overwritten synchronously in the constructor from
+   * router navigation state; on a hard refresh that state is gone, so
+   * ngOnInit re-fetches it from the backend using the `id` query param
+   * instead (see loadProductById).
+   */
+  product: Product = new Product();
+  isLoadingProduct = false;
+  productLoadFailed = false;
 
   zoomImgSrc: string | null = null;
   zoomSlabId: number | null = null;
@@ -78,6 +90,8 @@ export class ViewProductComponent implements OnInit {
 
   // PDF export
   isExportingPdf = false;
+  /** Shown as "Report Generated" in the PDF header — fixed at page load rather than re-evaluated per render. */
+  exportDate = new Date();
 
   // Sold details popup — Slabs capture quantity + running sqft, Blocks capture weight sold instead.
   // soldDate is common to both and defaults to today.
@@ -86,30 +100,94 @@ export class ViewProductComponent implements OnInit {
   soldForm: { partyName: string; soldQuantity: number | null; soldSqft: number | null; weightSold: number | null; soldDate: string } =
     { partyName: '', soldQuantity: null, soldSqft: null, weightSold: null, soldDate: '' };
 
+  // Activity panel — who added this product and who last edited it (with what changed), sourced from the audit log.
+  auditHistory: AuditLog[] = [];
+  isLoadingActivity = false;
+  expandedActivityId: string | null = null;
+
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
+    private location: Location,
     private http: HttpClient,
     private productService: ProductService,
     private toastService: ToastService,
     public auth: AuthService,
-    private approvalService: ApprovalService
+    private approvalService: ApprovalService,
+    private auditLogService: AuditLogService
   ) {
     const nav = this.router.getCurrentNavigation();
-    this.product = nav?.extras?.state?.['product'];
+    const stateProduct = nav?.extras?.state?.['product'] as Product | undefined;
+    if (stateProduct) {
+      this.product = stateProduct;
+    }
   }
 
   async ngOnInit(): Promise<void> {
-    if (this.product?.id) {
-      await this.approvalService.refresh();
+    if (!this.product.id) {
+      const id = this.route.snapshot.queryParamMap.get('id');
+      if (id) {
+        await this.loadProductById(id);
+      }
     }
+
+    if (this.product.id) {
+      await this.approvalService.refresh();
+      this.loadActivity();
+    }
+  }
+
+  /** Re-fetches the product from the backend — the only path that survives a hard refresh, since router navigation state doesn't. */
+  private async loadProductById(id: string): Promise<void> {
+    this.isLoadingProduct = true;
+    try {
+      this.product = await firstValueFrom(this.productService.getProduct(id));
+    } catch {
+      this.productLoadFailed = true;
+      this.toastService.showError('Failed to load product. It may have been deleted.');
+    } finally {
+      this.isLoadingProduct = false;
+    }
+  }
+
+  private async loadActivity(): Promise<void> {
+    this.isLoadingActivity = true;
+    try {
+      this.auditHistory = await firstValueFrom(this.auditLogService.getForEntity(this.product.id));
+    } catch {
+      // Non-critical — the rest of the page still works without activity history.
+    } finally {
+      this.isLoadingActivity = false;
+    }
+  }
+
+  /** The CREATE entry, if the audit log has one — legacy products saved before this system existed won't. */
+  get addedEntry(): AuditLog | null {
+    return this.auditHistory.find(l => l.action === 'CREATE') ?? null;
+  }
+
+  /** Most recent UPDATE entry (auditHistory is oldest-first, so the last UPDATE in the array is the latest one). */
+  get lastEditedEntry(): AuditLog | null {
+    const edits = this.auditHistory.filter(l => l.action === 'UPDATE');
+    return edits.length ? edits[edits.length - 1] : null;
+  }
+
+  toggleActivityExpand(entry: AuditLog): void {
+    this.expandedActivityId = this.expandedActivityId === entry.id ? null : entry.id;
   }
 
   // ── Role helpers ────────────────────────────────────────────────────────
 
   get isAdmin(): boolean { return this.auth.isAdmin(); }
 
-  goToDashboard(): void {
-    this.router.navigate(['/search']);
+  /**
+   * Returns to wherever the product was opened from (Block/Slab Inventory,
+   * Warehouses, Search, a pending Approval review, ...) via browser history,
+   * rather than always landing back on the dashboard regardless of entry
+   * point.
+   */
+  goBack(): void {
+    this.location.back();
   }
 
   get isBlock(): boolean {
@@ -161,7 +239,7 @@ export class ViewProductComponent implements OnInit {
         // Blocks saved before catalogueItemId existed — best-effort match by name.
         const all = await firstValueFrom(this.http.get<Record<string, any>[]>(`${CATALOGUE_BASE}/all`));
         this.marble = all.find(
-          m => m['marbleName']?.toLowerCase() === this.product.productQuality.toLowerCase()
+          m => m['stoneFamily']?.toLowerCase() === this.product.productQuality.toLowerCase()
         ) ?? null;
       }
       if (!this.marble) this.marbleNotFound = true;
@@ -266,14 +344,40 @@ export class ViewProductComponent implements OnInit {
 
   // ── Image Zoom ──────────────────────────────────────────────────────────
 
+  /** "Total Sqft" — the Overall Sqft from SLAB DETAILS (Size L × W × Quantity), saved as product.size. Independent of the grid; see [[gridSqft]]. */
   get totalSqft(): string {
+    const val = Number(this.product?.size) || 0;
+    return val ? this.formatSqft(val) : '—';
+  }
+
+  /**
+   * Sqft from the SLAB ENTRY GRID specifically — read from the persisted
+   * gridSqft field when present, falling back to summing pieces' totalArea
+   * for records saved before that field existed.
+   */
+  get gridSqft(): string {
+    if (this.product?.gridSqft) return this.formatSqft(this.product.gridSqft);
     if (this.product?.pieces?.length) {
-      const sum = this.product.pieces.reduce(
-        (acc, piece) => acc + (Number(piece.totalArea) || 0), 0
-      );
-      return sum % 1 === 0 ? sum.toString() : sum.toFixed(2);
+      const sum = this.product.pieces.reduce((acc, p) => acc + (Number(p.recheckedTotalArea) || Number(p.totalArea) || 0), 0);
+      return sum ? this.formatSqft(sum) : '—';
     }
-    return this.product?.size?.toString() || '—';
+    return '—';
+  }
+
+  /**
+   * Piece count from the SLAB ENTRY GRID specifically (one row = one
+   * physical piece) — read from the persisted gridQuantity field when
+   * present, falling back to the pieces array length for records saved
+   * before that field existed.
+   */
+  get gridQuantity(): string {
+    if (this.product?.gridQuantity) return String(this.product.gridQuantity);
+    if (this.product?.pieces?.length) return String(this.product.pieces.length);
+    return '—';
+  }
+
+  private formatSqft(n: number): string {
+    return n % 1 === 0 ? n.toString() : n.toFixed(2);
   }
 
   getStatusClass(status: string): string {
@@ -321,12 +425,22 @@ export class ViewProductComponent implements OnInit {
   // ── Admin: direct Status / Delete actions ───────────────────────────────
 
   /**
-   * Opens the Sold-details popup instead of updating status immediately —
-   * party name, quantity and sqft must be captured first. Used by both the
+   * Every Slab goes through the dedicated Sold Slab Details page — it needs
+   * per-piece recheck + a sold/unsold split when the slab has grid pieces,
+   * and falls back to a simple quantity/sqft form on that same page when it
+   * doesn't (e.g. a slab entered with just a Quantity, no grid rows), so
+   * there's one consistent Sold flow for slabs rather than two different UIs
+   * depending on how the slab happened to be entered. Blocks (sold by
+   * weight, not sqft/quantity) keep the quick popup below. Used by both the
    * admin's direct "Sold" button and the store manager's "Request Sell"
-   * button; the confirm button in the popup branches by role (see template).
+   * button; the confirm action branches by role inside that page.
    */
   openSoldPopup(): void {
+    if (this.isSlab) {
+      this.router.navigate(['/sold-slab-details'], { state: { product: this.product } });
+      return;
+    }
+
     this.soldForm = {
       partyName: '', soldQuantity: null, soldSqft: null, weightSold: null,
       soldDate: new Date().toISOString().slice(0, 10),
@@ -458,7 +572,7 @@ export class ViewProductComponent implements OnInit {
       await this.approvalService.submit({
         type: this.pendingRequestAction,
         productId: this.product.id,
-        productCode: this.product.productCode,
+        productCode: this.displayCode,
         productCategory: this.product.category,
         productSnapshot: { ...this.product },
         requestedBy: this.auth.getCurrentUser() ?? 'store_manager',
@@ -474,10 +588,12 @@ export class ViewProductComponent implements OnInit {
   }
 
   // ── Sell: shared Sold-details popup ─────────────────────────────────────
-  // Admin uses it to mark Sold directly (confirmSold); the store manager
-  // uses the same popup to capture the same details up front, but submits
-  // an approval request instead (submitSellRequest) — the admin then sees
-  // those details on the request card and applies them on approval.
+  // Admin uses it to mark Sold directly (confirmSold). The store manager
+  // uses the same popup to capture the same details, but instead stages the
+  // sale immediately — status flips to 'PendingSold' right away, which
+  // hides it from normal inventory (see inventory-list's exclusion filter)
+  // — and submits it for admin approval. Only the final flip to 'Sold'
+  // waits on that approval.
 
   async submitSellRequest(): Promise<void> {
     if (!this.product?.id || this.isSubmittingSold) return;
@@ -485,17 +601,22 @@ export class ViewProductComponent implements OnInit {
     const extra = this.buildSoldExtra();
     if (!extra) return;
 
+    const previousStatus = this.product.status || 'Available';
     this.isSubmittingSold = true;
     try {
+      await firstValueFrom(this.productService.updateProductStatus(this.product, 'PendingSold', extra));
+      Object.assign(this.product, extra, { status: 'PendingSold' });
+
       await this.approvalService.submit({
         type: 'sell',
         productId: this.product.id,
-        productCode: this.product.productCode,
+        productCode: this.displayCode,
         productCategory: this.product.category,
-        productSnapshot: { ...this.product, ...extra },
+        productSnapshot: { ...this.product },
+        previousStatus,
         requestedBy: this.auth.getCurrentUser() ?? 'store_manager',
       });
-      this.toastService.showSuccess('Sale request submitted for admin approval.');
+      this.toastService.showSuccess('Sale staged — waiting for admin approval.');
       this.showSoldPopup = false;
     } catch {
       this.toastService.showError('Failed to submit request. Please try again.');

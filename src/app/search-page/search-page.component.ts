@@ -148,8 +148,8 @@ export class SearchPageComponent implements OnInit {
 
     this.isLoading = true;
     this.productService.fetchAllsProducts().then(products => {
-      this.allProducts = products;
-      this.filteredProducts = [...products];
+      this.allProducts = products.filter(p => this.auth.canAccessLocation(p.godownLocation));
+      this.filteredProducts = [...this.allProducts];
       this.computeDashboardStats();
       this.applyDashboardFilter(this.selectedLinkId || 'All');
       this.isLoading = false;
@@ -175,10 +175,11 @@ export class SearchPageComponent implements OnInit {
     if (key === 'All') {
       this.finalProducts = [...this.allProducts];
     } else if (key === 'Block' || key === 'Slab') {
-      // Mirrors Block/Slab Inventory: Sold and Process items live in their own dedicated views.
-      this.finalProducts = this.allProducts.filter(p =>
-        p.category === key && p.status?.toLowerCase() !== 'sold' && p.status?.toLowerCase() !== 'process'
-      );
+      // Mirrors Block/Slab Inventory: Sold, Process and staged-for-sale (PendingSold) items live in their own dedicated views.
+      this.finalProducts = this.allProducts.filter(p => {
+        const status = p.status?.toLowerCase();
+        return p.category === key && status !== 'sold' && status !== 'process' && status !== 'pendingsold';
+      });
     } else {
       this.finalProducts = this.allProducts.filter(p => p.status === key);
     }

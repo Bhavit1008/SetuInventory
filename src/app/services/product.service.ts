@@ -35,6 +35,13 @@ export class ProductService {
     );
   }
 
+  /** Single product by id — used by View Product to re-load its data on a hard refresh (router navigation state doesn't survive one). */
+  getProduct(id: string): Observable<Product> {
+    return this.httpClient.get<Product>(ProductService.backendHost + 'products/' + id).pipe(
+      map(raw => this.normalizeProduct(raw))
+    );
+  }
+
   async fetchAllsProducts(): Promise<Product[]> {
     const response = await fetch(ProductService.backendHost + 'getAllProducts');
     if (!response.ok) {

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ProductService } from '../services/product.service';
 import { Product } from '../model/product';
 import { SlabPieces } from '../model/slab-pieces';
@@ -10,6 +11,20 @@ import { Platform } from '@angular/cdk/platform';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
+import { COLLECTION_SHORT_CODE_MAP, COUNTRY_SHORT_CODE_MAP, STONE_FAMILY_SHORT_CODE_MAP, abbreviate } from '../model/catalogue-options';
+
+/** One Marble Master entry — fields needed to build the abbreviated slab code. */
+interface CatalogueMarble {
+  id: string;
+  itemCode: string;
+  collectionName?: string;
+  stoneFamily: string;
+  country: string;
+  color?: string;
+  alternateTradeName?: string;
+  /** 2-char code entered manually on the catalogue entry — see Add Marble Master. */
+  alternateTradeNameAbbreviation?: string;
+}
 
 @Component({
   selector: 'app-slabs-management',
@@ -62,6 +77,22 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   slabCameraStream: MediaStream | null = null;
   showSlabCamera = false;
 
+  // ── Image zoom viewer state (gallery photos + per-slab grid photos) ───────
+  zoomImageSrc: string | null = null;
+  zoomScale = 1;
+  zoomTranslateX = 0;
+  zoomTranslateY = 0;
+  private zoomDragging = false;
+  private zoomDragStart = { x: 0, y: 0 };
+  private readonly ZOOM_MIN = 1;
+  private readonly ZOOM_MAX = 5;
+  private readonly ZOOM_STEP = 0.5;
+  // Touch-specific: pinch-to-zoom + double-tap detection (mouse events don't fire on touch devices)
+  private isPinching = false;
+  private pinchStartDist = 0;
+  private pinchStartScale = 1;
+  private lastTapTime = 0;
+
   // ── ViewRefs (slab-level) ──────────────────────────────────────────────────
   @ViewChild('slabVideo')  slabVideoRef!:  ElementRef<HTMLVideoElement>;
   @ViewChild('slabCanvas') slabCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -94,35 +125,21 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     { id: 10, label: 'Leather Finish' }
   ];
 
-  productQuality = [
-    { id: 1, label: 'Banswara White' },
-    { id: 2, label: 'Banswara Purple' },
-    { id: 3, label: 'Torronto' },
-    { id: 4, label: 'Traventine B.' },
-    { id: 5, label: 'Kayampura' },
-    { id: 6, label: 'Morchana Brown' },
-    { id: 7, label: 'Marine Black' },
-    { id: 8, label: 'Kesariya Green' }
-  ];
-
   statusOption = [
     { id: 1, label: 'Available' },
     { id: 2, label: 'Hold' },
     { id: 3, label: 'Sold' }
   ];
 
-  productOptions = [
-    { id: 'WW', label: 'WISPER WHITE'  },
-    { id: 'LH', label: 'LAVENDER HAZE' },
-    { id: 'DB', label: 'DUSKY BLOOM'   },
-    { id: 'WR', label: 'WISPER RED'    },
-    { id: 'SV', label: 'SILVER VIEL'   },
-    { id: 'SE', label: 'SUN VIEL'      },
-  ];
+  // ── Marble type (Marble Master) ─────────────────────────────────────────────
+  catalogueMarbles: CatalogueMarble[] = [];
+  selectedMarble: CatalogueMarble | null = null;
+  isLoadingMarbleTypes = false;
 
   // ── Constructor ────────────────────────────────────────────────────────────
   constructor(
     private fb: FormBuilder,
+    private http: HttpClient,
     private productService: ProductService,
     private platform: Platform,
     private toastService: ToastService,
@@ -135,6 +152,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.isMobile = this.platform.ANDROID || this.platform.IOS;
     this.loadTheme();
     this.buildForm();
+    this.loadMarbleTypeOptions();
 
     const state = history.state as { formData?: Product };
     if (state?.formData) {
@@ -202,9 +220,10 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   buildForm(): void {
     this.stockFormGroup = new FormGroup({
       productCode:       new FormControl(''),
+      slabNumberInput:   new FormControl(''),
+      /** Computed from the selected marble's codes + slabNumberInput — see updateSlabNumber(). */
       slabNumber:        new FormControl(''),
       godownLocation:    new FormControl('', Validators.required),
-      productQuality:    new FormControl(''),
       productFinished:   new FormControl('', Validators.required),
       productLength:     new FormControl(''),
       productWidth:      new FormControl(''),
@@ -216,10 +235,65 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       inHouseCost:       new FormControl(''),
       sellingCost:       new FormControl(''),
       status:            new FormControl('Available', Validators.required),
-      product:           new FormControl(''),
       remark:            new FormControl(''),
       size:              new FormControl('')
     });
+  }
+
+  /** Fetches every Marble Master entry to populate the Marble Type dropdown. */
+  private async loadMarbleTypeOptions(): Promise<void> {
+    this.isLoadingMarbleTypes = true;
+    try {
+      this.catalogueMarbles = await firstValueFrom(
+        this.http.get<CatalogueMarble[]>('https://setu-crm.onrender.com/catalogue/all')
+      );
+    } catch {
+      this.toastService.showError('Could not load marble types from catalogue.');
+    } finally {
+      this.isLoadingMarbleTypes = false;
+    }
+  }
+
+  onMarbleSelected(event: Event): void {
+    const id = (event.target as HTMLSelectElement).value;
+    this.selectedMarble = this.catalogueMarbles.find(m => m.id === id) ?? null;
+    this.updateSlabNumber();
+  }
+
+  /**
+   * Recomputes the final Slab Number as
+   * collection-color-stoneFamily-country-tradeNameAbbreviation-slabNumber —
+   * same order as Marble Master's own Product Code (see
+   * add-catalogue.component.ts's generatedItemCode), so the two stay
+   * consistent. Every segment is 2 characters by default — the
+   * *_SHORT_CODE_MAP lookups already resolve same-category collisions up
+   * to 3 characters (see toShortCodeMap in catalogue-options.ts); color has
+   * no fixed code list, so it uses the shared 2-char abbreviation
+   * algorithm, and trade name uses the abbreviation entered manually on
+   * the catalogue entry itself (see Add Marble Master), falling back to
+   * the same algorithm if that entry predates the field. Blank segments
+   * are dropped so an incomplete marble entry doesn't produce stray
+   * dashes.
+   */
+  updateSlabNumber(): void {
+    const marble = this.selectedMarble;
+    const number = (this.stockFormGroup.get('slabNumberInput')?.value || '').toString().trim();
+
+    if (!marble) {
+      this.stockFormGroup.get('slabNumber')?.setValue(number, { emitEvent: false });
+      return;
+    }
+
+    const parts = [
+      COLLECTION_SHORT_CODE_MAP[marble.collectionName || ''] || abbreviate(marble.collectionName),
+      abbreviate(marble.color),
+      STONE_FAMILY_SHORT_CODE_MAP[marble.stoneFamily] || abbreviate(marble.stoneFamily),
+      COUNTRY_SHORT_CODE_MAP[marble.country] || abbreviate(marble.country),
+      marble.alternateTradeNameAbbreviation || abbreviate(marble.alternateTradeName),
+      number
+    ].filter(Boolean);
+
+    this.stockFormGroup.get('slabNumber')?.setValue(parts.join('-'), { emitEvent: false });
   }
 
   // ── Computed getters ───────────────────────────────────────────────────────
@@ -238,6 +312,11 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     return this.slabPieces.reduce((sum, p) => sum + (p.totalArea || 0), 0);
   }
 
+  /** Piece count represented by the SLAB ENTRY GRID — one row is one physical piece (see copySlabPiece for fast entry of same-size pieces without collapsing them into a single ambiguous count). */
+  get gridPieceCount(): number {
+    return this.slabPieces.length;
+  }
+
   /**
    * Real-time per-slab sqft from the SLAB DETAILS "Size L × W" fields —
    * same (L × W) / 144 formula used per-row in the SLAB ENTRY GRID
@@ -250,30 +329,24 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     return Math.round((length * width / 144) * 100) / 100;
   }
 
-  /** sizeSqft scaled by Quantity — the grid has no single quantity to multiply by, this does. */
+  /**
+   * "Overall Sqft" — driven entirely by SLAB DETAILS (Size L × W × Quantity),
+   * independent of whatever is in the SLAB ENTRY GRID. See [[gridPieceCount]]
+   * / totalSlabSqft for the grid's own, separately-tracked total.
+   */
   get sizeTotalSqft(): number {
     return Math.round((this.sizeSqft * this.totalSlabCount) * 100) / 100;
   }
 
-  /**
-   * Combined sqft across both entry methods: individually-measured grid
-   * pieces plus the uniform Size L × W × Quantity shortcut. A slab entry
-   * only ever uses one of the two in practice, so whichever is untouched
-   * contributes 0 and this just reflects the one actually filled in.
-   */
-  get combinedTotalSqft(): number {
-    return Math.round((this.totalSlabSqft + this.sizeTotalSqft) * 100) / 100;
-  }
-
-  /** Quantity is the authoritative slab count now that it's directly editable, falling back to the grid's row count only if left blank. */
+  /** Quantity is the authoritative slab count, entered directly in SLAB DETAILS — the grid never writes back into it. Falls back to the grid's piece count only if left blank. */
   get totalSlabCount(): number {
     const quantity = parseInt(this.stockFormGroup?.get('quantity')?.value, 10) || 0;
-    return quantity > 0 ? quantity : this.slabPieces.length;
+    return quantity > 0 ? quantity : this.gridPieceCount;
   }
 
   get avgSlabSize(): number {
     if (!this.totalSlabCount) return 0;
-    return this.combinedTotalSqft / this.totalSlabCount;
+    return this.sizeTotalSqft / this.totalSlabCount;
   }
 
   /** The source block's own remark, kept read-only and separate from the slab's own remark. */
@@ -296,7 +369,6 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       productCode:       formData.productCode      ?? '',
       slabNumber:        formData.slabNumber       ?? '',
       godownLocation:    formData.godownLocation   ?? '',
-      productQuality:    formData.productQuality   ?? '',
       productFinished:   formData.productFinished  ?? '',
       productLength:     formData.productLength    ?? '',
       productWidth:      formData.productWidth     ?? '',
@@ -310,8 +382,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       // A block converted out of "Process" becomes a fresh, sellable slab —
       // default it to "Available" rather than silently carrying the block's
       // Process status forward (which isn't even a selectable status here).
-      status:            formData.status?.toLowerCase() === 'process' ? 'Available' : (formData.status || 'Available'),
-      product:           formData.product          ?? ''
+      status:            formData.status?.toLowerCase() === 'process' ? 'Available' : (formData.status || 'Available')
       // remark is intentionally left blank — it's the slab's own remark,
       // kept separate from the block's remark (shown read-only in BLOCK INFO
       // and re-joined with a separator only at save time; see prepareResponseObject).
@@ -336,10 +407,8 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.slabImgPreviews = formData.imageUrls?.length
       ? [...formData.imageUrls]
       : formData.imageUrl ? [formData.imageUrl] : [];
-    // Quantity was already patched above from the saved product — don't
-    // call syncQuantity() here, it would overwrite that with the grid's
-    // current row count (0 for a standalone slab with no grid pieces),
-    // wiping out the saved value the moment you open it for edit.
+    // Quantity was already patched above from the saved product — the grid
+    // never writes back into it, so nothing to reconcile here.
     this.cd.detectChanges();
   }
 
@@ -347,11 +416,6 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   calculateTotalSlabSize(): void {
     const area = this.slabPieces.reduce((sum, piece) => sum + (piece.totalArea || 0), 0);
     this.stockFormGroup.get('size')?.setValue(area);
-  }
-
-  // ── Quantity auto-sync (mirrors number of slab pieces added) ───────────────
-  private syncQuantity(): void {
-    this.stockFormGroup.get('quantity')?.setValue(this.slabPieces.length);
   }
 
   calculateSlabArea(index: number): void {
@@ -365,8 +429,38 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     group.patchValue({ totalArea: totalSlabSize, editable: false });
   }
 
+  /**
+   * SLAB DETAILS' own Quantity value — used only as a soft cap on how many
+   * rows the grid can hold, since the grid can never legitimately claim
+   * more physical pieces than the declared total. 0 means "not set", i.e.
+   * no cap yet.
+   */
+  get slabDetailsQuantity(): number {
+    return parseInt(this.stockFormGroup?.get('quantity')?.value, 10) || 0;
+  }
+
+  /** True once the grid already has one row per piece declared in slabDetailsQuantity — drives disabling "Add Slab" / "Copy". */
+  get isGridRowCapReached(): boolean {
+    return this.slabDetailsQuantity > 0 && this.slabPieceForm.length >= this.slabDetailsQuantity;
+  }
+
+  /** False only when slabDetailsQuantity is set AND the grid's row count doesn't match it — drives the sync indicator's warning state. */
+  get isGridQtyInSync(): boolean {
+    return this.slabDetailsQuantity <= 0 || this.slabPieceForm.length === this.slabDetailsQuantity;
+  }
+
+  private warnIfRowCapReached(): boolean {
+    if (!this.isGridRowCapReached) return false;
+    this.toastService.showError(
+      `All ${this.slabDetailsQuantity} pieces from Slab Details Quantity are already in the grid. Increase Quantity in Slab Details to add more rows.`
+    );
+    return true;
+  }
+
   // ── Row CRUD ───────────────────────────────────────────────────────────────
   addNewRow(): void {
+    if (this.warnIfRowCapReached()) return;
+
     const newId = this.slabPieces.length > 0
       ? this.slabPieces[this.slabPieces.length - 1].id + 1
       : 1;
@@ -386,7 +480,49 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       imageBase64: new FormControl(''),
       imageUrl:    new FormControl('')
     }));
-    this.syncQuantity();
+  }
+
+  /**
+   * Copies another row's Length/Width/Less/Remark straight into a brand new
+   * row — the fast path for "50 of these came out the same size" without
+   * collapsing them into one ambiguous count. Each copy is still its own
+   * row with its own ID, remark and photo, so every physical piece stays
+   * individually identifiable, editable and traceable back to which
+   * measurement it came from.
+   */
+  copySlabPiece(index: number): void {
+    if (this.warnIfRowCapReached()) return;
+
+    const source = this.slabPieceForm[index].value;
+    const newId = this.slabPieces.length > 0
+      ? this.slabPieces[this.slabPieces.length - 1].id + 1
+      : 1;
+
+    const newSlab      = new SlabPieces();
+    newSlab.id         = newId;
+    newSlab.length     = source.length;
+    newSlab.width      = source.width;
+    newSlab.lessLength = source.lessLength;
+    newSlab.lessWidth  = source.lessWidth;
+    newSlab.remark     = source.remark;
+    newSlab.editable   = false;
+    const rawArea = (Number(newSlab.length) * Number(newSlab.width)) - (Number(newSlab.lessLength) * Number(newSlab.lessWidth));
+    newSlab.totalArea  = Math.round((rawArea / 144) * 100) / 100;
+
+    this.slabPieces.push(newSlab);
+    this.slabPieceForm.push(this.fb.group({
+      id:          new FormControl(newSlab.id),
+      length:      new FormControl(newSlab.length),
+      width:       new FormControl(newSlab.width),
+      lessLength:  new FormControl(newSlab.lessLength),
+      lessWidth:   new FormControl(newSlab.lessWidth),
+      totalArea:   new FormControl(newSlab.totalArea),
+      editable:    new FormControl(false),
+      remark:      new FormControl(newSlab.remark),
+      imageBase64: new FormControl(''),
+      imageUrl:    new FormControl('')
+    }));
+    this.calculateTotalSlabSize();
   }
 
   editSlabPiece(index: number): void {
@@ -408,7 +544,6 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.slabPieces.splice(index, 1);
     this.slabPieceForm.splice(index, 1);
     this.calculateTotalSlabSize();
-    this.syncQuantity();
   }
 
   /**
@@ -552,6 +687,119 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Image zoom viewer ───────────────────────────────────────────────────────
+  openImageZoom(src: string | null | undefined): void {
+    if (!src) return;
+    this.zoomImageSrc = src;
+    this.resetZoom();
+  }
+
+  closeImageZoom(): void {
+    this.zoomImageSrc = null;
+    this.resetZoom();
+  }
+
+  private resetZoom(): void {
+    this.zoomScale = 1;
+    this.zoomTranslateX = 0;
+    this.zoomTranslateY = 0;
+    this.zoomDragging = false;
+  }
+
+  zoomIn(): void {
+    this.zoomScale = Math.min(this.zoomScale + this.ZOOM_STEP, this.ZOOM_MAX);
+  }
+
+  zoomOut(): void {
+    this.zoomScale = Math.max(this.zoomScale - this.ZOOM_STEP, this.ZOOM_MIN);
+    if (this.zoomScale === this.ZOOM_MIN) { this.zoomTranslateX = 0; this.zoomTranslateY = 0; }
+  }
+
+  onZoomWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? this.ZOOM_STEP : -this.ZOOM_STEP;
+    this.zoomScale = Math.min(Math.max(this.zoomScale + delta, this.ZOOM_MIN), this.ZOOM_MAX);
+    if (this.zoomScale === this.ZOOM_MIN) { this.zoomTranslateX = 0; this.zoomTranslateY = 0; }
+  }
+
+  /** Double-click/tap toggles between fit and a fixed zoomed-in level. */
+  onZoomDoubleClick(): void {
+    this.zoomScale = this.zoomScale > this.ZOOM_MIN ? this.ZOOM_MIN : 2.5;
+    if (this.zoomScale === this.ZOOM_MIN) { this.zoomTranslateX = 0; this.zoomTranslateY = 0; }
+  }
+
+  onZoomDragStart(event: MouseEvent): void {
+    if (this.zoomScale <= this.ZOOM_MIN) return;
+    event.preventDefault();
+    this.zoomDragging = true;
+    this.zoomDragStart = { x: event.clientX - this.zoomTranslateX, y: event.clientY - this.zoomTranslateY };
+  }
+
+  onZoomDragMove(event: MouseEvent): void {
+    if (!this.zoomDragging) return;
+    this.zoomTranslateX = event.clientX - this.zoomDragStart.x;
+    this.zoomTranslateY = event.clientY - this.zoomDragStart.y;
+  }
+
+  onZoomDragEnd(): void {
+    this.zoomDragging = false;
+  }
+
+  // ── Touch support (pinch-to-zoom, single-finger pan, double-tap) ──────────
+  onZoomTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 2) {
+      this.isPinching   = true;
+      this.zoomDragging = false;
+      this.pinchStartDist  = this.touchDistance(event.touches);
+      this.pinchStartScale = this.zoomScale;
+      return;
+    }
+
+    if (event.touches.length === 1) {
+      const now = Date.now();
+      if (now - this.lastTapTime < 300) {
+        this.lastTapTime = 0;
+        this.onZoomDoubleClick();
+        return;
+      }
+      this.lastTapTime = now;
+
+      if (this.zoomScale > this.ZOOM_MIN) {
+        this.zoomDragging = true;
+        const t = event.touches[0];
+        this.zoomDragStart = { x: t.clientX - this.zoomTranslateX, y: t.clientY - this.zoomTranslateY };
+      }
+    }
+  }
+
+  onZoomTouchMove(event: TouchEvent): void {
+    if (this.isPinching && event.touches.length === 2) {
+      event.preventDefault();
+      const dist  = this.touchDistance(event.touches);
+      const ratio = dist / (this.pinchStartDist || 1);
+      this.zoomScale = Math.min(Math.max(this.pinchStartScale * ratio, this.ZOOM_MIN), this.ZOOM_MAX);
+      if (this.zoomScale === this.ZOOM_MIN) { this.zoomTranslateX = 0; this.zoomTranslateY = 0; }
+      return;
+    }
+
+    if (this.zoomDragging && event.touches.length === 1) {
+      event.preventDefault();
+      const t = event.touches[0];
+      this.zoomTranslateX = t.clientX - this.zoomDragStart.x;
+      this.zoomTranslateY = t.clientY - this.zoomDragStart.y;
+    }
+  }
+
+  onZoomTouchEnd(event: TouchEvent): void {
+    if (event.touches.length < 2) this.isPinching = false;
+    if (event.touches.length === 0) this.zoomDragging = false;
+  }
+
+  private touchDistance(touches: TouchList): number {
+    const a = touches[0], b = touches[1];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
   private setSlabImage(base64: string): void {
     const i = this.slabPhotoModalIndex;
     if (i === null) return;
@@ -569,6 +817,16 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     if (this.stockFormGroup.invalid) return;
 
     this.syncAllSlabPieces();
+
+    // Guards against the grid drifting out of sync with Slab Details'
+    // Quantity — e.g. Quantity was lowered after the grid already had more
+    // rows, which the row cap alone doesn't catch retroactively.
+    if (this.slabDetailsQuantity > 0 && this.gridPieceCount > this.slabDetailsQuantity) {
+      this.toastService.showError(
+        `Slab Entry Grid has ${this.gridPieceCount} rows, which is more than the Quantity (${this.slabDetailsQuantity}) in Slab Details. Remove a row or increase Quantity before saving.`
+      );
+      return;
+    }
 
     this.isSubmitting = true;
     history.replaceState({}, document.title);
@@ -615,6 +873,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.blockData        = null;
     this.slabImgPreviews  = [];
     this.sourceBlockSnapshot = null;
+    this.selectedMarble   = null;
     this.toastService.showSuccess(
       this.isUpdate ? 'Slab updated successfully.' : 'New slab added successfully.'
     );
@@ -643,21 +902,25 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       productCode:       slab.value.productCode,
       slabNumber:        slab.value.slabNumber,
       godownLocation:    slab.value.godownLocation,
-      productQuality:    slab.value.productQuality,
       productFinished:   slab.value.productFinished,
       productLength:     parseFloat(slab.value.productLength) || 0,
       productWidth:      parseFloat(slab.value.productWidth)  || 0,
       productThickness:  parseFloat(slab.value.productThickness),
       quantity:          parseInt(slab.value.quantity),
-      size:              this.combinedTotalSqft,
+      size:              this.sizeTotalSqft,
+      gridQuantity:      this.gridPieceCount,
+      gridSqft:          this.totalSlabSqft,
       exFactoryCost:     parseFloat(slab.value.exFactoryCost)     || 0,
       miscellaneousCost: parseFloat(slab.value.miscellaneousCost) || 0,
       freightCost:       parseFloat(slab.value.freightCost)       || 0,
       inHouseCost:       parseFloat(slab.value.inHouseCost)       || 0,
       sellingCost:       parseFloat(slab.value.sellingCost)       || 0,
       status:            slab.value.status,
-      product:           slab.value.product,
       description:       this.combinedRemark(slab.value.remark),
+      // Links this slab back to the Marble Master entry it was created from,
+      // so the backend can fill in product/material from it (see comment on
+      // the removed Product/Material fields in this form).
+      catalogueItemId:   this.selectedMarble?.id || '',
       pieces:            this.slabPieces,
       imageUrl:          imageUrls[0] || '',
       imageUrls:         imageUrls,

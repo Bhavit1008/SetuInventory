@@ -9,6 +9,31 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   Loading / not-found state
+═══════════════════════════════════════════════════ */
+.state-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 70px 20px;
+  color: #6c6c70;
+  font-size: 15px;
+  text-align: center;
+}
+
+.state-msg .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid #e2e3ec;
+  border-top-color: #ff6a3d;
+  border-radius: 50%;
+  display: inline-block;
+  animation: view-product-spin 0.7s linear infinite;
+}
+@keyframes view-product-spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════
    Hero card  —  gallery + specs + summary
 ═══════════════════════════════════════════════════ */
 .page-top-bar {
@@ -213,7 +238,9 @@
 
 .summary-stats {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  row-gap: 12px;
   gap: 0;
 }
 
@@ -223,6 +250,7 @@
   align-items: center;
   gap: 3px;
   flex: 1;
+  min-width: 56px;
 }
 
 .stat-val {
@@ -311,6 +339,64 @@
   color: #3c3c43;
   flex: 1;
 }
+
+/* ═══════════════════════════════════════════════════
+   Activity (Added By / Last Edited By)
+═══════════════════════════════════════════════════ */
+.activity-edit-row { cursor: pointer; }
+
+.activity-changed-fields {
+  color: #ff6a3d;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.activity-expand-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: #8e8e93;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+.activity-expand-btn.expanded { transform: rotate(180deg); }
+
+.activity-changes {
+  padding: 0 18px 16px 54px;
+  border-top: 0.5px solid #e8e8ed;
+}
+
+.changes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: #fafafc;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.changes-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8e8e93;
+  border-bottom: 1px solid #e8e8ed;
+}
+
+.changes-table td { padding: 8px 10px; border-bottom: 1px solid #eee; color: #3c3c43; }
+.changes-table tr:last-child td { border-bottom: none; }
+.td-field { font-weight: 600; color: #1c1c1e; }
+.td-old { color: #e74c3c; text-decoration: line-through; }
+.td-new { color: #1a8a3a; font-weight: 600; }
 
 /* ═══════════════════════════════════════════════════
    Piece table
@@ -965,55 +1051,17 @@
 
 .pdf-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  flex-direction: column;
+  gap: 14px;
   background: #0d0d0d;
   padding: 34px 42px;
 }
 
-.pdf-brand {
+.pdf-header-top {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.pdf-brand-since {
-  font-size: 12px;
-  font-weight: 700;
-  color: #e87825;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.pdf-brand-mark {
-  margin: 4px 0;
-}
-
-.pdf-brand-name {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 30px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.08em;
-}
-
-.pdf-brand-locations {
-  font-size: 9.5px;
-  font-weight: 600;
-  color: #e87825;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.pdf-title-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  text-align: right;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .pdf-tagline {
@@ -1027,7 +1075,7 @@
 .pdf-product-name {
   margin: 0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.03em;
@@ -1035,6 +1083,7 @@
 }
 
 .pdf-lot-box {
+  flex-shrink: 0;
   border: 1.5px solid #e87825;
   border-radius: 6px;
   padding: 6px 14px;
@@ -1042,10 +1091,40 @@
   font-weight: 600;
   color: #ffffff;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .pdf-lot-box strong {
   color: #e87825;
+}
+
+.pdf-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.pdf-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pdf-meta-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #9a9a9a;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pdf-meta-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .pdf-body {

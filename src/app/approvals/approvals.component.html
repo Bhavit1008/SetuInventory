@@ -7,8 +7,8 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="header-titles">
-      <h1>Approval Requests</h1>
-      <p class="header-sub">Review and action requests from the store manager</p>
+      <h1>Deletion Requests</h1>
+      <p class="header-sub">Review and action delete requests from the store manager</p>
     </div>
   </header>
 
@@ -42,34 +42,17 @@
 
       <!-- Card left: type badge + product info -->
       <div class="card-left">
-        <div class="type-badge" [class.badge-delete]="req.type === 'delete'" [class.badge-sell]="req.type === 'sell'">
-          <svg *ngIf="req.type === 'delete'" viewBox="0 0 20 20" fill="none" width="14" height="14">
+        <div class="type-badge badge-delete">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
             <polyline points="4 6 6 6 16 6" stroke="currentColor" stroke-width="1.6"/>
             <path d="M15 6v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6m2 0V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
-          <svg *ngIf="req.type === 'sell'" viewBox="0 0 20 20" fill="none" width="14" height="14">
-            <circle cx="6.5" cy="16.5" r="1.2" stroke="currentColor" stroke-width="1.4"/>
-            <circle cx="14" cy="16.5" r="1.2" stroke="currentColor" stroke-width="1.4"/>
-            <path d="M1 2h2.5l1.6 8.2a1 1 0 0 0 1 .8h6.9a1 1 0 0 0 1-.8L15 6H4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
-          {{ req.type === 'delete' ? 'Delete' : 'Sell' }}
+          Delete
         </div>
 
         <div class="product-info">
-          <span class="product-code">{{ req.productCode }}</span>
+          <span class="product-code">{{ req.productCode || '—' }}</span>
           <span class="product-meta">{{ req.productCategory }}</span>
-
-          <!-- Sale details captured by the store manager, for the admin to review before approving -->
-          <div class="sell-details" *ngIf="req.type === 'sell' && req.productSnapshot?.partyName">
-            <span>Party: <strong>{{ req.productSnapshot.partyName }}</strong></span>
-            <ng-container *ngIf="req.productCategory.toLowerCase() === 'block'; else slabApprovalDetails">
-              <span>Weight: <strong>{{ req.productSnapshot.weightSold }} Tons</strong></span>
-            </ng-container>
-            <ng-template #slabApprovalDetails>
-              <span>Slabs: <strong>{{ req.productSnapshot.soldQuantity }}</strong></span>
-              <span>Sqft: <strong>{{ req.productSnapshot.soldSqft }}</strong></span>
-            </ng-template>
-          </div>
         </div>
       </div>
 
@@ -114,7 +97,7 @@
           </button>
           <button class="btn-approve" (click)="approve(req)" [disabled]="isProcessing(req.id)">
             <ng-container *ngIf="!isProcessing(req.id)">
-              ✓ Approve &amp; {{ req.type === 'delete' ? 'Delete' : 'Sell' }}
+              ✓ Approve &amp; Delete
             </ng-container>
             <ng-container *ngIf="isProcessing(req.id)">
               Processing...

@@ -1,11 +1,22 @@
 <div class="view-page">
 
   <div class="page-top-bar">
-    <button type="button" class="back-btn" (click)="goToDashboard()">
+    <button type="button" class="back-btn" (click)="goBack()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Dashboard
+      Back
     </button>
   </div>
+
+  <!-- Loading / not-found — shown while re-fetching the product after a hard refresh (router state doesn't survive one), or if that fetch fails -->
+  <div class="state-msg" *ngIf="isLoadingProduct">
+    <span class="spinner"></span> Loading product…
+  </div>
+  <div class="state-msg" *ngIf="!isLoadingProduct && !product.id">
+    <p>{{ productLoadFailed ? 'This product could not be loaded — it may have been deleted.' : 'Product not found.' }}</p>
+    <button type="button" class="back-btn" (click)="goBack()">Go Back</button>
+  </div>
+
+  <ng-container *ngIf="!isLoadingProduct && product.id">
 
   <!-- ── Hero Card ── -->
   <div class="hero-card">
@@ -89,11 +100,25 @@
             <span class="stat-val">{{ product.quantity || '—' }}</span>
             <span class="stat-lbl">Quantity</span>
           </div>
+          <ng-container *ngIf="isSlab">
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-val">{{ gridQuantity }}</span>
+              <span class="stat-lbl">Grid Qty</span>
+            </div>
+          </ng-container>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-val">{{ totalSqft || '—' }}</span>
+            <span class="stat-val">{{ totalSqft }}</span>
             <span class="stat-lbl">Total Sqft</span>
           </div>
+          <ng-container *ngIf="isSlab">
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-val">{{ gridSqft }}</span>
+              <span class="stat-lbl">Grid Sqft</span>
+            </div>
+          </ng-container>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-val">{{ product.productFinished || '—' }}</span>
@@ -161,6 +186,67 @@
         <span class="field-value">{{ product.soldSqft }}</span>
       </div>
     </ng-template>
+  </div>
+
+  <!-- ── Activity: who added it, who last edited it and what changed ── -->
+  <div class="section-card" *ngIf="!isLoadingActivity && (addedEntry || lastEditedEntry || product.createdAt)">
+    <div class="section-header">ACTIVITY</div>
+
+    <div class="field-row" *ngIf="addedEntry">
+      <span class="field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/>
+          <line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>
+        </svg>
+      </span>
+      <span class="field-label">Added By</span>
+      <span class="field-value">{{ addedEntry.performedBy || 'Unknown' }} &middot; {{ addedEntry.timestamp | date:'dd MMM yyyy, h:mm a' }}</span>
+    </div>
+    <div class="field-row" *ngIf="!addedEntry && product.createdAt">
+      <span class="field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      <span class="field-label">Date Added</span>
+      <span class="field-value">{{ product.createdAt | date:'dd MMM yyyy, h:mm a' }}</span>
+    </div>
+
+    <ng-container *ngIf="lastEditedEntry as edit">
+      <div class="field-row activity-edit-row" (click)="toggleActivityExpand(edit)">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+          </svg>
+        </span>
+        <span class="field-label">Last Edited By</span>
+        <span class="field-value">
+          {{ edit.performedBy || 'Unknown' }} &middot; {{ edit.timestamp | date:'dd MMM yyyy, h:mm a' }}
+          <span class="activity-changed-fields" *ngIf="edit.changes?.length">
+            &mdash; changed {{ edit.changes.length }} field{{ edit.changes.length === 1 ? '' : 's' }}
+          </span>
+        </span>
+        <button type="button" class="activity-expand-btn" *ngIf="edit.changes?.length" [class.expanded]="expandedActivityId === edit.id">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <div class="activity-changes" *ngIf="expandedActivityId === edit.id">
+        <table class="changes-table">
+          <thead>
+            <tr><th>Field</th><th>Old Value</th><th>New Value</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of edit.changes">
+              <td class="td-field">{{ c.field }}</td>
+              <td class="td-old">{{ c.oldValue ?? '—' }}</td>
+              <td class="td-new">{{ c.newValue ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
   </div>
 
   <!-- ── Remarks ── -->
@@ -344,6 +430,8 @@
     </div>
   </div>
 
+  </ng-container>
+
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -447,7 +535,7 @@
           <input type="number" min="1" [(ngModel)]="soldForm.soldQuantity" placeholder="0" [disabled]="isSubmittingSold">
         </div>
         <div class="sold-field">
-          <label>Running Sqft</label>
+          <label>Rechecked Sqft</label>
           <input type="number" min="0" step="0.01" [(ngModel)]="soldForm.soldSqft" placeholder="0.00" [disabled]="isSubmittingSold">
         </div>
       </ng-template>
@@ -492,20 +580,19 @@
     <!-- Details -->
     <ng-container *ngIf="!isLoadingMarble && !marbleNotFound && marble as m">
       <div class="marble-popup-header">
-        <img *ngIf="m['mainSlabPhotoUrl']" [src]="m['mainSlabPhotoUrl']" [alt]="m['marbleName']" class="marble-popup-photo"/>
+        <img *ngIf="m['mainSlabPhotoUrl']" [src]="m['mainSlabPhotoUrl']" [alt]="m['stoneFamily']" class="marble-popup-photo"/>
         <div class="marble-popup-placeholder" *ngIf="!m['mainSlabPhotoUrl']">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
             <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
           </svg>
         </div>
         <div>
-          <h3 class="marble-popup-title">{{ marbleVal('marbleName') }}</h3>
+          <h3 class="marble-popup-title">{{ marbleVal('stoneFamily') }}</h3>
           <p class="marble-popup-code">{{ marbleVal('itemCode') }}</p>
         </div>
       </div>
 
       <div class="marble-popup-grid">
-        <div class="marble-kv"><span class="marble-kv-label">Material Type</span><span class="marble-kv-value">{{ marbleVal('materialType') }}</span></div>
         <div class="marble-kv"><span class="marble-kv-label">Stone Family</span><span class="marble-kv-value">{{ marbleVal('stoneFamily') }}</span></div>
         <div class="marble-kv"><span class="marble-kv-label">Country</span><span class="marble-kv-value">{{ marbleVal('country') }}</span></div>
         <div class="marble-kv"><span class="marble-kv-label">Quarry / Mine</span><span class="marble-kv-value">{{ marbleVal('quarryMineName') }}</span></div>
@@ -581,21 +668,28 @@
   <div id="pdf-export-template" class="pdf-sheet" *ngIf="product">
 
     <div class="pdf-header">
-      <div class="pdf-brand">
-        <span class="pdf-brand-since">Since 1983</span>
-        <div class="pdf-brand-mark">
-          <svg width="58" height="58" viewBox="0 0 100 100" fill="none">
-            <path d="M50 4 L92 18 V52 C92 74 74 90 50 98 C26 90 8 74 8 52 V18 Z" fill="none" stroke="#e87825" stroke-width="3.5"/>
-            <text x="50" y="64" text-anchor="middle" font-size="46" font-weight="700" fill="#e87825" font-family="Georgia, serif">S</text>
-          </svg>
-        </div>
-        <span class="pdf-brand-name">SETU</span>
-        <span class="pdf-brand-locations">BANSWARA &nbsp;|&nbsp; MORADABAD &nbsp;|&nbsp; KISHANGARH</span>
-      </div>
-      <div class="pdf-title-block">
+      <div class="pdf-header-top">
         <span class="pdf-tagline">{{ product.category }} &nbsp;&middot;&nbsp; MARBLE AND SURFACES</span>
-        <h1 class="pdf-product-name">{{ product.productQuality }}</h1>
         <div class="pdf-lot-box">LOT NO. <strong>{{ displayCode }}</strong></div>
+      </div>
+      <h1 class="pdf-product-name">{{ product.productQuality }}</h1>
+      <div class="pdf-header-meta">
+        <div class="pdf-meta-item" *ngIf="product.godownLocation">
+          <span class="pdf-meta-label">Godown Location</span>
+          <span class="pdf-meta-value">{{ product.godownLocation }}</span>
+        </div>
+        <div class="pdf-meta-item">
+          <span class="pdf-meta-label">Status</span>
+          <span class="pdf-meta-value">{{ product.status || '—' }}</span>
+        </div>
+        <div class="pdf-meta-item" *ngIf="product.productFinished">
+          <span class="pdf-meta-label">Finish</span>
+          <span class="pdf-meta-value">{{ product.productFinished }}</span>
+        </div>
+        <div class="pdf-meta-item">
+          <span class="pdf-meta-label">Report Generated</span>
+          <span class="pdf-meta-value">{{ exportDate | date:'d MMM y' }}</span>
+        </div>
       </div>
     </div>
 
@@ -626,10 +720,6 @@
       <ng-template #pdfNoPhotos>
         <div class="pdf-image-empty">No photos available</div>
       </ng-template>
-
-      <div class="pdf-footer">
-        <span>&ldquo;A Legacy of Trust, Carved in Stone&rdquo;</span>
-      </div>
     </div>
   </div>
 </div>

@@ -17,6 +17,11 @@ export class AuditLogService {
     return this.httpClient.get<PageResponse<AuditLog>>(AuditLogService.backendHost + 'audit-logs', { params });
   }
 
+  /** Full history for one product (oldest first) — who added it and every edit since, with what changed. */
+  getForEntity(entityId: string): Observable<AuditLog[]> {
+    return this.httpClient.get<AuditLog[]>(AuditLogService.backendHost + 'audit-logs/entity/' + entityId);
+  }
+
   delete(id: string): Observable<void> {
     return this.httpClient.delete<void>(AuditLogService.backendHost + 'audit-logs/' + id);
   }

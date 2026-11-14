@@ -40,6 +40,9 @@ export class AddEmployeeComponent implements OnInit {
 
   readonly storeLocations = ['Kishangarh', 'Banswara', 'Moradabad'];
 
+  /** Checkbox selection for the Add/Edit form — kept outside the reactive form for simplicity. */
+  selectedLocations: string[] = [];
+
   form!: FormGroup;
 
   constructor(
@@ -68,10 +71,24 @@ export class AddEmployeeComponent implements OnInit {
       employeeName:   ['', Validators.required],
       employeeNumber: [''],
       employeeEmail:  ['', Validators.email],
-      storeLocation:  ['', Validators.required],
       role:           ['', Validators.required],
       password:       [''],
     });
+  }
+
+  /** Defensively null-safe: employees saved before storeLocations existed may still come back with it unset. */
+  locationsLabel(emp: Employee): string {
+    return emp.storeLocations?.length ? emp.storeLocations.join(', ') : '—';
+  }
+
+  isLocationSelected(loc: string): boolean {
+    return this.selectedLocations.includes(loc);
+  }
+
+  toggleLocation(loc: string): void {
+    this.selectedLocations = this.isLocationSelected(loc)
+      ? this.selectedLocations.filter(l => l !== loc)
+      : [...this.selectedLocations, loc];
   }
 
   switchTab(tab: 'add' | 'manage'): void {
@@ -92,6 +109,7 @@ export class AddEmployeeComponent implements OnInit {
   startAdd(): void {
     this.editId = null;
     this.submitted = false;
+    this.selectedLocations = [];
     this.buildForm();
     this.activeTab = 'add';
   }
@@ -99,11 +117,11 @@ export class AddEmployeeComponent implements OnInit {
   startEdit(emp: Employee): void {
     this.editId = emp.id;
     this.submitted = false;
+    this.selectedLocations = [...(emp.storeLocations || [])];
     this.form = this.fb.group({
       employeeName:   [emp.employeeName, Validators.required],
       employeeNumber: [emp.employeeNumber || ''],
       employeeEmail:  [emp.employeeEmail || '', Validators.email],
-      storeLocation:  [emp.storeLocation || '', Validators.required],
       role:           [emp.role || '', Validators.required],
       password:       [''], // blank = keep the existing password
     });
@@ -113,6 +131,7 @@ export class AddEmployeeComponent implements OnInit {
   cancelEdit(): void {
     this.editId = null;
     this.submitted = false;
+    this.selectedLocations = [];
     this.buildForm();
     this.activeTab = 'manage';
   }
@@ -120,6 +139,11 @@ export class AddEmployeeComponent implements OnInit {
   async save(): Promise<void> {
     this.submitted = true;
     if (this.form.invalid) return;
+
+    if (this.selectedLocations.length === 0) {
+      this.toastService.showError('Select at least one store location.');
+      return;
+    }
 
     const value = this.form.value;
     if (!this.editId && !value.password?.trim()) {
@@ -129,11 +153,11 @@ export class AddEmployeeComponent implements OnInit {
 
     this.isSaving = true;
     const payload: Partial<Employee> = {
-      employeeName:   value.employeeName.trim(),
-      employeeNumber: value.employeeNumber?.trim() || '',
-      employeeEmail:  value.employeeEmail?.trim() || '',
-      storeLocation:  value.storeLocation,
-      role:           value.role,
+      employeeName:    value.employeeName.trim(),
+      employeeNumber:  value.employeeNumber?.trim() || '',
+      employeeEmail:   value.employeeEmail?.trim() || '',
+      storeLocations:  this.selectedLocations,
+      role:            value.role,
     };
     if (value.password?.trim()) {
       payload.password = value.password.trim();

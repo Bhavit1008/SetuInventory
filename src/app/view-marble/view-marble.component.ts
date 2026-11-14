@@ -67,7 +67,7 @@ export class ViewMarbleComponent implements OnInit {
 
   async remove(): Promise<void> {
     if (!this.marble?.['id']) return;
-    if (!confirm(`Delete "${this.marble['marbleName']}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${this.marble['stoneFamily']}"? This cannot be undone.`)) return;
     try {
       await firstValueFrom(this.http.delete(`${BASE}/${this.marble['id']}`, { responseType: 'text' }));
       this.toast.showSuccess('Marble deleted.');

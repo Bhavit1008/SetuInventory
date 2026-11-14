@@ -25,9 +25,9 @@
         <div class="breadcrumb">
           <a href="javascript:void(0)" (click)="goToList()">Marble Master</a>
           <span class="crumb-sep">&rsaquo;</span>
-          <span class="crumb-current">{{ m['marbleName'] }}</span>
+          <span class="crumb-current">{{ m['stoneFamily'] }}</span>
         </div>
-        <h1 class="page-title">{{ m['marbleName'] }}</h1>
+        <h1 class="page-title">{{ m['stoneFamily'] }}</h1>
         <p class="page-subtitle">Product Code: {{ m['itemCode'] }}</p>
       </div>
 
@@ -44,12 +44,11 @@
       <div class="section-card">
         <div class="section-header"><span class="section-badge">1</span>Basic Information</div>
         <div class="section-body">
-          <div class="kv-row"><span class="kv-label">Marble Name</span><span class="kv-value">{{ val('marbleName') }}</span></div>
           <div class="kv-row"><span class="kv-label">Collection Name</span><span class="kv-value">{{ val('collectionName') }}</span></div>
           <div class="kv-row"><span class="kv-label">Product Code</span><span class="kv-value">{{ val('itemCode') }}</span></div>
           <div class="kv-row"><span class="kv-label">Alternate / Trade Name</span><span class="kv-value">{{ val('alternateTradeName') }}</span></div>
-          <div class="kv-row"><span class="kv-label">SKU Code</span><span class="kv-value">{{ val('skuCode') }}</span></div>
-          <div class="kv-row"><span class="kv-label">Material Type</span><span class="kv-value">{{ val('materialType') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Trade Name Abbreviation</span><span class="kv-value">{{ val('alternateTradeNameAbbreviation') }}</span></div>
+          <div class="kv-row"><span class="kv-label">Color</span><span class="kv-value">{{ val('color') }}</span></div>
           <div class="kv-row"><span class="kv-label">Stone Family</span><span class="kv-value">{{ val('stoneFamily') }}</span></div>
         </div>
       </div>
@@ -186,19 +185,19 @@
         <div class="media-view-grid">
           <div class="media-view-tile" *ngIf="m['mainSlabPhotoUrl']">
             <span class="media-view-label">Main Slab Photo</span>
-            <img [src]="m['mainSlabPhotoUrl']" [alt]="m['marbleName']"/>
+            <img [src]="m['mainSlabPhotoUrl']" [alt]="m['stoneFamily']"/>
           </div>
           <div class="media-view-tile" *ngIf="m['bookmatchPhotoUrl']">
             <span class="media-view-label">Bookmatch Photo</span>
-            <img [src]="m['bookmatchPhotoUrl']" [alt]="m['marbleName']"/>
+            <img [src]="m['bookmatchPhotoUrl']" [alt]="m['stoneFamily']"/>
           </div>
           <div class="media-view-tile" *ngIf="m['blockPhotoUrl']">
             <span class="media-view-label">Block Photo</span>
-            <img [src]="m['blockPhotoUrl']" [alt]="m['marbleName']"/>
+            <img [src]="m['blockPhotoUrl']" [alt]="m['stoneFamily']"/>
           </div>
           <div class="media-view-tile" *ngIf="m['mineQuarryPhotoUrl']">
             <span class="media-view-label">Mine / Quarry Photo</span>
-            <img [src]="m['mineQuarryPhotoUrl']" [alt]="m['marbleName']"/>
+            <img [src]="m['mineQuarryPhotoUrl']" [alt]="m['stoneFamily']"/>
           </div>
           <div class="media-view-tile" *ngIf="m['quarryVideoUrl']">
             <span class="media-view-label">Quarry / Mine Video</span>
@@ -206,7 +205,7 @@
           </div>
           <div class="media-view-tile" *ngIf="m['view360Url']">
             <span class="media-view-label">360&deg; View</span>
-            <img [src]="m['view360Url']" [alt]="m['marbleName']"/>
+            <img [src]="m['view360Url']" [alt]="m['stoneFamily']"/>
           </div>
           <p class="no-media" *ngIf="!m['mainSlabPhotoUrl'] && !m['bookmatchPhotoUrl'] && !m['blockPhotoUrl'] && !m['mineQuarryPhotoUrl'] && !m['quarryVideoUrl'] && !m['view360Url']">
             No media uploaded for this marble.

@@ -220,6 +220,35 @@
 .field-group.err input,
 .field-group.err select { border-color: #e74c3c; }
 
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #e2e3ec;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1c1c1e;
+  cursor: pointer;
+  background: #fff;
+}
+
+.checkbox-option input { margin: 0; }
+
+.field-group.err .checkbox-option { border-color: #e74c3c; }
+
+.field-error {
+  font-size: 11.5px;
+  color: #e74c3c;
+}
+
 .form-actions {
   grid-column: 1 / -1;
   display: flex;

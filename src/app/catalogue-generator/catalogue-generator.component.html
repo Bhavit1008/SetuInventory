@@ -1,0 +1,184 @@
+<div class="catalogue-page">
+
+  <!-- Page header -->
+  <header class="page-header">
+    <button class="icon-btn nav-toggle" *ngIf="layout.isMobile" (click)="layout.toggleNav()" aria-label="Open navigation">☰</button>
+    <button class="icon-btn" (click)="goBack()" aria-label="Back to Dashboard" title="Back to Dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="header-titles">
+      <h1>Catalogue Generator</h1>
+      <p class="header-sub">Pick slabs (or specific pieces) and generate a PDF catalogue to share.</p>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <div class="slabs-grid" *ngIf="isLoading">
+    <ngx-skeleton-loader *ngFor="let i of [1,2,3,4,5,6]" [theme]="{ height: '120px', 'border-radius': '14px' }"></ngx-skeleton-loader>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!isLoading && selections.length === 0">
+    <div class="empty-icon">
+      <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+        <rect x="6" y="6" width="36" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M14 34l6-8 5 5 9-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="empty-title">No slabs available</p>
+    <p class="empty-sub">Add some slabs to inventory first.</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading && selections.length > 0">
+
+    <!-- Select-all bar + location filter -->
+    <div class="bulk-bar">
+      <label class="bulk-select-all">
+        <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll()">
+        <span>Select all ({{ filteredSelections.length }})</span>
+      </label>
+
+      <select class="location-select" [(ngModel)]="selectedLocation" (ngModelChange)="onLocationChange()">
+        <option value="">{{ isAdmin ? 'All Locations' : 'My Locations' }}</option>
+        <option *ngFor="let godown of locationOptions" [value]="godown.label">{{ godown.label }}</option>
+      </select>
+
+      <span class="selection-summary" *ngIf="selectedCount > 0">
+        {{ selectedCount }} selected &middot; {{ totalSqftSelected | number:'1.2-2' }} sqft
+      </span>
+    </div>
+
+    <!-- Empty state for the current location filter -->
+    <div class="empty-state" *ngIf="filteredSelections.length === 0">
+      <p class="empty-title">No slabs at this location</p>
+    </div>
+
+    <!-- Slab cards — click a card to open its details popup -->
+    <div class="slabs-grid" *ngIf="pageItems.length > 0">
+      <div class="slab-card" *ngFor="let sel of pageItems" [class.card-selected]="sel.checked" (click)="openDetails(sel)">
+
+        <div class="slab-card-main">
+          <input type="checkbox" class="row-select" [checked]="sel.checked" (click)="$event.stopPropagation()" (change)="toggleSlab(sel)">
+
+          <img class="slab-thumb" *ngIf="rowThumb(sel.product) as thumb" [src]="thumb" alt="">
+          <div class="slab-thumb slab-thumb-empty" *ngIf="!rowThumb(sel.product)">—</div>
+
+          <div class="slab-info">
+            <span class="slab-code">{{ slabCode(sel.product) }}</span>
+            <span class="slab-meta">{{ sel.product.godownLocation || '—' }} &middot; {{ sel.product.productQuality || '—' }}</span>
+            <span class="slab-meta">
+              {{ sel.product.productLength || '—' }} x {{ sel.product.productWidth || '—' }}
+              <ng-container *ngIf="sel.hasPieces">&middot; {{ sel.product.pieces.length }} pieces</ng-container>
+            </span>
+          </div>
+
+          <span class="btn-view-details">View Details &rsaquo;</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <button type="button" (click)="prevPage()" [disabled]="pageNumber === 0">&larr; Prev</button>
+      <span>Page {{ pageNumber + 1 }} of {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="pageNumber >= totalPages - 1">Next &rarr;</button>
+    </div>
+
+    <!-- Description + generate -->
+    <div class="generate-panel">
+      <label class="description-label" for="catalogue-description">Catalogue Description</label>
+      <textarea id="catalogue-description" class="description-input" rows="4"
+                placeholder="Add any notes to accompany this catalogue (quality, offers, terms, etc.)"
+                [(ngModel)]="description"></textarea>
+
+      <div class="generate-footer">
+        <button type="button" class="btn-generate" [disabled]="selectedCount === 0 || isGenerating" (click)="previewPdf()">
+          <ng-container *ngIf="!isGenerating">Preview PDF ({{ selectedCount }})</ng-container>
+          <ng-container *ngIf="isGenerating">Generating...</ng-container>
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- Slab details popup — full details + per-slab PDF field selection, isolated from every other slab -->
+  <div class="detail-backdrop" *ngIf="activeDetail as detail" (click)="closeDetails()">
+    <div class="detail-modal" (click)="$event.stopPropagation()">
+      <div class="detail-header">
+        <h2>{{ slabCode(detail.product) }}</h2>
+        <button type="button" class="icon-btn" (click)="closeDetails()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="detail-body">
+        <img class="detail-thumb" *ngIf="rowThumb(detail.product) as thumb" [src]="thumb" alt="">
+
+        <div class="detail-grid">
+          <div class="detail-row"><span class="detail-label">Location</span><span>{{ detail.product.godownLocation || '—' }}</span></div>
+          <div class="detail-row"><span class="detail-label">Quality</span><span>{{ detail.product.productQuality || '—' }}</span></div>
+          <div class="detail-row"><span class="detail-label">Status</span><span>{{ detail.product.status || '—' }}</span></div>
+          <div class="detail-row"><span class="detail-label">Size</span><span>{{ detail.product.productLength || '—' }} x {{ detail.product.productWidth || '—' }}</span></div>
+          <div class="detail-row"><span class="detail-label">Quantity</span><span>{{ pieceSummary(detail).qty }}<ng-container *ngIf="detail.hasPieces"> of {{ detail.product.pieces.length }}</ng-container></span></div>
+          <div class="detail-row"><span class="detail-label">Sqft</span><span>{{ pieceSummary(detail).sqft | number:'1.2-2' }}</span></div>
+        </div>
+
+        <!-- Piece-level selection — only slabs entered with a piece grid -->
+        <ng-container *ngIf="detail.hasPieces">
+          <div class="mode-toggle">
+            <button type="button" class="mode-btn" [class.active]="detail.mode === 'full'" (click)="setMode(detail, 'full')">Full Slab</button>
+            <button type="button" class="mode-btn" [class.active]="detail.mode === 'partial'" (click)="setMode(detail, 'partial')">Select Pieces</button>
+          </div>
+
+          <ng-container *ngIf="detail.mode === 'partial'">
+            <div class="pieces-list-actions">
+              <span class="pieces-count">{{ checkedPieceCount(detail) }} of {{ detail.product.pieces.length }} pieces selected</span>
+              <button type="button" class="btn-link" (click)="selectAllPieces(detail)">Select All</button>
+              <button type="button" class="btn-link" (click)="clearAllPieces(detail)">Clear All</button>
+            </div>
+            <div class="pieces-list">
+              <label class="piece-item" *ngFor="let piece of detail.product.pieces; let i = index">
+                <input type="checkbox" [checked]="detail.pieceChecks[i]" (change)="togglePiece(detail, i)">
+                <span>#{{ i + 1 }} — {{ piece.length }} x {{ piece.width }} ({{ (piece.recheckedTotalArea || piece.totalArea || 0) | number:'1.2-2' }} sqft)</span>
+              </label>
+            </div>
+          </ng-container>
+        </ng-container>
+
+        <!-- Per-slab PDF field selection — isolated to this slab only -->
+        <label class="description-label">Details to include for this slab in the PDF</label>
+        <div class="fields-row">
+          <label class="field-chip" *ngFor="let field of detail.fields" [class.chip-active]="field.checked">
+            <input type="checkbox" [checked]="field.checked" (change)="toggleField(field)">
+            <span>{{ field.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="detail-footer">
+        <label class="bulk-select-all">
+          <input type="checkbox" [checked]="detail.checked" (change)="toggleSlab(detail)">
+          <span>Include this slab in the catalogue</span>
+        </label>
+        <button type="button" class="btn-generate" (click)="closeDetails()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview modal — nothing is downloaded until the user confirms -->
+  <div class="preview-backdrop" *ngIf="showPreview" (click)="closePreview()">
+    <div class="preview-modal" (click)="$event.stopPropagation()">
+      <div class="preview-header">
+        <h2>Preview Catalogue</h2>
+        <button type="button" class="icon-btn" (click)="closePreview()" aria-label="Close preview">✕</button>
+      </div>
+
+      <iframe class="preview-frame" [src]="previewUrl" title="Catalogue preview"></iframe>
+
+      <div class="preview-footer">
+        <button type="button" class="btn-secondary" (click)="closePreview()">Back &amp; Edit</button>
+        <button type="button" class="btn-generate" (click)="confirmDownload()">Looks Good — Download</button>
+      </div>
+    </div>
+  </div>
+
+</div>

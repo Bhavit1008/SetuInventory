@@ -8,6 +8,12 @@ import { LayoutService } from '../services/layout.service';
 
 type FilterTab = 'pending' | 'all';
 
+/**
+ * Handles "delete" requests only — "sell" requests (store manager staging a
+ * sale for approval) have their own dedicated page, Sold Staging, since
+ * they need piece-level detail and a different reject behavior (restore to
+ * inventory) that doesn't make sense mixed into a generic request list.
+ */
 @Component({
   selector: 'app-approvals',
   standalone: true,
@@ -41,7 +47,7 @@ export class ApprovalsComponent implements OnInit {
   }
 
   load(): void {
-    const all = this.approvalService.getAll();
+    const all = this.approvalService.getAll().filter(r => r.type === 'delete');
     this.requests = this.activeTab === 'pending'
       ? all.filter(r => r.status === 'pending')
       : all;
@@ -53,11 +59,11 @@ export class ApprovalsComponent implements OnInit {
   }
 
   get pendingCount(): number {
-    return this.approvalService.getPendingCount();
+    return this.approvalService.getPendingByType('delete').length;
   }
 
   get allCount(): number {
-    return this.approvalService.getAll().length;
+    return this.approvalService.getAll().filter(r => r.type === 'delete').length;
   }
 
   async approve(req: ApprovalRequest): Promise<void> {
@@ -65,18 +71,9 @@ export class ApprovalsComponent implements OnInit {
     this.processingId = req.id;
 
     try {
-      if (req.type === 'delete') {
-        await this.executeDelete(req);
-      } else {
-        await this.executeSell(req);
-      }
-
+      await this.executeDelete(req);
       await this.approvalService.approve(req.id);
-      this.toastService.showSuccess(
-        req.type === 'delete'
-          ? `"${req.productCode}" deleted successfully.`
-          : `"${req.productCode}" marked as Sold.`
-      );
+      this.toastService.showSuccess(`"${req.productCode}" deleted successfully.`);
     } catch {
       this.toastService.showError('Action failed. Please try again.');
     } finally {
@@ -98,15 +95,6 @@ export class ApprovalsComponent implements OnInit {
   private executeDelete(req: ApprovalRequest): Promise<void> {
     return new Promise((resolve, reject) => {
       this.productService.deleteProduct(req.productId).subscribe({
-        next: () => resolve(),
-        error: () => reject()
-      });
-    });
-  }
-
-  private executeSell(req: ApprovalRequest): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.productService.updateProductStatus(req.productSnapshot, 'Sold').subscribe({
         next: () => resolve(),
         error: () => reject()
       });

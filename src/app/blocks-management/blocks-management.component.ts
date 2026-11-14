@@ -12,9 +12,7 @@ import { firstValueFrom } from 'rxjs';
 interface CatalogueItem {
   id: string;
   itemCode: string;
-  marbleName: string;
   country: string;
-  materialType: string;
   stoneFamily: string;
 }
 
@@ -158,7 +156,7 @@ export class BlocksManagementComponent implements OnInit {
       }
       if (!this.selectedStone && formData?.productQuality) {
         this.selectedStone = this.catalogueItems.find(
-          i => i.marbleName?.toLowerCase() === formData.productQuality?.toLowerCase()
+          i => i.stoneFamily?.toLowerCase() === formData.productQuality?.toLowerCase()
         ) ?? null;
       }
     } catch {
@@ -175,8 +173,8 @@ export class BlocksManagementComponent implements OnInit {
     this.openDropdown = null;
     this.blockFormGroup.patchValue({
       origin:         stone.country,
-      material:       stone.materialType,
-      productQuality: stone.marbleName,
+      material:       stone.stoneFamily,
+      productQuality: stone.stoneFamily,
     }, { emitEvent: false });
     this.refreshBlockCode();
   }

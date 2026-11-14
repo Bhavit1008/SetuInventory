@@ -26,7 +26,9 @@ export class AppComponent implements OnInit, OnDestroy {
   closing = false;
   isLoginPage = true;
   pendingApprovalCount = 0;
+  pendingSoldStagingCount = 0;
   directorySubmenuOpen = false;
+  warehousesSubmenuOpen = false;
 
   private routerSub?: Subscription;
 
@@ -42,8 +44,12 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.toastService.registerApp(this);
 
-    this.approvalService.pendingCount.subscribe(count => {
-      this.pendingApprovalCount = this.isAdmin ? count : 0;
+    this.approvalService.pendingCount.subscribe(() => {
+      this.pendingApprovalCount = this.isAdmin ? this.approvalService.getPendingByType('delete').length : 0;
+      // Admin sees everyone's pending sell requests; a store manager sees only the count of their own.
+      this.pendingSoldStagingCount = this.approvalService.getPendingByType('sell')
+        .filter(r => this.isAdmin || r.requestedBy === this.auth.getCurrentUser())
+        .length;
     });
 
     // Init push subscriptions once the user is authenticated
@@ -60,6 +66,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
         if (e.urlAfterRedirects.startsWith('/architects')) {
           this.directorySubmenuOpen = true;
+        }
+
+        if (e.urlAfterRedirects.startsWith('/warehouse')) {
+          this.warehousesSubmenuOpen = true;
         }
 
         // Force re-login if a session exists but no role is stored (pre-RBAC session)
@@ -82,6 +92,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isLoginPage = this.router.url.startsWith('/login');
     }
     this.directorySubmenuOpen = this.router.url.startsWith('/architects');
+    this.warehousesSubmenuOpen = this.router.url.startsWith('/warehouse');
 
     // Same check for initial load
     if (localStorage.getItem('sessionId') && !this.auth.getCurrentRole()) {
@@ -97,8 +108,16 @@ export class AppComponent implements OnInit, OnDestroy {
     return this.auth.isAdmin();
   }
 
+  get canAccessCatalogue(): boolean {
+    return this.auth.canAccessCatalogue();
+  }
+
   get isDirectoryActive(): boolean {
     return this.router.url.startsWith('/architects');
+  }
+
+  get isWarehousesActive(): boolean {
+    return this.router.url.startsWith('/warehouse');
   }
 
   get currentUser(): string {
@@ -116,9 +135,19 @@ export class AppComponent implements OnInit, OnDestroy {
     this.layout.closeNav();
   }
 
+  openSoldStaging(): void {
+    this.router.navigate(['/sold-staging']);
+    this.layout.closeNav();
+  }
+
   toggleDirectorySubmenu(event: Event): void {
     event.preventDefault();
     this.directorySubmenuOpen = !this.directorySubmenuOpen;
+  }
+
+  toggleWarehousesSubmenu(event: Event): void {
+    event.preventDefault();
+    this.warehousesSubmenuOpen = !this.warehousesSubmenuOpen;
   }
 
   logout(): void {

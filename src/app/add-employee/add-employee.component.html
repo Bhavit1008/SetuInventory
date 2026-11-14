@@ -41,7 +41,7 @@
             <td class="td-name">{{ emp.employeeName }} <span class="you-badge" *ngIf="emp.employeeName === currentUserName">You</span></td>
             <td>{{ emp.employeeNumber || '—' }}</td>
             <td>{{ emp.employeeEmail || '—' }}</td>
-            <td>{{ emp.storeLocation || '—' }}</td>
+            <td>{{ locationsLabel(emp) }}</td>
             <td><span class="role-badge" [class.role-admin]="emp.role === 'admin'">{{ emp.role === 'admin' ? 'Admin' : 'Store Manager' }}</span></td>
             <td class="td-actions">
               <button type="button" class="act-btn edit-act" (click)="startEdit(emp)" title="Edit">
@@ -82,12 +82,15 @@
         <input type="email" formControlName="employeeEmail" placeholder="Optional">
       </div>
 
-      <div class="field-group" [class.err]="submitted && form.get('storeLocation')?.invalid">
-        <label>Store Location <span class="req">*</span></label>
-        <select formControlName="storeLocation">
-          <option value="" disabled selected>Select</option>
-          <option *ngFor="let loc of storeLocations" [value]="loc">{{ loc }}</option>
-        </select>
+      <div class="field-group" [class.err]="submitted && selectedLocations.length === 0">
+        <label>Store Location(s) <span class="req">*</span></label>
+        <div class="checkbox-group">
+          <label class="checkbox-option" *ngFor="let loc of storeLocations">
+            <input type="checkbox" [checked]="isLocationSelected(loc)" (change)="toggleLocation(loc)">
+            {{ loc }}
+          </label>
+        </div>
+        <span class="field-error" *ngIf="submitted && selectedLocations.length === 0">Select at least one store location.</span>
       </div>
 
       <div class="field-group" [class.err]="submitted && form.get('role')?.invalid">

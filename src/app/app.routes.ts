@@ -5,15 +5,20 @@ import { SearchPageComponent } from './search-page/search-page.component';
 import { LoginManagementComponent } from './login-management/login-management.component';
 import { AuthGuard } from './auth.guard';
 import { AdminGuard } from './admin.guard';
+import { CatalogueGuard } from './catalogue.guard';
 import { ViewProductComponent } from './view-product/view-product.component';
 import { InventoryDashboardComponent } from './inventory-dashboard/inventory-dashboard.component';
 import { AddIntransitComponent } from './add-intransit/add-intransit.component';
 import { ApprovalsComponent } from './approvals/approvals.component';
+import { SoldStagingComponent } from './sold-staging/sold-staging.component';
 import { AddCatalogueComponent } from './add-catalogue/add-catalogue.component';
 import { InventoryListComponent } from './inventory-list/inventory-list.component';
 import { ViewMarbleComponent } from './view-marble/view-marble.component';
 import { AddEmployeeComponent } from './add-employee/add-employee.component';
 import { AuditLogComponent } from './audit-log/audit-log.component';
+import { WarehouseComponent } from './warehouse/warehouse.component';
+import { SoldSlabDetailsComponent } from './sold-slab-details/sold-slab-details.component';
+import { CatalogueGeneratorComponent } from './catalogue-generator/catalogue-generator.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -24,11 +29,15 @@ export const routes: Routes = [
   { path: 'dashboard',    component: InventoryDashboardComponent,   canActivate: [AuthGuard] },
   { path: 'intransit',    component: AddIntransitComponent,         canActivate: [AuthGuard] },
   { path: 'approvals',    component: ApprovalsComponent,            canActivate: [AuthGuard, AdminGuard] },
+  { path: 'sold-staging', component: SoldStagingComponent,          canActivate: [AuthGuard] },
   { path: 'add-employee', component: AddEmployeeComponent,          canActivate: [AuthGuard, AdminGuard] },
   { path: 'audit-log',    component: AuditLogComponent,             canActivate: [AuthGuard, AdminGuard] },
-  { path: 'catalogue',           component: AddCatalogueComponent, canActivate: [AuthGuard] },
-  { path: 'catalogue/edit/:id',  component: AddCatalogueComponent, canActivate: [AuthGuard] },
-  { path: 'view-marble/:id',     component: ViewMarbleComponent,   canActivate: [AuthGuard] },
+  { path: 'warehouse/:slug', component: WarehouseComponent,         canActivate: [AuthGuard, AdminGuard] },
+  { path: 'sold-slab-details', component: SoldSlabDetailsComponent, canActivate: [AuthGuard] },
+  { path: 'catalogue-generator', component: CatalogueGeneratorComponent, canActivate: [AuthGuard] },
+  { path: 'catalogue',           component: AddCatalogueComponent, canActivate: [AuthGuard, CatalogueGuard] },
+  { path: 'catalogue/edit/:id',  component: AddCatalogueComponent, canActivate: [AuthGuard, CatalogueGuard] },
+  { path: 'view-marble/:id',     component: ViewMarbleComponent,   canActivate: [AuthGuard, CatalogueGuard] },
   { path: 'block-inventory',   component: InventoryListComponent, canActivate: [AuthGuard], data: { category: 'Block', title: 'Block Inventory' } },
   { path: 'slab-inventory',    component: InventoryListComponent, canActivate: [AuthGuard], data: { category: 'Slab',  title: 'Slab Inventory' } },
   { path: 'process-inventory', component: InventoryListComponent, canActivate: [AuthGuard], data: { statusFilter: 'Process', title: 'Process Inventory' } },

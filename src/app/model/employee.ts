@@ -6,6 +6,6 @@ export class Employee {
   /** Only ever sent on create/update — the backend never returns it. */
   password: string = '';
   role: string = '';
-  storeLocation: string = '';
+  storeLocations: string[] = [];
   createdAt: number = 0;
 }

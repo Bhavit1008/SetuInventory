@@ -6,17 +6,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ToastService } from '../services/toast.service';
 import { LayoutService } from '../services/layout.service';
 import { ProductService } from '../services/product.service';
-import { Subscription } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, combineLatest, firstValueFrom } from 'rxjs';
+import { startWith } from 'rxjs/operators';
+import {
+  COLLECTION_OPTIONS, COUNTRY_OPTIONS, STONE_FAMILY_OPTIONS,
+  COLLECTION_SHORT_CODE_MAP, COUNTRY_SHORT_CODE_MAP, STONE_FAMILY_SHORT_CODE_MAP,
+  abbreviate,
+} from '../model/catalogue-options';
 
 const BASE = 'https://setu-crm.onrender.com/catalogue';
 
 export interface CatalogueItem {
   id: string;
   itemCode: string;
-  marbleName: string;
   collectionName?: string;
-  materialType: string;
   stoneFamily: string;
   country: string;
   createdAt: number;
@@ -51,9 +54,12 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   // ── Dropdown option lists ─────────────────────────────────────────
-  readonly materialTypeOptions   = ['Marble', 'Granite', 'Quartzite', 'Onyx', 'Travertine', 'Limestone', 'Sandstone', 'Slate'];
-  readonly stoneFamilyOptions    = ['Calcite Marble', 'Dolomite Marble', 'Onyx Marble', 'Travertine', 'Granite', 'Quartzite'];
-  readonly countryOptions        = ['India', 'Italy', 'Turkey', 'China', 'Brazil', 'Spain', 'Portugal', 'Greece', 'Iran', 'Vietnam', 'Egypt', 'Pakistan', 'USA', 'Others'];
+  // Collection Name / Stone Family / Country are backed by a shared
+  // label→code list (see catalogue-options.ts) so other components can look
+  // up the same codes when building a marble/product code later.
+  readonly collectionNameOptions = COLLECTION_OPTIONS.map(o => o.label);
+  readonly stoneFamilyOptions    = STONE_FAMILY_OPTIONS.map(o => o.label);
+  readonly countryOptions        = COUNTRY_OPTIONS.map(o => o.label);
   readonly mineStatusOptions     = ['Active', 'Inactive', 'Under Exploration', 'Closed'];
   readonly materialNatureOptions = ['Calcareous', 'Siliceous'];
   readonly levelOptions          = ['Low', 'Medium', 'High'];
@@ -87,12 +93,11 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
 
   form = new FormGroup({
     // 1. Basic Information
-    marbleName:          new FormControl('', Validators.required),
     collectionName:      new FormControl(''),
-    itemCode:            new FormControl('', Validators.required), // Product Code *
+    itemCode:            new FormControl('', Validators.required), // Product Code — auto-generated, see updateItemCode()
     alternateTradeName:  new FormControl(''),
-    skuCode:             new FormControl(''),
-    materialType:        new FormControl('', Validators.required),
+    alternateTradeNameAbbreviation: new FormControl(''), // 2-char code entered alongside Trade Name, used to build itemCode
+    color:               new FormControl(''),
     stoneFamily:         new FormControl('', Validators.required),
 
     // 2. Origin Details
@@ -218,7 +223,22 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
 
   get f() { return this.form.controls; }
 
+  /** Fields the auto-generated Product Code is built from — see updateItemCode(). */
+  private static readonly ITEM_CODE_SOURCE_FIELDS = [
+    'collectionName', 'color', 'stoneFamily', 'country', 'alternateTradeNameAbbreviation'
+  ] as const;
+
   ngOnInit(): void {
+    // combineLatest (rather than 5 independent subscriptions) guarantees one
+    // synchronized recompute the instant ANY of the 5 fields changes — and
+    // startWith(control.value) means it also fires once immediately on load
+    // (relevant when editing, since loadForEdit() below patches these
+    // fields in before this subscription would otherwise see them).
+    const sourceControls = AddCatalogueComponent.ITEM_CODE_SOURCE_FIELDS.map(name => this.form.get(name)!);
+    this.sub = combineLatest(
+      sourceControls.map(c => c.valueChanges.pipe(startWith(c.value)))
+    ).subscribe(() => this.updateItemCode());
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.editId = id;
@@ -228,6 +248,35 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
     if (this.route.snapshot.queryParamMap.get('tab') === 'saved') {
       this.switchTab('saved');
     }
+  }
+
+  /**
+   * The live Product Code, computed fresh from current form values, as
+   * collection-color-stoneFamily-country-tradeNameAbbreviation. Collection/
+   * Stone Family/Country use the fixed 2-char (3 on collision) code lists
+   * from catalogue-options.ts; Color has no fixed list so it uses the
+   * shared abbreviation algorithm; Trade Name uses the 2-char abbreviation
+   * typed alongside it. Blank segments are dropped so an incomplete entry
+   * doesn't produce stray dashes. Bound directly in the template (not just
+   * pushed into the itemCode control), so the displayed value is always
+   * correct on every change-detection cycle — it doesn't depend on a
+   * subscription having fired in time.
+   */
+  get generatedItemCode(): string {
+    const v = this.form.value;
+    const parts = [
+      COLLECTION_SHORT_CODE_MAP[v.collectionName || ''] || abbreviate(v.collectionName),
+      abbreviate(v.color),
+      STONE_FAMILY_SHORT_CODE_MAP[v.stoneFamily || ''] || abbreviate(v.stoneFamily),
+      COUNTRY_SHORT_CODE_MAP[v.country || ''] || abbreviate(v.country),
+      (v.alternateTradeNameAbbreviation || '').toString().trim().toUpperCase(),
+    ].filter(Boolean);
+    return parts.join('-');
+  }
+
+  /** Keeps the itemCode control (used for validation and the save payload) in sync with generatedItemCode. */
+  private updateItemCode(): void {
+    this.form.get('itemCode')?.setValue(this.generatedItemCode, { emitEvent: false });
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
@@ -326,6 +375,7 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
 
   async save(isDraft = false): Promise<void> {
     this.submitted = true;
+    this.updateItemCode(); // final recompute, so the saved code can never lag behind the displayed one
     if ((!isDraft && this.form.invalid) || this.isSaving) return;
 
     this.isSaving = true;

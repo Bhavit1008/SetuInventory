@@ -17,6 +17,10 @@ export class Product {
   productWeight: number = 0;
   quantity: number = 0;
   size: number = 0;
+  /** Piece count from the SLAB ENTRY GRID specifically (sum of each row's own Qty) — independent of quantity, which is entered directly in Slab Details. */
+  gridQuantity: number = 0;
+  /** Sqft from the SLAB ENTRY GRID specifically — independent of size, which comes from Slab Details' Size L × W × Quantity. */
+  gridSqft: number = 0;
   exFactoryCost: number = 0;
   rate: number = 0;
   freightCost: number = 0;

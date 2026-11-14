@@ -222,6 +222,18 @@
   color: var(--text-secondary, #6c6c70);
 }
 
+.auto-tag {
+  background: var(--accent-light, #eef0ff);
+  color: var(--accent, #4a4ae0);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-left: 4px;
+  text-transform: uppercase;
+}
+
 /* ── Text input / select ──────────────────────────── */
 .field-input, .field-select {
   width: 100%;

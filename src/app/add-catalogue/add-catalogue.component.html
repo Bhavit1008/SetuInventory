@@ -62,32 +62,28 @@
           <div class="section-header"><span class="section-badge">1</span>Basic Information</div>
           <div class="section-body">
 
-            <div class="field-row" [class.row-invalid]="submitted && f['marbleName'].invalid">
-              <label class="field-label">Marble Name *</label>
-              <input class="field-input" type="text" formControlName="marbleName" placeholder="e.g. Statuario White"/>
-            </div>
             <div class="field-row">
               <label class="field-label">Collection Name</label>
-              <input class="field-input" type="text" formControlName="collectionName" placeholder="e.g. LUNA Collection"/>
+              <select class="field-select" formControlName="collectionName">
+                <option value="" disabled>Select collection</option>
+                <option *ngFor="let o of collectionNameOptions" [value]="o">{{ o }}</option>
+              </select>
             </div>
             <div class="field-row" [class.row-invalid]="submitted && f['itemCode'].invalid">
-              <label class="field-label">Product Code *</label>
-              <input class="field-input" type="text" formControlName="itemCode" placeholder="e.g. LUNA-STW-001"/>
+              <label class="field-label">Product Code * <span class="auto-tag">Auto-generated</span></label>
+              <input class="field-input" type="text" [value]="generatedItemCode" readonly placeholder="Fills in from the fields below"/>
             </div>
             <div class="field-row">
               <label class="field-label">Alternate / Trade Name</label>
               <input class="field-input" type="text" formControlName="alternateTradeName" placeholder="e.g. Statuario"/>
             </div>
             <div class="field-row">
-              <label class="field-label">SKU Code</label>
-              <input class="field-input" type="text" formControlName="skuCode" placeholder="e.g. STW001"/>
+              <label class="field-label">Trade Name Abbreviation <span class="auto-tag">2 chars</span></label>
+              <input class="field-input" type="text" formControlName="alternateTradeNameAbbreviation" placeholder="e.g. ST" maxlength="2"/>
             </div>
-            <div class="field-row" [class.row-invalid]="submitted && f['materialType'].invalid">
-              <label class="field-label">Material Type *</label>
-              <select class="field-select" formControlName="materialType">
-                <option value="" disabled>Select material type</option>
-                <option *ngFor="let o of materialTypeOptions" [value]="o">{{ o }}</option>
-              </select>
+            <div class="field-row">
+              <label class="field-label">Color</label>
+              <input class="field-input" type="text" formControlName="color" placeholder="e.g. White"/>
             </div>
             <div class="field-row" [class.row-invalid]="submitted && f['stoneFamily'].invalid">
               <label class="field-label">Stone Family *</label>
@@ -751,7 +747,7 @@
     <div class="cat-grid" *ngIf="!isLoading && items.length > 0">
       <div class="cat-card" *ngFor="let item of items" (click)="viewMarble(item.id)">
         <div class="cat-card-img-wrap">
-          <img *ngIf="item['mainSlabPhotoUrl']" [src]="item['mainSlabPhotoUrl']" [alt]="item.marbleName" class="cat-card-img"/>
+          <img *ngIf="item['mainSlabPhotoUrl']" [src]="item['mainSlabPhotoUrl']" [alt]="item['alternateTradeName'] || item.itemCode" class="cat-card-img"/>
           <div class="cat-card-img-placeholder" *ngIf="!item['mainSlabPhotoUrl']">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
               <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -768,14 +764,12 @@
           </button>
         </div>
         <div class="cat-card-info">
-          <h3 class="cat-card-name">{{ item.marbleName }}</h3>
+          <h3 class="cat-card-name">{{ (item['alternateTradeName'] || item.itemCode) | uppercase }}</h3>
           <div class="cat-card-chips">
             <span class="meta-chip">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               {{ item.country }}
             </span>
-            <span class="meta-chip">{{ item.materialType }}</span>
-            <span class="meta-chip meta-chip-quality">{{ item.stoneFamily }}</span>
           </div>
         </div>
       </div>

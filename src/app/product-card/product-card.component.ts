@@ -33,6 +33,6 @@ export class ProductCardComponent {
   }
 
   viewProduct(product: Product): void {
-    this.router.navigate(['/view-product'], { state: { product } });
+    this.router.navigate(['/view-product'], { state: { product }, queryParams: { id: product.id } });
   }
 }

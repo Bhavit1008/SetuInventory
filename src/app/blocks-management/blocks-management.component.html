@@ -73,7 +73,7 @@
                  (click)="onStoneSelected(item.itemCode); $event.stopPropagation()">
               <div class="stone-opt-wrap">
                 <span class="stone-opt-code">{{ item.itemCode }}</span>
-                <span class="stone-opt-meta">{{ item.marbleName }} · {{ item.country }} · {{ item.materialType }}</span>
+                <span class="stone-opt-meta">{{ item.stoneFamily }} · {{ item.country }}</span>
               </div>
               <svg *ngIf="selectedStone?.itemCode === item.itemCode"
                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dd-check">
@@ -96,17 +96,11 @@
           </svg>
           {{ selectedStone.country }}
         </span>
-        <span class="stone-chip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-          </svg>
-          {{ selectedStone.materialType }}
-        </span>
         <span class="stone-chip stone-chip-quality">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11">
             <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
           </svg>
-          {{ selectedStone.marbleName }}
+          {{ selectedStone.stoneFamily }}
         </span>
       </div>
 
@@ -359,7 +353,7 @@
 
     <!-- ═══════════════════════ SAVE ═══════════════════════ -->
     <div class="save-wrap">
-      <button type="submit" class="save-btn" (click)="saveBlockDetails(blockForm)">
+      <button type="button" class="save-btn" (click)="saveBlockDetails(blockForm)" [disabled]="isSubmitting">
         <ng-container *ngIf="!isSubmitting; else loadingTpl">SAVE BLOCK DATA</ng-container>
         <ng-template #loadingTpl>
           <span class="btn-spinner"></span> SUBMITTING...
