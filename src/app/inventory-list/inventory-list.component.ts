@@ -5,10 +5,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { firstValueFrom } from 'rxjs';
 import { Product } from '../model/product';
+import { SlabPieces } from '../model/slab-pieces';
 import { ProductService } from '../services/product.service';
 import { ToastService } from '../services/toast.service';
 import { LayoutService } from '../services/layout.service';
 import { AuthService } from '../services/auth.service';
+import { CatalogueLookupService } from '../services/catalogue-lookup.service';
+import { InventoryFilterStateService } from '../services/inventory-filter-state.service';
 
 interface StatCard {
   icon: 'cube' | 'scale' | 'layers' | 'check' | 'box';
@@ -116,6 +119,74 @@ export class InventoryListComponent implements OnInit {
     return this.auth.isAdmin();
   }
 
+  // ── Admin bulk-delete (Sold Inventory only) ───────────────────────────
+  selectedIds = new Set<string>();
+  showBulkDeleteConfirm = false;
+  isBulkDeleting = false;
+
+  get showBulkSelect(): boolean {
+    return this.isAdmin && this.statusFilter === 'Sold';
+  }
+
+  isSelected(id: string): boolean {
+    return this.selectedIds.has(id);
+  }
+
+  toggleSelect(id: string): void {
+    if (this.selectedIds.has(id)) this.selectedIds.delete(id);
+    else this.selectedIds.add(id);
+  }
+
+  /** "Select all" covers only the current page — selections elsewhere on other pages are kept. */
+  get allPageSelected(): boolean {
+    return this.pageItems.length > 0 && this.pageItems.every(p => this.selectedIds.has(p.id));
+  }
+
+  toggleSelectAllOnPage(): void {
+    const next = !this.allPageSelected;
+    this.pageItems.forEach(p => next ? this.selectedIds.add(p.id) : this.selectedIds.delete(p.id));
+  }
+
+  get selectedCount(): number {
+    return this.selectedIds.size;
+  }
+
+  openBulkDeleteConfirm(): void {
+    if (this.selectedCount === 0) return;
+    this.showBulkDeleteConfirm = true;
+  }
+
+  cancelBulkDelete(): void {
+    this.showBulkDeleteConfirm = false;
+  }
+
+  async confirmBulkDelete(): Promise<void> {
+    if (this.isBulkDeleting) return;
+    this.isBulkDeleting = true;
+
+    const ids = Array.from(this.selectedIds);
+    let failures = 0;
+    for (const id of ids) {
+      try {
+        await firstValueFrom(this.productService.deleteProduct(id));
+      } catch {
+        failures++;
+      }
+    }
+
+    this.isBulkDeleting = false;
+    this.showBulkDeleteConfirm = false;
+    this.selectedIds.clear();
+
+    if (failures) {
+      this.toast.showError(`Deleted ${ids.length - failures} of ${ids.length} — ${failures} failed.`);
+    } else {
+      this.toast.showSuccess(`Deleted ${ids.length} sold item${ids.length > 1 ? 's' : ''}.`);
+    }
+
+    await this.loadAll();
+  }
+
   /** Which date a row "belongs to": when it was sold for Sold Inventory, when it was added everywhere else — also drives the export date-range filter. */
   get dateField(): 'soldDate' | 'createdAt' {
     return this.statusFilter === 'Sold' ? 'soldDate' : 'createdAt';
@@ -131,6 +202,21 @@ export class InventoryListComponent implements OnInit {
     return 'Product';
   }
 
+  /** Identifies this page (Block/Slab/Process/Sold Inventory) for saving/restoring its own filter state. */
+  private get stateKey(): string {
+    return `${this.category ?? ''}|${this.statusFilter ?? ''}`;
+  }
+
+  private persistState(): void {
+    this.filterState.save(this.stateKey, {
+      filterValues: this.filterForm.value,
+      filterActive: this.filterActive,
+      sortField: this.sortField,
+      sortDirection: this.sortDirection,
+      pageNumber: this.pageNumber,
+    });
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -139,6 +225,8 @@ export class InventoryListComponent implements OnInit {
     private toast: ToastService,
     public layout: LayoutService,
     private auth: AuthService,
+    private catalogueLookup: CatalogueLookupService,
+    private filterState: InventoryFilterStateService,
   ) {
     this.filterForm = this.fb.group({
       godonLocations: [''],
@@ -232,6 +320,10 @@ export class InventoryListComponent implements OnInit {
     return Number(p.sqft) || Number(p.size) || 0;
   }
 
+  stoneType(p: Product): string {
+    return this.catalogueLookup.stoneType(p);
+  }
+
   /** Slabs are identified by their own slab number when set; blocks (and legacy slabs without one) fall back to productCode. */
   rowCode(p: Product): string {
     if (p.category?.toLowerCase() === 'slab' && p.slabNumber) return p.slabNumber;
@@ -265,6 +357,55 @@ export class InventoryListComponent implements OnInit {
       return sqft ? `${sqft.toLocaleString(undefined, { maximumFractionDigits: 2 })} sqft` : '—';
     }
     return p.productWeight ? `${p.productWeight} Tons` : '—';
+  }
+
+  /** One piece's size + sqft, for the expandable piece breakdown — uses the sold-recheck measurement when present (Sold Inventory rows carry only the pieces actually sold, already re-measured). */
+  pieceSizeLabel(piece: SlabPieces): string {
+    const length = piece.recheckedLength || piece.length;
+    const width = piece.recheckedWidth || piece.width;
+    const area = Number(piece.recheckedTotalArea) || Number(piece.totalArea) || 0;
+    return `${length} × ${width} (${area.toFixed(2)} sqft)`;
+  }
+
+  /** Whether this slab's pieces carry actual measured dimensions worth expanding — a single-row placeholder from a simple-quantity entry (length/width always 0) shouldn't offer an empty "View sizes" toggle. */
+  hasPieceSizes(p: Product): boolean {
+    return !!p.pieces?.some(pc => (pc.recheckedLength || pc.length) > 0 || (pc.recheckedWidth || pc.width) > 0);
+  }
+
+  private expandedRows = new Set<string>();
+
+  isRowExpanded(p: Product): boolean {
+    return this.expandedRows.has(p.id);
+  }
+
+  toggleRowExpand(p: Product, event: Event): void {
+    event.stopPropagation();
+    if (this.expandedRows.has(p.id)) this.expandedRows.delete(p.id);
+    else this.expandedRows.add(p.id);
+  }
+
+  // ── Hover-zoom preview for the row thumbnail ───────────────────────────
+  hoveredImage: string | null = null;
+  hoverPreviewStyle: Record<string, string> = {};
+
+  onThumbEnter(event: MouseEvent, url: string): void {
+    if (!url) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const previewSize = 440;
+
+    let left = rect.right + 14;
+    if (left + previewSize > window.innerWidth) left = rect.left - previewSize - 14;
+    left = Math.max(8, left);
+
+    let top = rect.top + rect.height / 2 - previewSize / 2;
+    top = Math.max(8, Math.min(top, window.innerHeight - previewSize - 8));
+
+    this.hoverPreviewStyle = { top: `${top}px`, left: `${left}px` };
+    this.hoveredImage = url;
+  }
+
+  onThumbLeave(): void {
+    this.hoveredImage = null;
   }
 
   rowDate(p: Product): string {
@@ -302,6 +443,7 @@ export class InventoryListComponent implements OnInit {
   onSortChange(): void {
     this.pageNumber = 0;
     this.recomputePagination();
+    this.persistState();
   }
 
   toggleSortDirection(): void {
@@ -323,7 +465,10 @@ export class InventoryListComponent implements OnInit {
   async loadAll(): Promise<void> {
     this.isLoading = true;
     try {
-      const res = await firstValueFrom(this.productService.getProductsPage(this.category, 0, 5000));
+      const [res] = await Promise.all([
+        firstValueFrom(this.productService.getProductsPage(this.category, 0, 5000)),
+        this.catalogueLookup.ensureLoaded(),
+      ]);
       this.baseProducts = (this.statusFilter
         ? res.content.filter(p => p.status?.toLowerCase() === this.statusFilter!.toLowerCase())
         : res.content.filter(p => {
@@ -335,10 +480,20 @@ export class InventoryListComponent implements OnInit {
           })
       ).filter(p => this.auth.canAccessLocation(p.godownLocation));
 
-      this.filterForm.reset();
-      this.filterActive = false;
-      this.displayProducts = this.baseProducts;
-      this.pageNumber = 0;
+      const saved = this.filterState.get(this.stateKey);
+      if (saved) {
+        this.filterForm.patchValue(saved.filterValues, { emitEvent: false });
+        this.filterActive = saved.filterActive;
+        this.sortField = saved.sortField;
+        this.sortDirection = saved.sortDirection;
+        this.pageNumber = saved.pageNumber;
+        this.displayProducts = saved.filterActive ? this.computeFiltered(saved.filterValues) : this.baseProducts;
+      } else {
+        this.filterForm.reset();
+        this.filterActive = false;
+        this.displayProducts = this.baseProducts;
+        this.pageNumber = 0;
+      }
       this.recomputePagination();
     } catch {
       this.toast.showError('Failed to load inventory.');
@@ -359,6 +514,7 @@ export class InventoryListComponent implements OnInit {
     if (page < 0 || page >= this.totalPages) return;
     this.pageNumber = page;
     this.recomputePagination();
+    this.persistState();
   }
 
   prevPage(): void { this.goToPage(this.pageNumber - 1); }
@@ -372,10 +528,10 @@ export class InventoryListComponent implements OnInit {
     this.filterPanelVisible = false;
   }
 
-  applyFilter(): void {
-    const { godonLocations, productQuality, status, category, productCode, minPrice, maxPrice, minQuantity, maxQuantity } = this.filterForm.value;
+  private computeFiltered(values: any): Product[] {
+    const { godonLocations, productQuality, status, category, productCode, minPrice, maxPrice, minQuantity, maxQuantity } = values;
 
-    this.displayProducts = this.baseProducts.filter(p =>
+    return this.baseProducts.filter(p =>
       (!godonLocations || p.godownLocation?.toLowerCase().includes(godonLocations.toLowerCase())) &&
       (!productQuality || p.productQuality?.toLowerCase().includes(productQuality.toLowerCase())) &&
       (!status || p.status?.toLowerCase().includes(status.toLowerCase())) &&
@@ -386,11 +542,15 @@ export class InventoryListComponent implements OnInit {
       (!minQuantity || p.quantity >= +minQuantity) &&
       (!maxQuantity || p.quantity <= +maxQuantity)
     );
+  }
 
+  applyFilter(): void {
+    this.displayProducts = this.computeFiltered(this.filterForm.value);
     this.filterActive = true;
     this.pageNumber = 0;
     this.recomputePagination();
     this.closeFilterPanel();
+    this.persistState();
   }
 
   resetFilter(): void {
@@ -399,6 +559,7 @@ export class InventoryListComponent implements OnInit {
     this.displayProducts = this.baseProducts;
     this.pageNumber = 0;
     this.recomputePagination();
+    this.persistState();
   }
 
   viewProduct(product: Product): void {
@@ -464,7 +625,7 @@ export class InventoryListComponent implements OnInit {
     const isSlab = p.category?.toLowerCase() === 'slab';
     const row: Record<string, string | number> = {
       'Code': this.rowCode(p),
-      'Quality': p.productQuality || '—',
+      'Quality': this.stoneType(p),
       'Status': p.status || '—',
       'Size': this.productSize(p),
       'Weight (Tons)': isSlab ? '—' : (p.productWeight || 0),

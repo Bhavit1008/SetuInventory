@@ -78,8 +78,11 @@
               <input class="field-input" type="text" formControlName="alternateTradeName" placeholder="e.g. Statuario"/>
             </div>
             <div class="field-row">
-              <label class="field-label">Trade Name Abbreviation <span class="auto-tag">2 chars</span></label>
-              <input class="field-input" type="text" formControlName="alternateTradeNameAbbreviation" placeholder="e.g. ST" maxlength="2"/>
+              <label class="field-label">Trade Name Abbreviation</label>
+              <input class="field-input" type="text" formControlName="alternateTradeNameAbbreviation" placeholder="e.g. ST"/>
+              <span class="abbr-checking" *ngIf="isCheckingAbbreviation">Checking…</span>
+              <span class="abbr-taken" *ngIf="!isCheckingAbbreviation && abbreviationTaken">Already used by another marble.</span>
+              <span class="abbr-ok" *ngIf="!isCheckingAbbreviation && abbreviationTaken === false">Available</span>
             </div>
             <div class="field-row">
               <label class="field-label">Color</label>

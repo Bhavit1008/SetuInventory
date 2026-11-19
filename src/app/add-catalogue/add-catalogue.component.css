@@ -258,6 +258,15 @@
   background: var(--bg-card, #fff);
 }
 
+.abbr-checking, .abbr-taken, .abbr-ok {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.abbr-checking { color: var(--text-secondary, #6c6c70); }
+.abbr-taken    { color: var(--danger, #ff3b30); }
+.abbr-ok       { color: var(--success, #34c759); }
+
 .row-invalid .field-label { color: var(--danger, #ff3b30); }
 .row-invalid .field-input, .row-invalid .field-select {
   border-color: var(--danger, #ff3b30);

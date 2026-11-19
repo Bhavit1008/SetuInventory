@@ -11,6 +11,7 @@ import { AuthService } from '../services/auth.service';
 import { ApprovalService } from '../services/approval.service';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { CatalogueLookupService } from '../services/catalogue-lookup.service';
 
 interface StatCard {
   key: string | null;
@@ -111,6 +112,11 @@ export class SearchPageComponent implements OnInit {
   get isAdmin(): boolean { return this.auth.isAdmin(); }
   pendingApprovalCount = 0;
 
+  /** Trade Name (Marble Master) for anything created on/after the cutoff; the original Quality value for everything older — see CatalogueLookupService. */
+  stoneType(p: Product): string {
+    return this.catalogueLookup.stoneType(p);
+  }
+
   openApprovals(): void {
     if (this.isAdmin) this.router.navigate(['/approvals']);
   }
@@ -122,7 +128,8 @@ export class SearchPageComponent implements OnInit {
     public layout: LayoutService,
     private auth: AuthService,
     private approvalService: ApprovalService,
-    private router: Router
+    private router: Router,
+    private catalogueLookup: CatalogueLookupService,
   ) {
     this.searchForm = this.fb.group({
       category: [''],
@@ -142,6 +149,8 @@ export class SearchPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.catalogueLookup.ensureLoaded();
+
     this.approvalService.pendingCount.subscribe(count => {
       this.pendingApprovalCount = this.isAdmin ? count : 0;
     });

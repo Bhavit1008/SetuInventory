@@ -844,6 +844,20 @@
   letter-spacing: 0.03em;
 }
 
+.code-preview-input {
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+
+.code-preview-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
 .summary-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

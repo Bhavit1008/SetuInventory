@@ -59,7 +59,7 @@
                 <span class="stone-loading-txt">Loading...</span>
               </ng-container>
               <ng-container *ngIf="!isLoadingStones">
-                {{ selectedStone?.itemCode || 'Select stone' }}
+                {{ (selectedStone?.alternateTradeName || selectedStone?.itemCode) ? ((selectedStone?.alternateTradeName || selectedStone?.itemCode) | uppercase) : 'Select stone' }}
               </ng-container>
             </span>
             <span class="dd-chevron" [class.dd-chevron-open]="openDropdown === 'stone'">
@@ -72,7 +72,7 @@
                  [class.dd-option-selected]="selectedStone?.itemCode === item.itemCode"
                  (click)="onStoneSelected(item.itemCode); $event.stopPropagation()">
               <div class="stone-opt-wrap">
-                <span class="stone-opt-code">{{ item.itemCode }}</span>
+                <span class="stone-opt-code">{{ (item.alternateTradeName || item.itemCode) | uppercase }}</span>
                 <span class="stone-opt-meta">{{ item.stoneFamily }} · {{ item.country }}</span>
               </div>
               <svg *ngIf="selectedStone?.itemCode === item.itemCode"

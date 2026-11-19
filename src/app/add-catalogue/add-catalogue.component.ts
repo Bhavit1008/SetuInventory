@@ -7,7 +7,7 @@ import { ToastService } from '../services/toast.service';
 import { LayoutService } from '../services/layout.service';
 import { ProductService } from '../services/product.service';
 import { Subscription, combineLatest, firstValueFrom } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 import {
   COLLECTION_OPTIONS, COUNTRY_OPTIONS, STONE_FAMILY_OPTIONS,
   COLLECTION_SHORT_CODE_MAP, COUNTRY_SHORT_CODE_MAP, STONE_FAMILY_SHORT_CODE_MAP,
@@ -211,6 +211,13 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
   });
 
   private sub!: Subscription;
+  private abbrSub?: Subscription;
+
+  /** Every other marble's Trade Name Abbreviation already in use, lowercased → its id — loaded once, rechecked live as this one is typed. */
+  private abbreviationIndex = new Map<string, string>();
+  isCheckingAbbreviation = false;
+  /** null = nothing to check (blank); true/false once checked against abbreviationIndex. */
+  abbreviationTaken: boolean | null = null;
 
   constructor(
     private http: HttpClient,
@@ -238,6 +245,11 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
     this.sub = combineLatest(
       sourceControls.map(c => c.valueChanges.pipe(startWith(c.value)))
     ).subscribe(() => this.updateItemCode());
+
+    this.loadAbbreviationIndex();
+    this.abbrSub = this.form.get('alternateTradeNameAbbreviation')!.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(value => this.checkAbbreviation(value));
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -279,7 +291,39 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
     this.form.get('itemCode')?.setValue(this.generatedItemCode, { emitEvent: false });
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+    this.abbrSub?.unsubscribe();
+  }
+
+  /** Loads every other marble's abbreviation once, then runs an immediate check against whatever's typed so far (covers the edit-load race, where the form may already have patched a value before this resolves). */
+  private async loadAbbreviationIndex(): Promise<void> {
+    this.isCheckingAbbreviation = true;
+    try {
+      const items = await firstValueFrom(this.http.get<CatalogueItem[]>(`${BASE}/all`));
+      this.abbreviationIndex = new Map(
+        items
+          .filter(i => i['alternateTradeNameAbbreviation'])
+          .map(i => [i['alternateTradeNameAbbreviation'].trim().toLowerCase(), i.id])
+      );
+    } catch {
+      this.abbreviationIndex = new Map();
+    } finally {
+      this.isCheckingAbbreviation = false;
+      this.checkAbbreviation(this.form.get('alternateTradeNameAbbreviation')?.value);
+    }
+  }
+
+  /** Marks the currently-typed abbreviation as taken only if it belongs to a DIFFERENT marble — editing a marble never conflicts with its own existing abbreviation. */
+  private checkAbbreviation(value: string | null | undefined): void {
+    const trimmed = (value || '').trim().toLowerCase();
+    if (!trimmed) {
+      this.abbreviationTaken = null;
+      return;
+    }
+    const ownerId = this.abbreviationIndex.get(trimmed);
+    this.abbreviationTaken = !!ownerId && ownerId !== this.editId;
+  }
 
   private async loadForEdit(id: string): Promise<void> {
     this.isLoadingEdit = true;
@@ -290,6 +334,7 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
       this.applications        = item['applications'] ?? [];
       this.suitableThickness   = item['suitableThickness'] ?? [];
       this.qualityIssues       = item['qualityIssues'] ?? [];
+      this.checkAbbreviation(item['alternateTradeNameAbbreviation']);
     } catch {
       this.toast.showError('Failed to load marble for editing.');
       this.router.navigate(['/catalogue']);
@@ -399,8 +444,12 @@ export class AddCatalogueComponent implements OnInit, OnDestroy {
         this.toast.showSuccess(isDraft ? 'Saved as draft.' : `Saved — ID: ${this.f['itemCode'].value}`);
         this.resetForm();
       }
-    } catch {
-      this.toast.showError('Failed to save. Please try again.');
+      // Refresh so the just-saved abbreviation is immediately reflected if the user adds another marble in the same session.
+      this.loadAbbreviationIndex();
+    } catch (err: any) {
+      // The backend rejects a Trade Name Abbreviation already used by another marble with 409 + a plain-text message.
+      const duplicateMsg = err?.status === 409 && typeof err.error === 'string' ? err.error : null;
+      this.toast.showError(duplicateMsg || 'Failed to save. Please try again.');
     } finally {
       this.isSaving = false;
     }

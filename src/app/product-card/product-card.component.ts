@@ -5,6 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Product } from '../model/product';
 import { Router } from '@angular/router';
+import { CatalogueLookupService } from '../services/catalogue-lookup.service';
 
 @Component({
   selector: 'app-product-card',
@@ -16,7 +17,14 @@ import { Router } from '@angular/router';
 export class ProductCardComponent {
   @Input() product!: Product;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private catalogueLookup: CatalogueLookupService) {
+    this.catalogueLookup.ensureLoaded();
+  }
+
+  /** Trade Name (Marble Master) for anything created on/after the cutoff; the original Quality value for everything older — see CatalogueLookupService. */
+  get stoneType(): string {
+    return this.catalogueLookup.stoneType(this.product);
+  }
 
   /**
    * Blocks use their own block-level photo. Slabs use the first piece's own

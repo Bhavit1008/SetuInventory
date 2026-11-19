@@ -11,6 +11,7 @@ import { AuthService } from '../services/auth.service';
 import { ApprovalService, ApprovalRequest } from '../services/approval.service';
 import { AuditLogService } from '../services/audit-log.service';
 import { AuditLog } from '../model/audit-log';
+import { CatalogueLookupService } from '../services/catalogue-lookup.service';
 
 const CATALOGUE_BASE = 'https://setu-crm.onrender.com/catalogue';
 
@@ -69,6 +70,11 @@ export class ViewProductComponent implements OnInit {
     return this.product?.productCode || '';
   }
 
+  /** Trade Name (Marble Master) for anything created on/after the cutoff; the original Quality value for everything older — see CatalogueLookupService. */
+  get stoneType(): string {
+    return this.catalogueLookup.stoneType(this.product);
+  }
+
   // Admin: delete confirmation
   showDeleteConfirm = false;
   isDeleting = false;
@@ -114,7 +120,8 @@ export class ViewProductComponent implements OnInit {
     private toastService: ToastService,
     public auth: AuthService,
     private approvalService: ApprovalService,
-    private auditLogService: AuditLogService
+    private auditLogService: AuditLogService,
+    private catalogueLookup: CatalogueLookupService,
   ) {
     const nav = this.router.getCurrentNavigation();
     const stateProduct = nav?.extras?.state?.['product'] as Product | undefined;
@@ -124,6 +131,8 @@ export class ViewProductComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    this.catalogueLookup.ensureLoaded();
+
     if (!this.product.id) {
       const id = this.route.snapshot.queryParamMap.get('id');
       if (id) {

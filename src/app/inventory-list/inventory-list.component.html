@@ -48,6 +48,12 @@
       </div>
     </div>
 
+    <!-- Admin bulk-delete bar — Sold Inventory only -->
+    <div class="bulk-delete-bar" *ngIf="showBulkSelect && selectedCount > 0">
+      <span>{{ selectedCount }} selected</span>
+      <button type="button" class="btn-bulk-delete" (click)="openBulkDeleteConfirm()">Delete Selected</button>
+    </div>
+
     <!-- List -->
     <div class="list-card">
       <div class="list-card-header">
@@ -69,6 +75,9 @@
         <table class="inv-table">
           <thead>
             <tr>
+              <th class="th-select" *ngIf="showBulkSelect">
+                <input type="checkbox" [checked]="allPageSelected" (change)="toggleSelectAllOnPage()">
+              </th>
               <th>{{ numberColumnLabel }} Number</th>
               <th>Stone Type</th>
               <th>Location</th>
@@ -80,12 +89,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let product of pageItems" (click)="viewProduct(product)" class="inv-row">
+            <ng-container *ngFor="let product of pageItems">
+            <tr (click)="viewProduct(product)" class="inv-row">
+              <td class="td-select" *ngIf="showBulkSelect" (click)="$event.stopPropagation()">
+                <input type="checkbox" [checked]="isSelected(product.id)" (change)="toggleSelect(product.id)">
+              </td>
               <td class="td-code">
                 <div class="row-thumb-wrap">
                   <img *ngIf="rowThumb(product) as thumb"
                        [src]="thumb"
-                       [alt]="rowCode(product)" class="row-thumb">
+                       [alt]="rowCode(product)" class="row-thumb"
+                       (mouseenter)="onThumbEnter($event, thumb)" (mouseleave)="onThumbLeave()">
                   <div *ngIf="!rowThumb(product)" class="row-thumb-placeholder">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
@@ -94,7 +108,7 @@
                   <span class="row-code">{{ rowCode(product) }}</span>
                 </div>
               </td>
-              <td>{{ product.productQuality || '—' }}</td>
+              <td>{{ stoneType(product) }}</td>
               <td>
                 <span class="row-loc" *ngIf="product.godownLocation; else noLoc">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -102,7 +116,16 @@
                 </span>
                 <ng-template #noLoc>—</ng-template>
               </td>
-              <td class="td-mono">{{ productSize(product) }}</td>
+              <td class="td-mono">
+                <div class="size-cell">
+                  <span>{{ productSize(product) }}</span>
+                  <span class="piece-count-badge" *ngIf="product.category === 'Slab' && product.quantity">{{ product.quantity }} pcs</span>
+                </div>
+                <button type="button" class="pieces-toggle" *ngIf="hasPieceSizes(product)"
+                        (click)="toggleRowExpand(product, $event)">
+                  {{ isRowExpanded(product) ? 'Hide sizes ▴' : 'View sizes ▾' }}
+                </button>
+              </td>
               <td class="td-mono">{{ productMetric(product) }}</td>
               <td class="td-mono">{{ rowDate(product) }}</td>
               <td><span class="status-pill" [ngClass]="getStatusClass(product.status)">{{ product.status || '—' }}</span></td>
@@ -114,8 +137,21 @@
                 </button>
               </td>
             </tr>
+            <tr class="pieces-row" *ngIf="isRowExpanded(product)">
+              <td [attr.colspan]="showBulkSelect ? 9 : 8">
+                <div class="pieces-chip-list">
+                  <span class="piece-chip" *ngFor="let piece of product.pieces">{{ pieceSizeLabel(piece) }}</span>
+                </div>
+              </td>
+            </tr>
+            </ng-container>
           </tbody>
         </table>
+      </div>
+
+      <!-- Floating hover-zoom preview for the row thumbnail -->
+      <div class="hover-zoom-preview" *ngIf="hoveredImage" [ngStyle]="hoverPreviewStyle">
+        <img [src]="hoveredImage" alt="">
       </div>
 
       <div *ngIf="!pageItems.length" class="no-results">
@@ -130,6 +166,20 @@
     </div>
 
   </ng-container>
+
+  <!-- Bulk delete confirm — admin, Sold Inventory only -->
+  <div class="bulk-delete-backdrop" *ngIf="showBulkDeleteConfirm" (click)="cancelBulkDelete()">
+    <div class="bulk-delete-modal" (click)="$event.stopPropagation()">
+      <h3>Delete {{ selectedCount }} sold item{{ selectedCount > 1 ? 's' : '' }}?</h3>
+      <p>This permanently deletes the selected record{{ selectedCount > 1 ? 's' : '' }} — it can't be undone.</p>
+      <div class="bulk-delete-actions">
+        <button type="button" class="btn-cancel" (click)="cancelBulkDelete()" [disabled]="isBulkDeleting">Cancel</button>
+        <button type="button" class="btn-confirm-delete" (click)="confirmBulkDelete()" [disabled]="isBulkDeleting">
+          {{ isBulkDeleting ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
 
 </div>
 

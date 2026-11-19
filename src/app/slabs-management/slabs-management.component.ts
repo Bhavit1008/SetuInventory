@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -9,9 +9,9 @@ import { SourceBlockDetails } from '../model/source-block-details';
 import { ViewChild, ElementRef } from '@angular/core';
 import { Platform } from '@angular/cdk/platform';
 import { ToastService } from '../services/toast.service';
-import { Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { COLLECTION_SHORT_CODE_MAP, COUNTRY_SHORT_CODE_MAP, STONE_FAMILY_SHORT_CODE_MAP, abbreviate } from '../model/catalogue-options';
+import { CatalogueLookupService } from '../services/catalogue-lookup.service';
 
 /** One Marble Master entry — fields needed to build the abbreviated slab code. */
 interface CatalogueMarble {
@@ -48,6 +48,8 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
   isDark = false;
   productId: any = null;
   blockData: Product | null = null;
+  /** True only when this entry is an in-progress Block→Slab conversion — distinguishes that from editing an already-standalone slab, so the left-panel summary (and header) show the right source. */
+  isConvertingBlock = false;
 
   /**
    * This slab entry's own photo gallery — prefilled from the source block's
@@ -144,7 +146,8 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     private platform: Platform,
     private toastService: ToastService,
     private cd: ChangeDetectorRef,
-    private router: Router
+    private catalogueLookup: CatalogueLookupService,
+    private location: Location,
   ) {}
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -152,9 +155,12 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.isMobile = this.platform.ANDROID || this.platform.IOS;
     this.loadTheme();
     this.buildForm();
-    this.loadMarbleTypeOptions();
+    this.catalogueLookup.ensureLoaded();
+    const marbleTypesLoaded = this.loadMarbleTypeOptions();
 
     const state = history.state as { formData?: Product };
+    let convertingBlock = false;
+
     if (state?.formData) {
       this.blockData = state.formData;
       this.patchFormWithData(state.formData);
@@ -162,6 +168,8 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
       this.isUpdate = true;
 
       if (state.formData.category?.toLowerCase() === 'block') {
+        convertingBlock = true;
+        this.isConvertingBlock = true;
         // Converting a block: freeze its details now, before this same
         // record gets overwritten with the slab's own on save.
         this.sourceBlockSnapshot = {
@@ -183,6 +191,36 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
         this.sourceBlockSnapshot = state.formData.sourceBlock ?? null;
       }
     }
+
+    // Pre-select the Marble Type dropdown whenever there's a linked catalogue
+    // entry to match — both when converting a block AND when editing an
+    // existing slab. Only RECOMPUTE the generated code when converting a
+    // fresh block, though — an existing slab's already-saved slabNumber
+    // (already patched above) must never be overwritten out from under it.
+    if (state?.formData?.catalogueItemId) {
+      marbleTypesLoaded.then(() => {
+        // Deferred a tick past the *ngFor that just rendered catalogueMarbles'
+        // <option> elements — setting the <select>'s bound value in the very
+        // same cycle those options are created can lose the selection, since
+        // the browser has nothing to match it against yet.
+        setTimeout(() => this.preselectMarbleFromSource(state.formData!, convertingBlock));
+      });
+    }
+  }
+
+  /**
+   * Pre-selects the Marble Master entry a slab/block was already linked to
+   * (via catalogueItemId) — so Marble Type opens already matching it. The
+   * generated Slab Code is only recomputed from it (`recomputeCode`) when
+   * converting a fresh block; an existing slab's own saved code is left
+   * exactly as patched. The dropdown and the code stay fully editable
+   * afterward either way, this just seeds them.
+   */
+  private preselectMarbleFromSource(formData: Product, recomputeCode: boolean): void {
+    if (!formData.catalogueItemId) return;
+    this.selectedMarble = this.catalogueMarbles.find(m => m.id === formData.catalogueItemId) ?? null;
+    if (this.selectedMarble && recomputeCode) this.updateSlabNumber();
+    this.cd.detectChanges();
   }
 
   ngOnDestroy(): void {
@@ -204,7 +242,7 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   goBack(): void {
-    this.router.navigate(['/search']);
+    this.location.back();
   }
 
   // ── Form Build ─────────────────────────────────────────────────────────────
@@ -296,6 +334,38 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.stockFormGroup.get('slabNumber')?.setValue(parts.join('-'), { emitEvent: false });
   }
 
+  /**
+   * BLOCK INFO always stays on screen, but only actually shows the source
+   * block's details while a conversion is genuinely in progress — editing a
+   * standalone (or already-converted) slab has no block behind it, so every
+   * row there just reads blank instead of borrowing the slab's own values.
+   */
+  get blockInfoSource(): Product | null {
+    return this.isConvertingBlock ? this.blockData : null;
+  }
+
+  get blockInfoStoneType(): string {
+    return this.blockInfoSource ? this.catalogueLookup.stoneType(this.blockInfoSource) : '—';
+  }
+
+  get blockInfoRemark(): string {
+    return this.blockInfoSource?.description ?? '';
+  }
+
+  /**
+   * Header title: the block's own code while converting it ("LUN-...-666"),
+   * this slab's own code + " Edit" when editing an existing standalone/
+   * already-converted slab, or "New Entry" for a genuinely fresh one.
+   */
+  get headerTitle(): string {
+    if (this.isConvertingBlock) return this.blockData?.productCode || 'New Entry';
+    if (this.isUpdate) {
+      const code = this.blockData?.slabNumber || this.stockFormGroup.get('slabNumber')?.value;
+      return code ? `${code} Edit` : 'Edit';
+    }
+    return 'New Entry';
+  }
+
   // ── Computed getters ───────────────────────────────────────────────────────
   get totalCostPerSqft(): number {
     const f = this.stockFormGroup?.value;
@@ -368,6 +438,12 @@ export class SlabsManagementComponent implements OnInit, OnDestroy {
     this.stockFormGroup.patchValue({
       productCode:       formData.productCode      ?? '',
       slabNumber:        formData.slabNumber       ?? '',
+      // The small "Slab Code" suffix box has no field of its own on the
+      // backend — only the final combined slabNumber is saved. On edit,
+      // seed it with that code's own last "-"-separated segment, so it
+      // isn't just blank even though it won't exactly reconstruct the
+      // original suffix typed when the slab was first built.
+      slabNumberInput:   formData.slabNumber ? formData.slabNumber.split('-').pop() : '',
       godownLocation:    formData.godownLocation   ?? '',
       productFinished:   formData.productFinished  ?? '',
       productLength:     formData.productLength    ?? '',

@@ -60,7 +60,7 @@
             {{ product.status }}
           </span>
         </div>
-        <p class="hero-category">{{ product.category }} · {{ product.productQuality }}</p>
+        <p class="hero-category">{{ product.category }} · {{ stoneType }}</p>
 
         <div class="hero-specs">
           <div class="hero-spec">
@@ -672,7 +672,7 @@
         <span class="pdf-tagline">{{ product.category }} &nbsp;&middot;&nbsp; MARBLE AND SURFACES</span>
         <div class="pdf-lot-box">LOT NO. <strong>{{ displayCode }}</strong></div>
       </div>
-      <h1 class="pdf-product-name">{{ product.productQuality }}</h1>
+      <h1 class="pdf-product-name">{{ stoneType }}</h1>
       <div class="pdf-header-meta">
         <div class="pdf-meta-item" *ngIf="product.godownLocation">
           <span class="pdf-meta-label">Godown Location</span>

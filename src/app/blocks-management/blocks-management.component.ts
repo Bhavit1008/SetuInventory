@@ -1,8 +1,7 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Component, ElementRef, ViewChild, HostListener, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Product } from '../model/product';
 import { ProductService } from '../services/product.service';
 import { Platform } from '@angular/cdk/platform';
@@ -14,6 +13,7 @@ interface CatalogueItem {
   itemCode: string;
   country: string;
   stoneFamily: string;
+  alternateTradeName?: string;
 }
 
 @Component({
@@ -27,14 +27,14 @@ export class BlocksManagementComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private router: Router,
+    private location: Location,
     private productService: ProductService,
     private platform: Platform,
     private toastService: ToastService
   ) {}
 
   goToDashboard(): void {
-    this.router.navigate(['/search']);
+    this.location.back();
   }
 
   @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
